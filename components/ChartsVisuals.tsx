@@ -6,14 +6,14 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  Legend,
+  LabelList,
   Pie,
   PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
-  YAxis,
 } from "recharts";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { budgetBarColor } from "@/lib/budget";
 import { formatHKD } from "@/lib/transaction-utils";
 import type { MonthBudgetStats } from "@/lib/types";
@@ -21,22 +21,31 @@ import type { MonthBudgetStats } from "@/lib/types";
 const COLORS = [
   "#F8A055",
   "#F8C96A",
-  "#A3E4D7",
   "#E07A3D",
   "#FFE8B8",
-  "#7EB8A8",
   "#D4A574",
   "#C0B49A",
+  "#A3E4D7",
+  "#7EB8A8",
 ];
+
+function displayCategory(name: string) {
+  return name === "居住" ? "住房" : name;
+}
 
 export function CategoryPieChart({
   data,
 }: {
   data: { name: string; value: number }[];
 }) {
+  const total = useMemo(
+    () => data.reduce((sum, item) => sum + item.value, 0),
+    [data],
+  );
+
   if (data.length === 0) {
     return (
-      <div className="grid h-72 place-items-center text-center">
+      <div className="grid h-56 place-items-center text-center">
         <div>
           <p className="font-medium text-[#5C4A32]">暂无数据</p>
           <p className="mt-1 text-sm text-[#A08B68]">记账后即可查看占比</p>
@@ -46,41 +55,110 @@ export function CategoryPieChart({
   }
 
   return (
-    <div className="h-72 w-full">
-      <ResponsiveContainer height="100%" width="100%">
-        <PieChart>
-          <Pie
-            cx="50%"
-            cy="45%"
-            data={data}
-            dataKey="value"
-            innerRadius={54}
-            nameKey="name"
-            outerRadius={86}
-            paddingAngle={3}
-            stroke="none"
-          >
-            {data.map((entry, index) => (
-              <Cell fill={COLORS[index % COLORS.length]} key={entry.name} />
-            ))}
-          </Pie>
-          <Tooltip
-            contentStyle={{
-              border: "1px solid #EFE5D3",
-              borderRadius: "16px",
-              background: "#FAF6EC",
-              boxShadow: "0 8px 24px rgba(92,74,50,.08)",
-            }}
-            formatter={(value) => formatHKD(Number(value))}
-          />
-          <Legend
-            iconSize={8}
-            iconType="circle"
-            wrapperStyle={{ fontSize: "12px", color: "#9A7B55" }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
+    <div>
+      <div className="mx-auto h-52 w-full max-w-xs">
+        <ResponsiveContainer height="100%" width="100%">
+          <PieChart>
+            <Pie
+              cx="50%"
+              cy="50%"
+              data={data}
+              dataKey="value"
+              innerRadius={52}
+              nameKey="name"
+              outerRadius={78}
+              paddingAngle={3}
+              stroke="none"
+            >
+              {data.map((entry, index) => (
+                <Cell fill={COLORS[index % COLORS.length]} key={entry.name} />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{
+                border: "1px solid #EFE5D3",
+                borderRadius: "16px",
+                background: "#FAF6EC",
+                boxShadow: "0 8px 24px rgba(92,74,50,.08)",
+              }}
+              formatter={(value) => formatHKD(Number(value))}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+
+      <ul className="mt-2 space-y-3">
+        {data.map((item, index) => {
+          const pct = total > 0 ? (item.value / total) * 100 : 0;
+          const color = COLORS[index % COLORS.length];
+          return (
+            <li className="flex items-center gap-2.5" key={item.name}>
+              <div
+                className="grid size-9 shrink-0 place-items-center rounded-xl"
+                style={{ backgroundColor: `${color}33`, color }}
+              >
+                <CategoryIcon
+                  category={item.name}
+                  className="size-4"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <p className="truncate text-sm font-semibold text-[#5C4A32]">
+                    {displayCategory(item.name)}
+                  </p>
+                  <p className="shrink-0 text-xs font-medium tabular-nums text-[#A08B68]">
+                    {pct.toFixed(0)}%
+                  </p>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-[#FFF6D9]">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${Math.min(100, pct)}%`,
+                      backgroundColor: color,
+                    }}
+                  />
+                </div>
+              </div>
+              <p className="w-[5.75rem] shrink-0 text-right text-sm font-semibold tabular-nums text-[#5C4A32]">
+                {formatHKD(item.value)}
+              </p>
+            </li>
+          );
+        })}
+      </ul>
     </div>
+  );
+}
+
+function BarTopLabel(props: {
+  x?: number | string;
+  y?: number | string;
+  width?: number | string;
+  value?: number | string;
+}) {
+  const { x = 0, y = 0, width = 0, value } = props;
+  const amount = Number(value) || 0;
+  if (amount <= 0) return null;
+  const cx = Number(x) + Number(width) / 2;
+  const cy = Number(y) - 6;
+  const text =
+    amount >= 1000
+      ? `${(amount / 1000).toFixed(amount >= 10000 ? 0 : 1)}k`
+      : String(Math.round(amount));
+
+  return (
+    <text
+      fill="#A08B68"
+      fontSize={10}
+      fontWeight={600}
+      textAnchor="middle"
+      x={cx}
+      y={cy}
+    >
+      {text}
+    </text>
   );
 }
 
@@ -92,19 +170,24 @@ export function TrendBarChart({
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer height="100%" width="100%">
-        <BarChart data={data}>
-          <CartesianGrid stroke="#EFE5D3" strokeDasharray="3 3" vertical={false} />
+        <BarChart data={data} margin={{ top: 18, right: 4, left: 4, bottom: 0 }}>
+          <defs>
+            <linearGradient id="creamBarGradient" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#F8A055" />
+              <stop offset="100%" stopColor="#FFE8B8" />
+            </linearGradient>
+          </defs>
+          <CartesianGrid
+            horizontal={false}
+            stroke="#EFE5D3"
+            strokeDasharray="3 3"
+            vertical={false}
+          />
           <XAxis
             axisLine={false}
             dataKey="label"
             tick={{ fill: "#A08B68", fontSize: 11 }}
             tickLine={false}
-          />
-          <YAxis
-            axisLine={false}
-            tick={{ fill: "#A08B68", fontSize: 11 }}
-            tickLine={false}
-            width={40}
           />
           <Tooltip
             contentStyle={{
@@ -112,12 +195,20 @@ export function TrendBarChart({
               borderRadius: "16px",
               background: "#FAF6EC",
             }}
+            cursor={{ fill: "rgba(248, 160, 85, 0.08)" }}
             formatter={(value) => formatHKD(Number(value))}
             labelFormatter={(_, payload) =>
               payload?.[0]?.payload?.date ?? ""
             }
           />
-          <Bar dataKey="amount" fill="#F8A055" radius={[8, 8, 0, 0]} />
+          <Bar
+            dataKey="amount"
+            fill="url(#creamBarGradient)"
+            maxBarSize={36}
+            radius={[8, 8, 0, 0]}
+          >
+            <LabelList content={<BarTopLabel />} dataKey="amount" />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -155,7 +246,7 @@ export function BudgetProgressCard({ stats }: { stats: MonthBudgetStats }) {
           <p className="text-[10px] text-[#A08B68]">剩余</p>
           <p
             className={`mt-1 text-sm font-semibold ${
-              stats.remaining < 0 ? "text-[#E07A3D]" : "text-[#2A9D8F]"
+              stats.remaining < 0 ? "text-[#E07A3D]" : "text-[#8C6D53]"
             }`}
           >
             {formatHKD(stats.remaining)}

@@ -24,11 +24,12 @@ export const CATEGORIES = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES] as const
 export const BUDGET_STORAGE_KEY = "cyberbookkeeper_monthly_budget";
 
 export function formatHKD(amount: number) {
-  return new Intl.NumberFormat("zh-HK", {
-    style: "currency",
-    currency: "HKD",
-    currencyDisplay: "narrowSymbol",
-  }).format(Number(amount) || 0);
+  const n = Number(amount) || 0;
+  const abs = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Math.abs(n));
+  return `${n < 0 ? "-" : ""}HK$${abs}`;
 }
 
 export function localDateString(date = new Date()) {

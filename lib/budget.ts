@@ -20,5 +20,5 @@ export function computeBudgetStats(
 export function budgetBarColor(ratio: number) {
   if (ratio >= 1) return "bg-[#E07A3D]";
   if (ratio >= 0.8) return "bg-[#F8C96A]";
-  return "bg-[#A3E4D7]";
+  return "bg-[#F8A055]";
 }
