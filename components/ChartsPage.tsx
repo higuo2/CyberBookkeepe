@@ -28,7 +28,7 @@ const CategoryPieChart = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="grid h-56 place-items-center">
+      <div className="grid h-40 place-items-center">
         <LoaderCircle className="size-6 animate-spin text-[#F8A055]" />
       </div>
     ),
@@ -173,32 +173,32 @@ export function ChartsPage() {
   }
 
   return (
-    <main className="h-full overflow-y-auto overscroll-contain bg-[#FAF6EC] px-5 pb-6 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
+    <main className="h-full overflow-y-auto overscroll-contain bg-[#FAF6EC] px-4 pb-5 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
       <header className="flex items-end justify-between">
         <div>
           <p className="text-sm font-semibold text-[#F8A055]">消费分析</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-[#5C4A32]">
+          <h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-[#5C4A32]">
             统计
           </h1>
         </div>
         <button
           aria-label="刷新统计"
-          className="grid size-11 place-items-center rounded-full border border-[#EFE5D3] bg-white text-[#8A7A5C] shadow-sm transition-all active:scale-95 disabled:opacity-50"
+          className="grid size-9 place-items-center rounded-full border border-[#EFE5D3] bg-white text-[#8A7A5C] shadow-sm transition-all active:scale-95 disabled:opacity-50"
           disabled={loading}
           onClick={() => void loadChart(true)}
           type="button"
         >
-          <RefreshCw className={`size-4.5 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
         </button>
       </header>
 
-      <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl bg-[#FFF6D9] p-1.5">
+      <div className="mt-3 grid grid-cols-2 gap-1.5 rounded-2xl bg-[#FFF6D9] p-1">
         {([
           { key: "EXPENSE", label: "支出统计", icon: TrendingDown },
           { key: "INCOME", label: "收入统计", icon: TrendingUp },
         ] as const).map(({ key, label, icon: Icon }) => (
           <button
-            className={`flex h-11 items-center justify-center gap-1.5 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
+            className={`flex h-9 items-center justify-center gap-1.5 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
               mode === key
                 ? "bg-white text-[#5C4A32] shadow-sm"
                 : "text-[#A08B68]"
@@ -213,10 +213,10 @@ export function ChartsPage() {
         ))}
       </div>
 
-      <div className="mt-5 flex items-center justify-between rounded-2xl border border-[#EFE5D3] bg-white px-2 py-1.5 shadow-sm">
+      <div className="mt-3 flex items-center justify-between rounded-2xl border border-[#EFE5D3] bg-white px-2 py-1 shadow-sm">
         <button
           aria-label="上一月"
-          className="grid size-9 place-items-center rounded-xl text-[#8C6D53] transition-all active:scale-95 hover:bg-[#FFF6D9]"
+          className="grid size-8 place-items-center rounded-xl text-[#8C6D53] transition-all active:scale-95 hover:bg-[#FFF6D9]"
           onClick={() => shiftMonth(-1)}
           type="button"
         >
@@ -227,7 +227,7 @@ export function ChartsPage() {
         </p>
         <button
           aria-label="下一月"
-          className="grid size-9 place-items-center rounded-xl text-[#8C6D53] transition-all active:scale-95 hover:bg-[#FFF6D9]"
+          className="grid size-8 place-items-center rounded-xl text-[#8C6D53] transition-all active:scale-95 hover:bg-[#FFF6D9]"
           onClick={() => shiftMonth(1)}
           type="button"
         >
@@ -235,41 +235,44 @@ export function ChartsPage() {
         </button>
       </div>
 
-      <section className="relative mt-3 overflow-hidden rounded-3xl bg-gradient-to-br from-[#F8A055] via-[#F8C96A] to-[#FFE8B8] p-6 text-[#5C4A32] shadow-sm">
-        <div className="absolute -right-10 -top-10 size-36 rounded-full bg-white/25 blur-2xl" />
-        <p className="relative text-sm text-[#8A5A12]/90">
-          本月{mode === "EXPENSE" ? "总支出" : "总收入"}
-        </p>
-        <p className="relative mt-3 text-4xl font-semibold tracking-tight">
-          {formatHKD(total)}
-        </p>
-        <p className="relative mt-2 text-xs text-[#8A5A12]/80">
-          {formatMonthLabel(monthCursor)} · {filtered.length} 笔
-        </p>
-      </section>
+      <div className="mt-3 flex flex-col gap-3">
+        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#F8A055] via-[#F8C96A] to-[#FFE8B8] p-4 text-[#5C4A32] shadow-sm">
+          <div className="absolute -right-10 -top-10 size-28 rounded-full bg-white/25 blur-2xl" />
+          <p className="relative text-sm text-[#8A5A12]/90">
+            本月{mode === "EXPENSE" ? "总支出" : "总收入"}
+          </p>
+          <p className="relative mt-2 text-3xl font-semibold tracking-tight">
+            {formatHKD(total)}
+          </p>
+          <p className="relative mt-1.5 text-xs text-[#8A5A12]/80">
+            {formatMonthLabel(monthCursor)} · {filtered.length} 笔
+          </p>
+        </section>
 
-      <section className="mt-5 rounded-3xl border border-[#EFE5D3] bg-white p-5 shadow-sm">
-        <h2 className="font-semibold text-[#5C4A32]">分类占比</h2>
-        {loading && filtered.length === 0 ? (
-          <div className="grid h-56 place-items-center">
-            <LoaderCircle className="size-7 animate-spin text-[#F8A055]" />
+        <section className="rounded-3xl border border-[#EFE5D3] bg-white p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-[#5C4A32]">分类占比</h2>
+          {loading && filtered.length === 0 ? (
+            <div className="grid h-40 place-items-center">
+              <LoaderCircle className="size-6 animate-spin text-[#F8A055]" />
+            </div>
+          ) : (
+            <div className="mt-1">
+              <CategoryPieChart data={pieData} />
+            </div>
+          )}
+        </section>
+
+        <BudgetProgressCard
+          onBudgetSaved={setBudget}
+          stats={budgetStats}
+        />
+
+        <section className="rounded-3xl border border-[#EFE5D3] bg-white p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-[#5C4A32]">近 7 日支出趋势</h2>
+          <div className="mt-1">
+            <TrendBarChart data={trendData} />
           </div>
-        ) : (
-          <div className="mt-2">
-            <CategoryPieChart data={pieData} />
-          </div>
-        )}
-      </section>
-
-      <section className="mt-5 rounded-3xl border border-[#EFE5D3] bg-white p-5 shadow-sm">
-        <h2 className="font-semibold text-[#5C4A32]">近 7 日支出趋势</h2>
-        <div className="mt-2">
-          <TrendBarChart data={trendData} />
-        </div>
-      </section>
-
-      <div className="mt-5">
-        <BudgetProgressCard stats={budgetStats} />
+        </section>
       </div>
     </main>
   );

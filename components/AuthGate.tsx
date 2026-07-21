@@ -4,7 +4,11 @@ import { FormEvent, useEffect, useState } from "react";
 import { CatAvatar } from "@/components/CatAvatar";
 
 const STORAGE_KEY = "cyberbookkeeper_auth";
-const APP_PASSWORD = "cyber2026";
+const AUTH_MARKER = "unlocked";
+
+function expectedPassword() {
+  return process.env.NEXT_PUBLIC_APP_PASSWORD?.trim() ?? "";
+}
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -14,7 +18,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setAuthenticated(localStorage.getItem(STORAGE_KEY) === APP_PASSWORD);
+      setAuthenticated(localStorage.getItem(STORAGE_KEY) === AUTH_MARKER);
       setReady(true);
     }, 0);
     return () => window.clearTimeout(timer);
@@ -22,12 +26,17 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   function unlock(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (password !== APP_PASSWORD) {
+    const expected = expectedPassword();
+    if (!expected) {
+      setError("未配置访问密码，请在 .env.local 设置 NEXT_PUBLIC_APP_PASSWORD");
+      return;
+    }
+    if (password !== expected) {
       setError("密码不正确哦");
       return;
     }
 
-    localStorage.setItem(STORAGE_KEY, APP_PASSWORD);
+    localStorage.setItem(STORAGE_KEY, AUTH_MARKER);
     setAuthenticated(true);
     setPassword("");
     setError("");
