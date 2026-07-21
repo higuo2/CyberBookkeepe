@@ -23,8 +23,8 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="z-50 shrink-0 border-t border-[#EFE5D3] bg-[#FAF6EC]/90 pb-[calc(env(safe-area-inset-bottom)+12px)] backdrop-blur-md">
-      <div className="grid h-14 grid-cols-5 px-1">
+    <nav className="z-50 shrink-0 bg-[#FAF6EC]/90 pt-1.5 pb-[calc(env(safe-area-inset-bottom)+4px)] backdrop-blur-md shadow-[0_-4px_16px_rgba(92,74,50,0.03)]">
+      <div className="grid grid-cols-5 px-1">
         {tabs.map(({ href, label, icon: Icon }) => {
           const active =
             href === "/" ? pathname === href : pathname.startsWith(href);
@@ -32,15 +32,17 @@ export function BottomNav() {
           return (
             <Link
               aria-current={active ? "page" : undefined}
-              className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-all active:scale-95 ${
-                active ? "text-[#8C6D53]" : "text-[#BFAFA0]"
+              className={`flex flex-col items-center justify-center gap-0.5 py-0.5 text-[11px] transition-all active:scale-95 ${
+                active
+                  ? "font-semibold text-[#8C6D53]"
+                  : "font-medium text-[#C2B5A5]"
               }`}
               href={href}
               key={href}
             >
               <Icon
                 aria-hidden="true"
-                className={`size-[1.2rem] ${active ? "stroke-[2.5]" : ""}`}
+                className={`size-6 ${active ? "stroke-[2.25]" : "stroke-[1.75]"}`}
               />
               {label}
             </Link>

@@ -377,11 +377,11 @@ export function RecordPage() {
         )}
       </div>
 
-      <div className="z-30 shrink-0 border-t border-[#EFE5D3] bg-[#FAF6EC] pb-2 pt-2">
-        <div className="flex gap-2 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="z-30 shrink-0 bg-[#FAF6EC] px-0 pb-1 pt-1">
+        <div className="mb-1.5 flex gap-2 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {QUICK_PILLS.map((pill) => (
             <button
-              className="shrink-0 rounded-full bg-white px-4 py-2 text-sm font-medium text-[#6B5A40] shadow-sm transition-all active:scale-95"
+              className="shrink-0 rounded-full bg-white px-3.5 py-1.5 text-sm font-medium text-[#6B5A40] shadow-sm transition-all active:scale-95"
               key={pill}
               onClick={() => {
                 setInput((prev) => (prev ? `${prev}${pill}` : `${pill} `));
@@ -395,19 +395,19 @@ export function RecordPage() {
         </div>
 
         <form
-          className="mx-4 flex items-center gap-2 rounded-[1.75rem] bg-white px-2 py-2 shadow-sm"
+          className="mx-4 flex items-center gap-1.5 rounded-[1.75rem] bg-white px-1.5 py-1 shadow-sm"
           onSubmit={onSubmit}
         >
           <button
             aria-label="语音输入"
-            className="grid size-11 shrink-0 place-items-center rounded-full bg-[#E8F4F8] text-[#6B8FA3] transition-all active:scale-95"
+            className="grid size-10 shrink-0 place-items-center rounded-full bg-[#E8F4F8] text-[#6B8FA3] transition-all active:scale-95"
             onClick={() => toast.message("语音记账即将开放，先打字跟小猫说吧")}
             type="button"
           >
             <Mic className="size-5" />
           </button>
           <input
-            className="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-[#5C4A32] outline-none placeholder:text-[#C0B49A]"
+            className="h-10 min-w-0 flex-1 bg-transparent text-[15px] text-[#5C4A32] outline-none placeholder:text-[#C0B49A]"
             disabled={busy}
             onChange={(event) => setInput(event.target.value)}
             placeholder="像聊天一样记一笔..."
@@ -416,7 +416,7 @@ export function RecordPage() {
           />
           <button
             aria-label="发送"
-            className="grid size-11 shrink-0 place-items-center rounded-full bg-[#F8A055] text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
+            className="grid size-10 shrink-0 place-items-center rounded-full bg-[#F8A055] text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
             disabled={busy || !input.trim()}
             type="submit"
           >
