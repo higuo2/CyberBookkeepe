@@ -7,7 +7,7 @@ import { BottomNav } from "@/components/BottomNav";
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <AuthGate>
-      <div className="mx-auto min-h-dvh max-w-lg bg-stone-50 pb-[calc(5.25rem+env(safe-area-inset-bottom))]">
+      <div className="mx-auto min-h-dvh max-w-lg bg-[#FAF6EC] pb-20">
         {children}
       </div>
       <BottomNav />

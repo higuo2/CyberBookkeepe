@@ -9,6 +9,13 @@ export interface Transaction {
   note: string;
 }
 
+export type TransactionDraft = Omit<Transaction, "id">;
+
+/** AI parse result: includes cat comment for UI only (not stored in Supabase). */
+export interface ParsedTransaction extends TransactionDraft {
+  comment: string;
+}
+
 export type ParseErrorCode =
   | "EMPTY_INPUT"
   | "UNPARSEABLE"
@@ -18,5 +25,17 @@ export type ParseErrorCode =
   | "SERVER_MISCONFIGURED";
 
 export type ParseApiResponse =
-  | { ok: true; data: Transaction }
+  | { ok: true; data: ParsedTransaction[] }
   | { ok: false; code: ParseErrorCode; message: string };
+
+export type SummaryApiResponse =
+  | { ok: true; summary: string }
+  | { ok: false; code: ParseErrorCode; message: string };
+
+export interface MonthBudgetStats {
+  budget: number;
+  spent: number;
+  remaining: number;
+  dailyAvailable: number;
+  ratio: number;
+}

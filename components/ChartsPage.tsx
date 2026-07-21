@@ -1,73 +1,101 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { LoaderCircle, RefreshCw, TrendingDown } from "lucide-react";
-import {
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
+import { LoaderCircle, RefreshCw, TrendingDown, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
+import { computeBudgetStats } from "@/lib/budget";
 import { getSupabase } from "@/lib/supabase";
-import type { Transaction } from "@/lib/types";
+import {
+  formatHKD,
+  getMonthRange,
+  lastNDays,
+  readBudgetFromStorage,
+  sumByCategory,
+} from "@/lib/transaction-utils";
+import type { Transaction, TransactionType } from "@/lib/types";
 
-const COLORS = ["#059669", "#0f766e", "#65a30d", "#d97706", "#ea580c", "#e11d48"];
+const CategoryPieChart = dynamic(
+  () =>
+    import("@/components/ChartsVisuals").then((mod) => mod.CategoryPieChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="grid h-72 place-items-center">
+        <LoaderCircle className="size-6 animate-spin text-[#F8A055]" />
+      </div>
+    ),
+  },
+);
 
-function money(amount: number) {
-  return new Intl.NumberFormat("zh-CN", {
-    style: "currency",
-    currency: "CNY",
-  }).format(amount);
-}
+const TrendBarChart = dynamic(
+  () => import("@/components/ChartsVisuals").then((mod) => mod.TrendBarChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="grid h-64 place-items-center">
+        <LoaderCircle className="size-6 animate-spin text-[#F8A055]" />
+      </div>
+    ),
+  },
+);
 
-function toDateString(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+const BudgetProgressCard = dynamic(
+  () =>
+    import("@/components/ChartsVisuals").then((mod) => mod.BudgetProgressCard),
+  { ssr: false },
+);
 
 export function ChartsPage() {
+  const [mode, setMode] = useState<TransactionType>("EXPENSE");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [weekTransactions, setWeekTransactions] = useState<Transaction[]>([]);
+  const [budget, setBudget] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const loadChart = useCallback(async (showToast = false) => {
     await Promise.resolve();
-
     if (!navigator.onLine) {
-      toast.error("当前无网络，无法读取图表");
+      toast.error("当前无网络，无法读取统计");
       setLoading(false);
       return;
     }
 
-    const now = new Date();
-    const firstDay = toDateString(new Date(now.getFullYear(), now.getMonth(), 1));
-    const lastDay = toDateString(
-      new Date(now.getFullYear(), now.getMonth() + 1, 0),
-    );
+    const { firstDay, lastDay } = getMonthRange();
+    const weekDays = lastNDays(7);
+    const weekStart = weekDays[0];
 
-    if (showToast) toast.loading("正在刷新图表…", { id: "refresh-chart" });
+    if (showToast) toast.loading("正在刷新统计…", { id: "refresh-chart" });
     setLoading(true);
+    setBudget(readBudgetFromStorage());
 
     try {
-      const { data, error } = await getSupabase()
+      const monthQuery = getSupabase()
         .from("transactions")
         .select("id, amount, type, category, date, note")
-        .eq("type", "EXPENSE")
         .gte("date", firstDay)
         .lte("date", lastDay)
         .order("date", { ascending: false });
-      if (error) throw error;
 
-      setTransactions((data ?? []) as Transaction[]);
-      if (showToast) toast.success("图表已更新", { id: "refresh-chart" });
+      const weekQuery = getSupabase()
+        .from("transactions")
+        .select("id, amount, type, category, date, note")
+        .eq("type", "EXPENSE")
+        .gte("date", weekStart)
+        .order("date", { ascending: true });
+
+      const [monthRes, weekRes] = await Promise.all([monthQuery, weekQuery]);
+      if (monthRes.error) throw monthRes.error;
+      if (weekRes.error) throw weekRes.error;
+
+      setTransactions((monthRes.data ?? []) as Transaction[]);
+      setWeekTransactions((weekRes.data ?? []) as Transaction[]);
+      if (showToast) toast.success("统计已更新", { id: "refresh-chart" });
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "读取失败，请稍后重试";
-      toast.error(message, showToast ? { id: "refresh-chart" } : undefined);
+      toast.error(
+        error instanceof Error ? error.message : "读取失败，请稍后重试",
+        showToast ? { id: "refresh-chart" } : undefined,
+      );
     } finally {
       setLoading(false);
     }
@@ -78,33 +106,44 @@ export function ChartsPage() {
     return () => window.clearTimeout(timer);
   }, [loadChart]);
 
-  const total = transactions.reduce((sum, item) => sum + Number(item.amount), 0);
-  const chartData = useMemo(() => {
-    const categories = transactions.reduce<Record<string, number>>(
-      (result, item) => {
-        result[item.category] =
-          (result[item.category] ?? 0) + Number(item.amount);
-        return result;
-      },
-      {},
-    );
-    return Object.entries(categories)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
-  }, [transactions]);
+  const filtered = useMemo(
+    () => transactions.filter((item) => item.type === mode),
+    [transactions, mode],
+  );
+  const total = filtered.reduce((sum, item) => sum + Number(item.amount), 0);
+  const pieData = useMemo(() => sumByCategory(filtered), [filtered]);
+
+  const trendData = useMemo(() => {
+    const days = lastNDays(7);
+    return days.map((date) => {
+      const amount = weekTransactions
+        .filter((item) => item.date === date)
+        .reduce((sum, item) => sum + Number(item.amount), 0);
+      return {
+        date,
+        amount,
+        label: date.slice(5),
+      };
+    });
+  }, [weekTransactions]);
+
+  const monthExpense = transactions
+    .filter((item) => item.type === "EXPENSE")
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+  const budgetStats = computeBudgetStats(budget, monthExpense);
 
   return (
-    <main className="px-5 pb-6 pt-[max(2rem,env(safe-area-inset-top))]">
+    <main className="min-h-dvh bg-[#FAF6EC] px-5 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
       <header className="flex items-end justify-between">
         <div>
-          <p className="text-sm font-semibold text-emerald-600">消费分析</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-stone-950">
-            图表
+          <p className="text-sm font-semibold text-[#F8A055]">消费分析</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-[#5C4A32]">
+            统计
           </h1>
         </div>
         <button
-          aria-label="刷新图表"
-          className="grid size-11 place-items-center rounded-full border border-stone-200 bg-white text-stone-600 transition active:scale-95 disabled:opacity-50"
+          aria-label="刷新统计"
+          className="grid size-11 place-items-center rounded-full border border-[#F0E6C8] bg-white text-[#8A7A5C] shadow-sm transition-all active:scale-95 disabled:opacity-50"
           disabled={loading}
           onClick={() => void loadChart(true)}
           type="button"
@@ -113,70 +152,61 @@ export function ChartsPage() {
         </button>
       </header>
 
-      <section className="mt-8 overflow-hidden rounded-[1.75rem] bg-stone-950 p-6 text-white shadow-xl shadow-stone-300">
-        <div className="flex items-center gap-2 text-stone-400">
-          <TrendingDown className="size-4" />
-          <p className="text-sm font-medium">本月总支出</p>
-        </div>
-        <p className="mt-3 text-4xl font-semibold tracking-tight">{money(total)}</p>
-        <p className="mt-2 text-xs text-stone-500">
-          {new Date().getMonth() + 1} 月 · {transactions.length} 笔支出
+      <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl bg-[#FFF6D9] p-1.5">
+        {([
+          { key: "EXPENSE", label: "支出统计", icon: TrendingDown },
+          { key: "INCOME", label: "收入统计", icon: TrendingUp },
+        ] as const).map(({ key, label, icon: Icon }) => (
+          <button
+            className={`flex h-11 items-center justify-center gap-1.5 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
+              mode === key
+                ? "bg-white text-[#5C4A32] shadow-sm"
+                : "text-[#A08B68]"
+            }`}
+            key={key}
+            onClick={() => setMode(key)}
+            type="button"
+          >
+            <Icon className="size-4" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <section className="relative mt-5 overflow-hidden rounded-3xl bg-gradient-to-br from-[#F8A055] via-[#F8C96A] to-[#FFE8B8] p-6 text-[#5C4A32] shadow-sm">
+        <div className="absolute -right-10 -top-10 size-36 rounded-full bg-white/25 blur-2xl" />
+        <p className="relative text-sm text-[#8A5A12]/90">
+          本月{mode === "EXPENSE" ? "总支出" : "总收入"}
+        </p>
+        <p className="relative mt-3 text-4xl font-semibold tracking-tight">
+          {formatHKD(total)}
+        </p>
+        <p className="relative mt-2 text-xs text-[#8A5A12]/80">
+          {new Date().getMonth() + 1} 月 · {filtered.length} 笔
         </p>
       </section>
 
-      <section className="mt-5 rounded-[1.75rem] border border-stone-200 bg-white p-5 shadow-sm">
-        <h2 className="font-semibold text-stone-900">分类占比</h2>
-        {loading && transactions.length === 0 ? (
-          <div className="grid h-80 place-items-center">
-            <LoaderCircle className="size-7 animate-spin text-emerald-600" />
-          </div>
-        ) : chartData.length === 0 ? (
-          <div className="grid h-80 place-items-center text-center">
-            <div>
-              <p className="font-medium text-stone-600">本月暂无支出</p>
-              <p className="mt-1 text-sm text-stone-400">记账后即可查看分析</p>
-            </div>
+      <section className="mt-5 rounded-3xl border border-[#F0E6C8] bg-white p-5 shadow-sm">
+        <h2 className="font-semibold text-[#5C4A32]">分类占比</h2>
+        {loading && filtered.length === 0 ? (
+          <div className="grid h-72 place-items-center">
+            <LoaderCircle className="size-7 animate-spin text-[#F8A055]" />
           </div>
         ) : (
-          <div className="h-80 w-full">
-            <ResponsiveContainer height="100%" width="100%">
-              <PieChart>
-                <Pie
-                  cx="50%"
-                  cy="45%"
-                  data={chartData}
-                  dataKey="value"
-                  innerRadius={58}
-                  nameKey="name"
-                  outerRadius={90}
-                  paddingAngle={3}
-                  stroke="none"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell
-                      fill={COLORS[index % COLORS.length]}
-                      key={entry.name}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    border: "1px solid #e7e5e4",
-                    borderRadius: "12px",
-                    boxShadow: "0 8px 24px rgba(0,0,0,.08)",
-                  }}
-                  formatter={(value) => money(Number(value))}
-                />
-                <Legend
-                  iconSize={8}
-                  iconType="circle"
-                  wrapperStyle={{ fontSize: "12px", color: "#57534e" }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          <CategoryPieChart data={pieData} />
         )}
       </section>
+
+      <section className="mt-5 rounded-3xl border border-[#F0E6C8] bg-white p-5 shadow-sm">
+        <h2 className="font-semibold text-[#5C4A32]">近 7 日支出趋势</h2>
+        <div className="mt-2">
+          <TrendBarChart data={trendData} />
+        </div>
+      </section>
+
+      <div className="mt-5">
+        <BudgetProgressCard stats={budgetStats} />
+      </div>
     </main>
   );
 }

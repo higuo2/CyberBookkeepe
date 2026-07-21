@@ -1,47 +1,136 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowDown, ArrowUp, LoaderCircle, Sparkles } from "lucide-react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { Mic, SendHorizontal, Star } from "lucide-react";
 import { toast } from "sonner";
+import { CatAvatar } from "@/components/CatAvatar";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { getSupabase } from "@/lib/supabase";
-import type { ParseApiResponse, ParseErrorCode, Transaction } from "@/lib/types";
+import {
+  formatHKD,
+  localDateString,
+  prepareDraft,
+} from "@/lib/transaction-utils";
+import type {
+  ParseApiResponse,
+  ParsedTransaction,
+  Transaction,
+} from "@/lib/types";
 
-const errorMessages: Partial<Record<ParseErrorCode, string>> = {
-  EMPTY_INPUT: "请先描述一笔账单",
-  UNPARSEABLE: "没有识别到账单，请补充金额和用途",
-  INVALID_JSON: "解析结果格式异常，请重试",
-  VALIDATION_FAILED: "账单信息不完整，请换一种说法",
-  UPSTREAM_ERROR: "AI 服务暂时不可用，请稍后重试",
-  SERVER_MISCONFIGURED: "AI 服务尚未配置",
-};
+type ChatMessage =
+  | { id: string; kind: "bot-text"; text: string }
+  | { id: string; kind: "user"; text: string }
+  | {
+      id: string;
+      kind: "bot-records";
+      records: Array<ParsedTransaction & { id?: string; recordedAt: string }>;
+    }
+  | { id: string; kind: "bot-error"; text: string };
 
-function money(amount: number) {
-  return new Intl.NumberFormat("zh-CN", {
-    style: "currency",
-    currency: "CNY",
-  }).format(amount);
+const QUICK_PILLS = ["饮食", "交通", "购物", "娱乐"] as const;
+const CATEGORY_TAGS = [
+  { label: "餐饮", value: "餐饮" },
+  { label: "交通", value: "交通" },
+  { label: "购物", value: "购物" },
+  { label: "住房", value: "居住" },
+] as const;
+
+function greetingByHour(hour: number) {
+  if (hour < 11) return "早上好";
+  if (hour < 14) return "中午好";
+  if (hour < 18) return "下午好";
+  return "晚上好";
+}
+
+function formatClock(date = new Date()) {
+  return date.toLocaleTimeString("zh-HK", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
+function formatHeaderDate(date = new Date()) {
+  return date.toLocaleDateString("zh-CN", {
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  });
+}
+
+function uid() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function toDbRow(item: ParsedTransaction) {
+  return prepareDraft({
+    amount: item.amount,
+    type: item.type,
+    category: item.category,
+    date: item.date,
+    note: item.note,
+  });
+}
+
+function createWelcomeMessage(): ChatMessage {
+  return {
+    id: "welcome",
+    kind: "bot-text",
+    text: `${greetingByHour(new Date().getHours())}，我是你的钱包小猫。今天想记什么账？`,
+  };
 }
 
 export function RecordPage() {
   const [input, setInput] = useState("");
-  const [result, setResult] = useState<Transaction | null>(null);
-  const [isParsing, setIsParsing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [todaySpend, setTodaySpend] = useState(0);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
+    createWelcomeMessage(),
+  ]);
+  const feedRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  async function parseTransaction() {
-    const text = input.trim();
-    if (!text) {
-      toast.error("请先输入一笔账单");
-      return;
-    }
+  useEffect(() => {
+    const timer = window.setTimeout(async () => {
+      try {
+        const today = localDateString();
+        const { data } = await getSupabase()
+          .from("transactions")
+          .select("amount, type, date")
+          .eq("date", today)
+          .eq("type", "EXPENSE");
+        const sum = (data ?? []).reduce(
+          (acc, row) => acc + Number((row as Transaction).amount),
+          0,
+        );
+        setTodaySpend(sum);
+      } catch {
+        // ignore header spend errors
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    feedRef.current?.scrollTo({
+      top: feedRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [messages, busy]);
+
+  const headerDate = useMemo(() => formatHeaderDate(), []);
+
+  async function sendText(raw: string) {
+    const text = raw.trim();
+    if (!text || busy) return;
     if (!navigator.onLine) {
       toast.error("当前无网络，请联网后再试");
       return;
     }
 
-    setIsParsing(true);
-    setResult(null);
-    const toastId = toast.loading("正在智能解析…");
+    setInput("");
+    setBusy(true);
+    setMessages((prev) => [...prev, { id: uid(), kind: "user", text }]);
 
     try {
       const response = await fetch("/api/parse", {
@@ -52,146 +141,289 @@ export function RecordPage() {
       const payload = (await response.json()) as ParseApiResponse;
 
       if (!response.ok || !payload.ok) {
-        const message = payload.ok
-          ? "解析失败，请稍后重试"
-          : errorMessages[payload.code] ?? payload.message;
-        throw new Error(message);
+        throw new Error(
+          payload.ok ? "小猫没听懂，请再试一次" : payload.message,
+        );
       }
 
-      setResult(payload.data);
-      toast.success("解析完成，请确认账单", { id: toastId });
+      const recordedAt = formatClock();
+      const saved: Array<ParsedTransaction & { id?: string; recordedAt: string }> =
+        [];
+
+      for (const item of payload.data) {
+        const row = toDbRow(item);
+        const { data, error } = await getSupabase()
+          .from("transactions")
+          .insert(row)
+          .select("id")
+          .single();
+        if (error) throw error;
+        saved.push({
+          ...item,
+          ...row,
+          id: data?.id,
+          recordedAt,
+        });
+        if (item.type === "EXPENSE") {
+          setTodaySpend((prev) => prev + Number(item.amount));
+        }
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        { id: uid(), kind: "bot-records", records: saved },
+      ]);
+      toast.success(`小猫已记好 ${saved.length} 笔账`);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "网络异常，请稍后重试";
-      toast.error(message, { id: toastId });
+      setMessages((prev) => [
+        ...prev,
+        { id: uid(), kind: "bot-error", text: message },
+      ]);
+      toast.error(message);
     } finally {
-      setIsParsing(false);
+      setBusy(false);
+      inputRef.current?.focus();
     }
   }
 
-  async function saveTransaction() {
-    if (!result || isSaving) return;
-    if (!navigator.onLine) {
-      toast.error("当前无网络，无法保存账单");
-      return;
-    }
+  function onSubmit(event: FormEvent) {
+    event.preventDefault();
+    void sendText(input);
+  }
 
-    setIsSaving(true);
-    const toastId = toast.loading("正在存入云端…");
+  async function changeCategory(
+    messageId: string,
+    recordId: string | undefined,
+    recordIndex: number,
+    category: string,
+  ) {
+    setMessages((prev) =>
+      prev.map((msg) => {
+        if (msg.kind !== "bot-records" || msg.id !== messageId) return msg;
+        return {
+          ...msg,
+          records: msg.records.map((record, index) =>
+            index === recordIndex ? { ...record, category } : record,
+          ),
+        };
+      }),
+    );
+
+    if (!recordId) return;
 
     try {
       const { error } = await getSupabase()
         .from("transactions")
-        .insert(result);
+        .update({ category })
+        .eq("id", recordId);
       if (error) throw error;
-
-      toast.success("账单已存入云端", { id: toastId });
-      setInput("");
-      setResult(null);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "保存失败，请稍后重试";
-      toast.error(message, { id: toastId });
-    } finally {
-      setIsSaving(false);
+      toast.success(`已改为「${category === "居住" ? "住房" : category}」`);
+    } catch {
+      toast.error("分类更新失败");
     }
   }
 
-  const busy = isParsing || isSaving;
-
   return (
-    <main className="px-5 pb-6 pt-[max(2rem,env(safe-area-inset-top))]">
-      <header>
-        <p className="text-sm font-semibold text-emerald-600">智能记账</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-stone-950">
-          今天花了什么？
-        </h1>
-        <p className="mt-2 text-sm text-stone-500">
-          用一句话描述，剩下的交给 AI。
-        </p>
+    <main className="relative flex min-h-dvh flex-col bg-[#FAF6EC]">
+      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-[#F0E6C8]/80 bg-[#FFFDF0]/90 px-5 py-3 backdrop-blur-md pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <div>
+          <p className="text-sm font-medium text-[#8A7A5C]">{headerDate}</p>
+          <p className="mt-0.5 text-base font-semibold text-[#5C4A32]">
+            今日支出{" "}
+            <span className="text-[#E07A3D]">{formatHKD(todaySpend)}</span>
+          </p>
+        </div>
+        <div className="grid size-12 place-items-center rounded-full bg-[#FFE8B8] shadow-sm ring-2 ring-white">
+          <CatAvatar size={44} />
+        </div>
       </header>
 
-      <section className="mt-8">
-        <label className="sr-only" htmlFor="transaction-input">
-          账单描述
-        </label>
-        <textarea
-          className="min-h-52 w-full resize-none rounded-[1.75rem] border border-stone-200 bg-white p-5 text-lg leading-8 text-stone-900 shadow-sm outline-none transition placeholder:text-stone-300 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10 disabled:cursor-not-allowed disabled:bg-stone-100"
-          disabled={busy}
-          id="transaction-input"
-          maxLength={500}
-          onChange={(event) => setInput(event.target.value)}
-          placeholder="例如：今天午饭花了 32 元"
-          value={input}
-        />
-        <button
-          className="mt-3 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-stone-950 font-semibold text-white shadow-lg shadow-stone-300 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={busy || !input.trim()}
-          onClick={parseTransaction}
-          type="button"
-        >
-          {isParsing ? (
-            <LoaderCircle className="size-5 animate-spin" />
-          ) : (
-            <Sparkles className="size-5" />
-          )}
-          {isParsing ? "解析中…" : "智能解析"}
-        </button>
-      </section>
+      <div
+        className="flex-1 space-y-4 overflow-y-auto px-4 py-5 pb-36"
+        ref={feedRef}
+      >
+        {messages.map((message) => {
+          if (message.kind === "user") {
+            return (
+              <div className="flex justify-end" key={message.id}>
+                <div className="max-w-[80%] rounded-[1.5rem] rounded-br-md bg-[#A3E4D7] px-4 py-2.5 text-[15px] leading-6 text-[#1F4A44] shadow-sm">
+                  {message.text}
+                </div>
+              </div>
+            );
+          }
 
-      {result && (
-        <section className="mt-7 animate-in rounded-[1.75rem] border border-stone-200 bg-white p-5 shadow-sm">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-stone-400">
-                解析结果
-              </p>
-              <p className="mt-2 text-3xl font-semibold tracking-tight text-stone-950">
-                {money(result.amount)}
-              </p>
+          if (message.kind === "bot-text" || message.kind === "bot-error") {
+            return (
+              <div className="flex items-end gap-2" key={message.id}>
+                <div className="mb-0.5 shrink-0 overflow-hidden rounded-full bg-[#FFE8B8] shadow-sm">
+                  <CatAvatar size={34} />
+                </div>
+                <div
+                  className={`max-w-[82%] rounded-[1.5rem] rounded-bl-md px-4 py-3 text-[15px] leading-6 shadow-sm ${
+                    message.kind === "bot-error"
+                      ? "bg-rose-50 text-rose-600"
+                      : "bg-white text-[#5C4A32]"
+                  }`}
+                >
+                  {message.text}
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div className="space-y-3" key={message.id}>
+              {message.records.map((record, index) => {
+                const typeLabel =
+                  record.type === "EXPENSE" ? "支出" : "收入";
+                return (
+                  <div className="flex items-end gap-2" key={`${message.id}-${index}`}>
+                    <div className="mb-0.5 shrink-0 overflow-hidden rounded-full bg-[#FFE8B8] shadow-sm">
+                      <CatAvatar size={34} />
+                    </div>
+                    <div className="max-w-[88%] rounded-3xl bg-white p-3.5 shadow-sm">
+                      <p className="text-[15px] leading-6 text-[#5C4A32]">
+                        已记录一笔{record.category}
+                        {typeLabel}：{record.amount} 元，时间为今天{" "}
+                        {record.recordedAt}。
+                      </p>
+                      <p className="mt-2 text-sm leading-5 text-[#9A7B55]">
+                        {record.comment}
+                      </p>
+
+                      <div className="mt-3 rounded-2xl bg-[#FFF6D9] p-3">
+                        <div className="flex items-center gap-3">
+                          <div className="grid size-11 shrink-0 place-items-center rounded-full bg-[#F8C96A] text-[#8A5A12] shadow-sm">
+                            {record.category === "其它" ? (
+                              <Star className="size-5 fill-current" />
+                            ) : (
+                              <CategoryIcon
+                                category={record.category}
+                                className="size-5"
+                              />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-[#5C4A32]">
+                              {record.category === "居住"
+                                ? "住房"
+                                : record.category}
+                            </p>
+                            <p className="truncate text-sm text-[#A08B68]">
+                              {record.note} · {record.recordedAt}
+                            </p>
+                          </div>
+                          <p
+                            className={`shrink-0 text-base font-bold ${
+                              record.type === "EXPENSE"
+                                ? "text-[#E07A3D]"
+                                : "text-[#2A9D8F]"
+                            }`}
+                          >
+                            {record.type === "EXPENSE" ? "-" : "+"}
+                            {formatHKD(record.amount)}
+                          </p>
+                        </div>
+
+                        {record.type === "EXPENSE" && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {CATEGORY_TAGS.map((tag) => {
+                              const active = record.category === tag.value;
+                              return (
+                                <button
+                                  className={`rounded-full px-3 py-1 text-xs font-medium transition-all active:scale-95 ${
+                                    active
+                                      ? "bg-[#F8A055] text-white shadow-sm"
+                                      : "bg-white/90 text-[#8A7A5C]"
+                                  }`}
+                                  key={tag.value}
+                                  onClick={() =>
+                                    void changeCategory(
+                                      message.id,
+                                      record.id,
+                                      index,
+                                      tag.value,
+                                    )
+                                  }
+                                  type="button"
+                                >
+                                  {tag.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <span
-              className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                result.type === "EXPENSE"
-                  ? "bg-rose-50 text-rose-600"
-                  : "bg-emerald-50 text-emerald-700"
-              }`}
-            >
-              {result.type === "EXPENSE" ? (
-                <ArrowDown className="size-3.5" />
-              ) : (
-                <ArrowUp className="size-3.5" />
-              )}
-              {result.type === "EXPENSE" ? "支出" : "收入"}
-            </span>
+          );
+        })}
+
+        {busy && (
+          <div className="flex items-end gap-2">
+            <div className="overflow-hidden rounded-full bg-[#FFE8B8] shadow-sm">
+              <CatAvatar size={34} />
+            </div>
+            <div className="rounded-[1.5rem] rounded-bl-md bg-white px-4 py-3 text-sm text-[#9A7B55] shadow-sm">
+              小猫正在记账中…
+            </div>
           </div>
+        )}
+      </div>
 
-          <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-stone-100 pt-5 text-sm">
-            <div>
-              <dt className="text-stone-400">分类</dt>
-              <dd className="mt-1 font-medium text-stone-800">{result.category}</dd>
-            </div>
-            <div>
-              <dt className="text-stone-400">日期</dt>
-              <dd className="mt-1 font-medium text-stone-800">{result.date}</dd>
-            </div>
-            <div className="col-span-2">
-              <dt className="text-stone-400">备注</dt>
-              <dd className="mt-1 font-medium text-stone-800">{result.note}</dd>
-            </div>
-          </dl>
+      <div className="fixed inset-x-0 bottom-16 z-30 mx-auto max-w-lg bg-gradient-to-t from-[#FAF6EC] via-[#FAF6EC] to-transparent pb-2 pt-3">
+        <div className="flex gap-2 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {QUICK_PILLS.map((pill) => (
+            <button
+              className="shrink-0 rounded-full bg-white px-4 py-2 text-sm font-medium text-[#6B5A40] shadow-sm transition-all active:scale-95"
+              key={pill}
+              onClick={() => {
+                setInput((prev) => (prev ? `${prev}${pill}` : `${pill} `));
+                inputRef.current?.focus();
+              }}
+              type="button"
+            >
+              {pill}
+            </button>
+          ))}
+        </div>
 
+        <form
+          className="mx-4 flex items-center gap-2 rounded-[1.75rem] bg-white px-2 py-2 shadow-sm"
+          onSubmit={onSubmit}
+        >
           <button
-            className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 font-semibold text-white transition active:scale-[0.98] disabled:opacity-50"
-            disabled={busy}
-            onClick={saveTransaction}
+            aria-label="语音输入"
+            className="grid size-11 shrink-0 place-items-center rounded-full bg-[#E8F4F8] text-[#6B8FA3] transition-all active:scale-95"
+            onClick={() => toast.message("语音记账即将开放，先打字跟小猫说吧")}
             type="button"
           >
-            {isSaving && <LoaderCircle className="size-5 animate-spin" />}
-            {isSaving ? "保存中…" : "确认并存入云端"}
+            <Mic className="size-5" />
           </button>
-        </section>
-      )}
+          <input
+            className="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-[#5C4A32] outline-none placeholder:text-[#C0B49A]"
+            disabled={busy}
+            onChange={(event) => setInput(event.target.value)}
+            placeholder="像聊天一样记一笔..."
+            ref={inputRef}
+            value={input}
+          />
+          <button
+            aria-label="发送"
+            className="grid size-11 shrink-0 place-items-center rounded-full bg-[#F8A055] text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
+            disabled={busy || !input.trim()}
+            type="submit"
+          >
+            <SendHorizontal className="size-5" />
+          </button>
+        </form>
+      </div>
     </main>
   );
 }

@@ -1,8 +1,8 @@
 {
   "name": "cyberbookkeeper",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "AI-powered personal bookkeeping PWA",
+  "description": "AI-powered personal bookkeeping PWA (v2)",
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",
@@ -20,7 +20,8 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "recharts": "^3.10.0",
-    "sonner": "^2.0.7"
+    "sonner": "^2.0.7",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",

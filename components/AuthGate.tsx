@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { LockKeyhole } from "lucide-react";
+import { CatAvatar } from "@/components/CatAvatar";
 
 const STORAGE_KEY = "cyberbookkeeper_auth";
 const APP_PASSWORD = "cyber2026";
@@ -23,7 +23,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   function unlock(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (password !== APP_PASSWORD) {
-      setError("密码不正确");
+      setError("密码不正确哦");
       return;
     }
 
@@ -34,22 +34,22 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   if (!ready) {
-    return <div className="min-h-dvh bg-stone-50" />;
+    return <div className="min-h-dvh bg-[#FAF6EC]" />;
   }
 
   if (!authenticated) {
     return (
-      <main className="grid min-h-dvh place-items-center bg-stone-50 px-6">
-        <section className="w-full max-w-sm rounded-[2rem] border border-stone-200 bg-white p-7 shadow-xl shadow-stone-200/60">
-          <div className="mb-7 flex size-14 items-center justify-center rounded-2xl bg-emerald-600 text-white">
-            <LockKeyhole aria-hidden="true" className="size-7" />
+      <main className="grid min-h-dvh place-items-center bg-[#FAF6EC] px-6">
+        <section className="w-full max-w-sm rounded-[2rem] bg-white p-7 shadow-sm">
+          <div className="mb-6 grid size-16 place-items-center rounded-full bg-[#FFE8B8] shadow-sm">
+            <CatAvatar size={52} />
           </div>
-          <p className="text-sm font-medium text-emerald-700">CyberBookkeeper</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-stone-950">
+          <p className="text-sm font-medium text-[#F8A055]">钱包小猫</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#5C4A32]">
             欢迎回来
           </h1>
-          <p className="mt-2 text-sm leading-6 text-stone-500">
-            输入访问密码以进入你的私人账本。
+          <p className="mt-2 text-sm leading-6 text-[#9A7B55]">
+            输入密码，小猫就帮你打开账本。
           </p>
 
           <form className="mt-7 space-y-3" onSubmit={unlock}>
@@ -59,7 +59,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             <input
               autoComplete="current-password"
               autoFocus
-              className="h-13 w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 text-base text-stone-950 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
+              className="h-13 w-full rounded-2xl border border-[#F0E6C8] bg-[#FFFDF0] px-4 text-base text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
               id="app-password"
               onChange={(event) => {
                 setPassword(event.target.value);
@@ -69,12 +69,12 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
               type="password"
               value={password}
             />
-            {error && <p className="text-sm text-rose-600">{error}</p>}
+            {error && <p className="text-sm text-rose-500">{error}</p>}
             <button
-              className="h-13 w-full rounded-2xl bg-stone-950 font-medium text-white transition active:scale-[0.98]"
+              className="h-13 w-full rounded-2xl bg-[#F8A055] font-medium text-white shadow-sm transition-all active:scale-95"
               type="submit"
             >
-              解锁账本
+              开始记账
             </button>
           </form>
         </section>
