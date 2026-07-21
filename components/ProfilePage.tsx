@@ -74,7 +74,7 @@ export function ProfilePage() {
   }
 
   return (
-    <main className="min-h-dvh bg-[#FAF6EC] px-5 pb-8 pt-[max(2rem,env(safe-area-inset-top))]">
+    <main className="h-full overflow-y-auto overscroll-contain bg-[#FFFDF0] px-5 pb-6 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
       <header>
         <p className="text-sm font-semibold text-[#F8A055]">个人中心</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight text-[#5C4A32]">

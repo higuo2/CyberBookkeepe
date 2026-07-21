@@ -23,8 +23,8 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[#F0E6C8] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_24px_rgba(92,74,50,0.06)]">
-      <div className="mx-auto grid h-16 max-w-lg grid-cols-5 px-1">
+    <nav className="z-50 shrink-0 border-t border-[#F0E6C8] bg-white pb-[calc(env(safe-area-inset-bottom)+12px)] shadow-[0_-6px_24px_rgba(92,74,50,0.06)]">
+      <div className="grid h-14 grid-cols-5 px-1">
         {tabs.map(({ href, label, icon: Icon }) => {
           const active =
             href === "/" ? pathname === href : pathname.startsWith(href);

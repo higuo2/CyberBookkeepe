@@ -55,10 +55,10 @@ export function TransactionDialog({
   return (
     <div
       aria-modal="true"
-      className="fixed inset-0 z-[70] flex items-end justify-center bg-[#5C4A32]/25 p-0 backdrop-blur-sm sm:items-center sm:p-5"
+      className="fixed inset-0 z-[70] flex items-end justify-center overflow-x-hidden bg-[#5C4A32]/25 p-0 backdrop-blur-sm sm:items-center sm:p-5"
       role="dialog"
     >
-      <section className="max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-[2rem] border border-[#F0E6C8] bg-[#FAF6EC] p-5 shadow-sm sm:rounded-[2rem]">
+      <section className="max-h-[92dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-[2rem] border border-[#F0E6C8] bg-[#FFFDF0] p-5 pb-[calc(env(safe-area-inset-bottom)+20px)] shadow-sm touch-pan-y sm:rounded-[2rem] sm:pb-5">
         <header className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#F8A055]">

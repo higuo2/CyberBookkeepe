@@ -226,8 +226,8 @@ export function RecordPage() {
   }
 
   return (
-    <main className="relative flex min-h-dvh flex-col bg-[#FAF6EC]">
-      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-[#F0E6C8]/80 bg-[#FFFDF0]/90 px-5 py-3 backdrop-blur-md pt-[max(0.75rem,env(safe-area-inset-top))]">
+    <main className="relative flex h-full min-h-0 flex-col bg-[#FFFDF0]">
+      <header className="z-20 flex shrink-0 items-center justify-between border-b border-[#F0E6C8]/80 bg-[#FFFDF0]/95 px-5 pb-3 pt-[calc(env(safe-area-inset-top)+12px)] backdrop-blur-md">
         <div>
           <p className="text-sm font-medium text-[#8A7A5C]">{headerDate}</p>
           <p className="mt-0.5 text-base font-semibold text-[#5C4A32]">
@@ -241,7 +241,7 @@ export function RecordPage() {
       </header>
 
       <div
-        className="flex-1 space-y-4 overflow-y-auto px-4 py-5 pb-36"
+        className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-2 touch-pan-y"
         ref={feedRef}
       >
         {messages.map((message) => {
@@ -377,7 +377,7 @@ export function RecordPage() {
         )}
       </div>
 
-      <div className="fixed inset-x-0 bottom-16 z-30 mx-auto max-w-lg bg-gradient-to-t from-[#FAF6EC] via-[#FAF6EC] to-transparent pb-2 pt-3">
+      <div className="z-30 shrink-0 border-t border-[#F0E6C8]/60 bg-gradient-to-t from-[#FFFDF0] via-[#FFFDF0] to-transparent pb-2 pt-2">
         <div className="flex gap-2 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {QUICK_PILLS.map((pill) => (
             <button

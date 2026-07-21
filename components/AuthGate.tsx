@@ -34,12 +34,12 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   if (!ready) {
-    return <div className="min-h-dvh bg-[#FAF6EC]" />;
+    return <div className="mx-auto h-dvh w-full max-w-md bg-[#FFFDF0]" />;
   }
 
   if (!authenticated) {
     return (
-      <main className="grid min-h-dvh place-items-center bg-[#FAF6EC] px-6">
+      <main className="mx-auto grid h-dvh w-full max-w-md place-items-center overflow-x-hidden bg-[#FFFDF0] px-6 pt-[calc(env(safe-area-inset-top)+12px)] pb-[calc(env(safe-area-inset-bottom)+12px)] touch-pan-y">
         <section className="w-full max-w-sm rounded-[2rem] bg-white p-7 shadow-sm">
           <div className="mb-6 grid size-16 place-items-center rounded-full bg-[#FFE8B8] shadow-sm">
             <CatAvatar size={52} />
