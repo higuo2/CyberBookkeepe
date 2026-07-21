@@ -23,7 +23,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="z-50 shrink-0 border-t border-[#F0E6C8] bg-white pb-[calc(env(safe-area-inset-bottom)+12px)] shadow-[0_-6px_24px_rgba(92,74,50,0.06)]">
+    <nav className="z-50 shrink-0 border-t border-[#EFE5D3] bg-[#FAF6EC]/90 pb-[calc(env(safe-area-inset-bottom)+12px)] backdrop-blur-md">
       <div className="grid h-14 grid-cols-5 px-1">
         {tabs.map(({ href, label, icon: Icon }) => {
           const active =
@@ -33,7 +33,7 @@ export function BottomNav() {
             <Link
               aria-current={active ? "page" : undefined}
               className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-all active:scale-95 ${
-                active ? "text-[#F8A055]" : "text-[#C0B49A]"
+                active ? "text-[#8C6D53]" : "text-[#BFAFA0]"
               }`}
               href={href}
               key={href}

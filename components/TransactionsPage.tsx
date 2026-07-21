@@ -200,7 +200,7 @@ export function TransactionsPage() {
 
   return (
     <>
-      <main className="h-full overflow-y-auto overscroll-contain bg-[#FFFDF0] px-5 pb-6 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
+      <main className="h-full overflow-y-auto overscroll-contain bg-[#FAF6EC] px-5 pb-6 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
         <header>
           <div className="flex items-end justify-between">
             <div>
@@ -212,7 +212,7 @@ export function TransactionsPage() {
             <div className="flex gap-2">
               <button
                 aria-label="导出报表"
-                className="grid size-11 place-items-center rounded-full border border-[#F0E6C8] bg-white text-[#8A7A5C] shadow-sm transition-all active:scale-95"
+                className="grid size-11 place-items-center rounded-full border border-[#EFE5D3] bg-white text-[#8A7A5C] shadow-sm transition-all active:scale-95"
                 onClick={handleExport}
                 type="button"
               >
@@ -220,7 +220,7 @@ export function TransactionsPage() {
               </button>
               <button
                 aria-label="刷新账单"
-                className="grid size-11 place-items-center rounded-full border border-[#F0E6C8] bg-white text-[#8A7A5C] shadow-sm transition-all active:scale-95 disabled:opacity-50"
+                className="grid size-11 place-items-center rounded-full border border-[#EFE5D3] bg-white text-[#8A7A5C] shadow-sm transition-all active:scale-95 disabled:opacity-50"
                 disabled={loading}
                 onClick={() => void loadTransactions(true)}
                 type="button"
@@ -234,7 +234,7 @@ export function TransactionsPage() {
             <label className="relative block">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[#C0B49A]" />
               <input
-                className="h-12 w-full rounded-2xl border border-[#F0E6C8] bg-white pl-10 pr-4 text-sm text-[#5C4A32] outline-none shadow-sm transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
+                className="h-12 w-full rounded-2xl border border-[#EFE5D3] bg-white pl-10 pr-4 text-sm text-[#5C4A32] outline-none shadow-sm transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="搜索备注、分类或金额"
                 value={query}
@@ -242,7 +242,7 @@ export function TransactionsPage() {
             </label>
             <div className="grid grid-cols-2 gap-2">
               <select
-                className="h-11 rounded-2xl border border-[#F0E6C8] bg-white px-3 text-sm text-[#5C4A32] outline-none shadow-sm"
+                className="h-11 rounded-2xl border border-[#EFE5D3] bg-white px-3 text-sm text-[#5C4A32] outline-none shadow-sm"
                 onChange={(event) =>
                   setTypeFilter(event.target.value as "ALL" | TransactionType)
                 }
@@ -253,7 +253,7 @@ export function TransactionsPage() {
                 <option value="INCOME">收入</option>
               </select>
               <select
-                className="h-11 rounded-2xl border border-[#F0E6C8] bg-white px-3 text-sm text-[#5C4A32] outline-none shadow-sm"
+                className="h-11 rounded-2xl border border-[#EFE5D3] bg-white px-3 text-sm text-[#5C4A32] outline-none shadow-sm"
                 onChange={(event) => setCategoryFilter(event.target.value)}
                 value={categoryFilter}
               >
@@ -282,7 +282,7 @@ export function TransactionsPage() {
             <LoaderCircle className="size-7 animate-spin text-[#F8A055]" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="mt-8 rounded-3xl border border-dashed border-[#F0E6C8] bg-white px-6 py-14 text-center shadow-sm">
+          <div className="mt-8 rounded-3xl border border-dashed border-[#EFE5D3] bg-white px-6 py-14 text-center shadow-sm">
             <p className="font-medium text-[#5C4A32]">没有匹配的账单</p>
             <p className="mt-1 text-sm text-[#A08B68]">试试调整筛选或新增一笔</p>
           </div>
@@ -299,7 +299,7 @@ export function TransactionsPage() {
                     const deleting = deletingId === item.id;
                     return (
                       <article
-                        className="rounded-3xl border border-[#F0E6C8] bg-white p-4 shadow-sm"
+                        className="rounded-3xl border border-[#EFE5D3] bg-white p-4 shadow-sm"
                         key={item.id ?? `${date}-${index}`}
                       >
                         <div className="flex items-center gap-3">
@@ -336,7 +336,7 @@ export function TransactionsPage() {
                             {formatHKD(item.amount)}
                           </p>
                         </div>
-                        <div className="mt-3 flex justify-end gap-2 border-t border-[#F0E6C8] pt-3">
+                        <div className="mt-3 flex justify-end gap-2 border-t border-[#EFE5D3] pt-3">
                           <button
                             className="flex h-9 items-center gap-1.5 rounded-full bg-[#FFF6D9] px-3 text-xs font-semibold text-[#8A7A5C] transition-all active:scale-95"
                             onClick={() => openEdit(item)}

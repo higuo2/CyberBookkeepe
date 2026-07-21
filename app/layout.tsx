@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { AppShell } from "@/components/AppShell";
 import "./globals.css";
 
+const CREAM = "#FAF6EC";
+
 export const metadata: Metadata = {
   title: "CyberBookkeeper",
   description: "AI 驱动的私人智能账本",
@@ -16,24 +18,27 @@ export const metadata: Metadata = {
     icon: "/icons/icon.svg",
     apple: "/icons/icon.svg",
   },
+  other: {
+    "apple-mobile-web-app-status-bar-style": "default",
+  },
 };
 
-/** Generates: width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover */
+/** Generates viewport-fit=cover + theme-color for iOS Safari chrome */
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#FFFDF0",
+  themeColor: CREAM,
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html className="h-dvh overflow-x-hidden" lang="zh-CN">
-      <body className="h-dvh overflow-x-hidden touch-pan-y overscroll-none">
+    <html className="h-dvh overflow-x-hidden bg-[#FAF6EC]" lang="zh-CN">
+      <body className="h-dvh overflow-x-hidden bg-[#FAF6EC] touch-pan-y overscroll-none">
         <AppShell>{children}</AppShell>
       </body>
     </html>

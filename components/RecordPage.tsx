@@ -226,8 +226,8 @@ export function RecordPage() {
   }
 
   return (
-    <main className="relative flex h-full min-h-0 flex-col bg-[#FFFDF0]">
-      <header className="z-20 flex shrink-0 items-center justify-between border-b border-[#F0E6C8]/80 bg-[#FFFDF0]/95 px-5 pb-3 pt-[calc(env(safe-area-inset-top)+12px)] backdrop-blur-md">
+    <main className="relative flex h-full min-h-0 flex-col bg-[#FAF6EC]">
+      <header className="z-20 flex shrink-0 items-center justify-between border-b border-[#EFE5D3] bg-[#FAF6EC] px-5 pb-3 pt-[calc(env(safe-area-inset-top)+12px)]">
         <div>
           <p className="text-sm font-medium text-[#8A7A5C]">{headerDate}</p>
           <p className="mt-0.5 text-base font-semibold text-[#5C4A32]">
@@ -235,7 +235,7 @@ export function RecordPage() {
             <span className="text-[#E07A3D]">{formatHKD(todaySpend)}</span>
           </p>
         </div>
-        <div className="grid size-12 place-items-center rounded-full bg-[#FFE8B8] shadow-sm ring-2 ring-white">
+        <div className="grid size-12 place-items-center rounded-full bg-[#FFE8B8] shadow-sm ring-2 ring-[#FAF6EC]">
           <CatAvatar size={44} />
         </div>
       </header>
@@ -377,7 +377,7 @@ export function RecordPage() {
         )}
       </div>
 
-      <div className="z-30 shrink-0 border-t border-[#F0E6C8]/60 bg-gradient-to-t from-[#FFFDF0] via-[#FFFDF0] to-transparent pb-2 pt-2">
+      <div className="z-30 shrink-0 border-t border-[#EFE5D3] bg-[#FAF6EC] pb-2 pt-2">
         <div className="flex gap-2 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {QUICK_PILLS.map((pill) => (
             <button

@@ -100,7 +100,7 @@ export function SummaryPage() {
   }
 
   return (
-    <main className="h-full overflow-y-auto overscroll-contain bg-[#FFFDF0] px-5 pb-6 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
+    <main className="h-full overflow-y-auto overscroll-contain bg-[#FAF6EC] px-5 pb-6 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
       <header>
         <p className="text-sm font-semibold text-[#F8A055]">AI 洞察</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight text-[#5C4A32]">
@@ -112,13 +112,13 @@ export function SummaryPage() {
       </header>
 
       <section className="mt-6 grid grid-cols-2 gap-3">
-        <div className="rounded-3xl border border-[#F0E6C8] bg-white p-4 shadow-sm">
+        <div className="rounded-3xl border border-[#EFE5D3] bg-white p-4 shadow-sm">
           <p className="text-xs text-[#A08B68]">本月支出</p>
           <p className="mt-2 text-xl font-semibold text-[#E07A3D]">
             {loading ? "…" : formatHKD(totalExpense)}
           </p>
         </div>
-        <div className="rounded-3xl border border-[#F0E6C8] bg-white p-4 shadow-sm">
+        <div className="rounded-3xl border border-[#EFE5D3] bg-white p-4 shadow-sm">
           <p className="text-xs text-[#A08B68]">本月收入</p>
           <p className="mt-2 text-xl font-semibold text-[#2A9D8F]">
             {loading ? "…" : formatHKD(totalIncome)}
@@ -127,7 +127,7 @@ export function SummaryPage() {
       </section>
 
       {categories.length > 0 && (
-        <section className="mt-4 rounded-3xl border border-[#F0E6C8] bg-white p-4 shadow-sm">
+        <section className="mt-4 rounded-3xl border border-[#EFE5D3] bg-white p-4 shadow-sm">
           <p className="text-xs font-medium text-[#A08B68]">支出结构 Top</p>
           <ul className="mt-3 space-y-2">
             {categories.slice(0, 5).map((item) => (
@@ -160,7 +160,7 @@ export function SummaryPage() {
       </button>
 
       {summary && (
-        <article className="mt-5 rounded-3xl border border-[#F0E6C8] bg-white p-5 text-sm leading-7 text-[#5C4A32] shadow-sm">
+        <article className="mt-5 rounded-3xl border border-[#EFE5D3] bg-white p-5 text-sm leading-7 text-[#5C4A32] shadow-sm">
           {summary}
         </article>
       )}

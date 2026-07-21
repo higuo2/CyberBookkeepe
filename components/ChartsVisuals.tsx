@@ -66,9 +66,9 @@ export function CategoryPieChart({
           </Pie>
           <Tooltip
             contentStyle={{
-              border: "1px solid #F0E6C8",
+              border: "1px solid #EFE5D3",
               borderRadius: "16px",
-              background: "#FFFDF0",
+              background: "#FAF6EC",
               boxShadow: "0 8px 24px rgba(92,74,50,.08)",
             }}
             formatter={(value) => formatHKD(Number(value))}
@@ -93,7 +93,7 @@ export function TrendBarChart({
     <div className="h-64 w-full">
       <ResponsiveContainer height="100%" width="100%">
         <BarChart data={data}>
-          <CartesianGrid stroke="#F0E6C8" strokeDasharray="3 3" vertical={false} />
+          <CartesianGrid stroke="#EFE5D3" strokeDasharray="3 3" vertical={false} />
           <XAxis
             axisLine={false}
             dataKey="label"
@@ -108,9 +108,9 @@ export function TrendBarChart({
           />
           <Tooltip
             contentStyle={{
-              border: "1px solid #F0E6C8",
+              border: "1px solid #EFE5D3",
               borderRadius: "16px",
-              background: "#FFFDF0",
+              background: "#FAF6EC",
             }}
             formatter={(value) => formatHKD(Number(value))}
             labelFormatter={(_, payload) =>
@@ -132,7 +132,7 @@ export function BudgetProgressCard({ stats }: { stats: MonthBudgetStats }) {
 
   if (stats.budget <= 0) {
     return (
-      <section className="rounded-3xl border border-[#F0E6C8] bg-white p-5 shadow-sm">
+      <section className="rounded-3xl border border-[#EFE5D3] bg-white p-5 shadow-sm">
         <h2 className="font-semibold text-[#5C4A32]">本月预算</h2>
         <p className="mt-3 text-sm text-[#9A7B55]">
           尚未设置预算。前往「我的」页面设定本月总预算后，这里会显示进度。
@@ -142,7 +142,7 @@ export function BudgetProgressCard({ stats }: { stats: MonthBudgetStats }) {
   }
 
   return (
-    <section className="rounded-3xl border border-[#F0E6C8] bg-white p-5 shadow-sm">
+    <section className="rounded-3xl border border-[#EFE5D3] bg-white p-5 shadow-sm">
       <h2 className="font-semibold text-[#5C4A32]">预算进度</h2>
       <div className="mt-4 grid grid-cols-3 gap-2 text-center">
         <div className="rounded-2xl bg-[#FFF6D9] p-3">

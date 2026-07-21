@@ -74,7 +74,7 @@ export function ProfilePage() {
   }
 
   return (
-    <main className="h-full overflow-y-auto overscroll-contain bg-[#FFFDF0] px-5 pb-6 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
+    <main className="h-full overflow-y-auto overscroll-contain bg-[#FAF6EC] px-5 pb-6 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
       <header>
         <p className="text-sm font-semibold text-[#F8A055]">个人中心</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight text-[#5C4A32]">
@@ -85,7 +85,7 @@ export function ProfilePage() {
         </p>
       </header>
 
-      <section className="mt-6 rounded-3xl border border-[#F0E6C8] bg-white p-5 shadow-sm">
+      <section className="mt-6 rounded-3xl border border-[#EFE5D3] bg-white p-5 shadow-sm">
         <div className="flex items-center gap-2 text-[#F8A055]">
           <Wallet className="size-5" />
           <h2 className="font-semibold text-[#5C4A32]">本月总预算</h2>
@@ -96,7 +96,7 @@ export function ProfilePage() {
         <label className="mt-4 block text-xs font-medium text-[#9A7B55]">
           预算金额（HK$）
           <input
-            className="mt-2 h-12 w-full rounded-2xl border border-[#F0E6C8] bg-[#FFFDF0] px-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
+            className="mt-2 h-12 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
             inputMode="decimal"
             min="0"
             onChange={(event) => setBudgetInput(event.target.value)}
@@ -116,7 +116,7 @@ export function ProfilePage() {
         </button>
       </section>
 
-      <section className="mt-4 rounded-3xl border border-[#F0E6C8] bg-white p-5 shadow-sm">
+      <section className="mt-4 rounded-3xl border border-[#EFE5D3] bg-white p-5 shadow-sm">
         <div className="flex items-center gap-2 text-[#F8A055]">
           <Download className="size-5" />
           <h2 className="font-semibold text-[#5C4A32]">数据导出</h2>
@@ -139,7 +139,7 @@ export function ProfilePage() {
         </button>
       </section>
 
-      <section className="mt-4 rounded-3xl border border-[#F0E6C8] bg-white p-5 shadow-sm">
+      <section className="mt-4 rounded-3xl border border-[#EFE5D3] bg-white p-5 shadow-sm">
         <div className="flex items-center gap-2 text-[#F8A055]">
           <Settings2 className="size-5" />
           <h2 className="font-semibold text-[#5C4A32]">系统设置</h2>

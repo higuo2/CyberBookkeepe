@@ -133,7 +133,7 @@ export function ChartsPage() {
   const budgetStats = computeBudgetStats(budget, monthExpense);
 
   return (
-    <main className="h-full overflow-y-auto overscroll-contain bg-[#FFFDF0] px-5 pb-6 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
+    <main className="h-full overflow-y-auto overscroll-contain bg-[#FAF6EC] px-5 pb-6 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
       <header className="flex items-end justify-between">
         <div>
           <p className="text-sm font-semibold text-[#F8A055]">消费分析</p>
@@ -143,7 +143,7 @@ export function ChartsPage() {
         </div>
         <button
           aria-label="刷新统计"
-          className="grid size-11 place-items-center rounded-full border border-[#F0E6C8] bg-white text-[#8A7A5C] shadow-sm transition-all active:scale-95 disabled:opacity-50"
+          className="grid size-11 place-items-center rounded-full border border-[#EFE5D3] bg-white text-[#8A7A5C] shadow-sm transition-all active:scale-95 disabled:opacity-50"
           disabled={loading}
           onClick={() => void loadChart(true)}
           type="button"
@@ -186,7 +186,7 @@ export function ChartsPage() {
         </p>
       </section>
 
-      <section className="mt-5 rounded-3xl border border-[#F0E6C8] bg-white p-5 shadow-sm">
+      <section className="mt-5 rounded-3xl border border-[#EFE5D3] bg-white p-5 shadow-sm">
         <h2 className="font-semibold text-[#5C4A32]">分类占比</h2>
         {loading && filtered.length === 0 ? (
           <div className="grid h-72 place-items-center">
@@ -197,7 +197,7 @@ export function ChartsPage() {
         )}
       </section>
 
-      <section className="mt-5 rounded-3xl border border-[#F0E6C8] bg-white p-5 shadow-sm">
+      <section className="mt-5 rounded-3xl border border-[#EFE5D3] bg-white p-5 shadow-sm">
         <h2 className="font-semibold text-[#5C4A32]">近 7 日支出趋势</h2>
         <div className="mt-2">
           <TrendBarChart data={trendData} />

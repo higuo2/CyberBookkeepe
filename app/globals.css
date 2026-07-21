@@ -2,7 +2,9 @@
 
 :root {
   color-scheme: light;
-  background: #fffdf0;
+  --cream: #faf6ec;
+  --cream-border: #efe5d3;
+  background: #faf6ec;
   font-family:
     "PingFang SC",
     "Hiragino Sans GB",
@@ -23,7 +25,7 @@
 html {
   height: 100dvh;
   overflow-x: hidden;
-  background: #f3ebda;
+  background: #faf6ec;
   touch-action: pan-y;
 }
 
@@ -33,9 +35,15 @@ body {
   overflow-x: hidden;
   overscroll-behavior: none;
   touch-action: pan-y;
-  background: #f3ebda;
+  background: #faf6ec;
   color: #5c4a32;
   -webkit-overflow-scrolling: touch;
+}
+
+#__next,
+#root {
+  min-height: 100dvh;
+  background: #faf6ec;
 }
 
 button,
@@ -51,7 +59,7 @@ button {
 @media (min-width: 512px) {
   body {
     background:
-      radial-gradient(circle at top, rgb(255 232 184 / 55%), transparent 32rem),
-      #f3ebda;
+      radial-gradient(circle at top, rgb(255 232 184 / 40%), transparent 32rem),
+      #faf6ec;
   }
 }

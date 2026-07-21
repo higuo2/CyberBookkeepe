@@ -17,7 +17,7 @@ import {
 import type { TransactionDraft } from "@/lib/types";
 
 const fieldClass =
-  "h-12 w-full rounded-2xl border border-[#F0E6C8] bg-[#FFFDF0] px-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15";
+  "h-12 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15";
 
 export function TransactionDialog({
   open,
@@ -58,7 +58,7 @@ export function TransactionDialog({
       className="fixed inset-0 z-[70] flex items-end justify-center overflow-x-hidden bg-[#5C4A32]/25 p-0 backdrop-blur-sm sm:items-center sm:p-5"
       role="dialog"
     >
-      <section className="max-h-[92dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-[2rem] border border-[#F0E6C8] bg-[#FFFDF0] p-5 pb-[calc(env(safe-area-inset-bottom)+20px)] shadow-sm touch-pan-y sm:rounded-[2rem] sm:pb-5">
+      <section className="max-h-[92dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-[2rem] border border-[#EFE5D3] bg-[#FAF6EC] p-5 pb-[calc(env(safe-area-inset-bottom)+20px)] shadow-sm touch-pan-y sm:rounded-[2rem] sm:pb-5">
         <header className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#F8A055]">
@@ -173,7 +173,7 @@ export function TransactionDialog({
           <label className="block text-xs font-medium text-[#9A7B55]">
             备注（选填，空则用分类名）
             <textarea
-              className="mt-2 min-h-24 w-full resize-none rounded-2xl border border-[#F0E6C8] bg-[#FFFDF0] p-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
+              className="mt-2 min-h-24 w-full resize-none rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] p-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
               maxLength={200}
               onChange={(event) =>
                 onChange({ ...value, note: event.target.value })

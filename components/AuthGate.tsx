@@ -34,12 +34,12 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   if (!ready) {
-    return <div className="mx-auto h-dvh w-full max-w-md bg-[#FFFDF0]" />;
+    return <div className="mx-auto h-dvh w-full max-w-md bg-[#FAF6EC]" />;
   }
 
   if (!authenticated) {
     return (
-      <main className="mx-auto grid h-dvh w-full max-w-md place-items-center overflow-x-hidden bg-[#FFFDF0] px-6 pt-[calc(env(safe-area-inset-top)+12px)] pb-[calc(env(safe-area-inset-bottom)+12px)] touch-pan-y">
+      <main className="mx-auto grid h-dvh w-full max-w-md place-items-center overflow-x-hidden bg-[#FAF6EC] px-6 pt-[calc(env(safe-area-inset-top)+12px)] pb-[calc(env(safe-area-inset-bottom)+12px)] touch-pan-y">
         <section className="w-full max-w-sm rounded-[2rem] bg-white p-7 shadow-sm">
           <div className="mb-6 grid size-16 place-items-center rounded-full bg-[#FFE8B8] shadow-sm">
             <CatAvatar size={52} />
@@ -59,7 +59,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             <input
               autoComplete="current-password"
               autoFocus
-              className="h-13 w-full rounded-2xl border border-[#F0E6C8] bg-[#FFFDF0] px-4 text-base text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
+              className="h-13 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-4 text-base text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
               id="app-password"
               onChange={(event) => {
                 setPassword(event.target.value);
