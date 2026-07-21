@@ -6,6 +6,7 @@ import {
   ArrowUpRight,
   LoaderCircle,
   Save,
+  Trash2,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,7 +18,7 @@ import {
 import type { TransactionDraft } from "@/lib/types";
 
 const fieldClass =
-  "h-12 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15";
+  "h-11 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15";
 
 export function TransactionDialog({
   open,
@@ -28,6 +29,8 @@ export function TransactionDialog({
   onChange,
   onClose,
   onSubmit,
+  onDelete,
+  deleting = false,
 }: {
   open: boolean;
   title: string;
@@ -37,10 +40,13 @@ export function TransactionDialog({
   onChange: (value: TransactionDraft) => void;
   onClose: () => void;
   onSubmit: () => Promise<void>;
+  onDelete?: () => Promise<void>;
+  deleting?: boolean;
 }) {
   if (!open) return null;
 
   const categories = categoriesForType(value.type);
+  const locked = busy || deleting;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -69,7 +75,7 @@ export function TransactionDialog({
           <button
             aria-label="关闭"
             className="grid size-10 place-items-center rounded-full bg-white text-[#8A7A5C] shadow-sm transition-all active:scale-95"
-            disabled={busy}
+            disabled={locked}
             onClick={onClose}
             type="button"
           >
@@ -173,7 +179,7 @@ export function TransactionDialog({
           <label className="block text-xs font-medium text-[#9A7B55]">
             备注（选填，空则用分类名）
             <textarea
-              className="mt-2 min-h-24 w-full resize-none rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] p-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
+              className="mt-2 min-h-20 w-full resize-none rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] p-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
               maxLength={200}
               onChange={(event) =>
                 onChange({ ...value, note: event.target.value })
@@ -183,18 +189,36 @@ export function TransactionDialog({
             />
           </label>
 
-          <button
-            className="flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-[#F8A055] font-semibold text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
-            disabled={busy}
-            type="submit"
-          >
-            {busy ? (
-              <LoaderCircle className="size-5 animate-spin" />
-            ) : (
-              <Save className="size-5" />
+          <div className="flex flex-col gap-2 pt-1">
+            <button
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#F8A055] font-semibold text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
+              disabled={locked}
+              type="submit"
+            >
+              {busy ? (
+                <LoaderCircle className="size-5 animate-spin" />
+              ) : (
+                <Save className="size-5" />
+              )}
+              {busy ? "正在保存…" : submitLabel}
+            </button>
+
+            {onDelete && (
+              <button
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#FFE8E0] text-sm font-semibold text-[#E07A3D] transition-all active:scale-95 disabled:opacity-50"
+                disabled={locked}
+                onClick={() => void onDelete()}
+                type="button"
+              >
+                {deleting ? (
+                  <LoaderCircle className="size-4 animate-spin" />
+                ) : (
+                  <Trash2 className="size-4" />
+                )}
+                {deleting ? "正在删除…" : "删除账单"}
+              </button>
             )}
-            {busy ? "正在保存…" : submitLabel}
-          </button>
+          </div>
         </form>
       </section>
     </div>

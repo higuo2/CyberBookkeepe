@@ -2,23 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ArrowDownLeft,
-  ArrowUpRight,
   Download,
   LoaderCircle,
-  Pencil,
   Plus,
   RefreshCw,
   Search,
-  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { CategoryFilterDropdown } from "@/components/CategoryFilterDropdown";
 import { TransactionDialog } from "@/components/TransactionDialog";
 import { exportTransactionsToXlsx } from "@/lib/export";
 import { getSupabase } from "@/lib/supabase";
 import {
-  CATEGORIES,
   createEmptyTransaction,
   formatHKD,
   prepareDraft,
@@ -33,6 +29,27 @@ function displayDate(date: string) {
   }).format(new Date(`${date}T00:00:00`));
 }
 
+function dayExpenseTotal(items: Transaction[]) {
+  return items
+    .filter((item) => item.type === "EXPENSE")
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+}
+
+function dayIncomeTotal(items: Transaction[]) {
+  return items
+    .filter((item) => item.type === "INCOME")
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+}
+
+const TYPE_PILLS: { key: "ALL" | TransactionType; label: string }[] = [
+  { key: "ALL", label: "全部" },
+  { key: "EXPENSE", label: "支出" },
+  { key: "INCOME", label: "收入" },
+];
+
+const iconBtn =
+  "grid size-9 place-items-center rounded-full border border-[#EFE5D3] bg-white text-[#8A7A5C] shadow-sm transition-all active:scale-95 disabled:opacity-50";
+
 export function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +60,7 @@ export function TransactionsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<TransactionDraft>(createEmptyTransaction);
   const [mutating, setMutating] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const loadTransactions = useCallback(async (showToast = false) => {
     await Promise.resolve();
@@ -93,13 +110,12 @@ export function TransactionsPage() {
     });
   }, [transactions, query, typeFilter, categoryFilter]);
 
-  const grouped = filtered.reduce<Record<string, Transaction[]>>(
-    (groups, item) => {
+  const grouped = useMemo(() => {
+    return filtered.reduce<Record<string, Transaction[]>>((groups, item) => {
       (groups[item.date] ??= []).push(item);
       return groups;
-    },
-    {},
-  );
+    }, {});
+  }, [filtered]);
 
   function openCreate() {
     setDraft(createEmptyTransaction());
@@ -155,8 +171,8 @@ export function TransactionsPage() {
     }
   }
 
-  async function deleteTransaction(transaction: Transaction) {
-    if (!transaction.id) {
+  async function deleteFromDialog() {
+    if (!editingId) {
       toast.error("该账单缺少 ID，无法删除");
       return;
     }
@@ -164,20 +180,22 @@ export function TransactionsPage() {
       toast.error("当前无网络，无法删除账单");
       return;
     }
-    if (!window.confirm(`确定彻底删除「${transaction.note || transaction.category}」吗？`)) {
+    if (!window.confirm(`确定彻底删除「${draft.note || draft.category}」吗？`)) {
       return;
     }
-    setDeletingId(transaction.id);
+    setDeleting(true);
     const toastId = toast.loading("正在删除账单…");
     try {
       const { error } = await getSupabase()
         .from("transactions")
         .delete()
-        .eq("id", transaction.id);
+        .eq("id", editingId);
       if (error) throw error;
       setTransactions((current) =>
-        current.filter((item) => item.id !== transaction.id),
+        current.filter((item) => item.id !== editingId),
       );
+      setDialogMode(null);
+      setEditingId(null);
       toast.success("账单已删除", { id: toastId });
     } catch (error) {
       toast.error(
@@ -185,7 +203,7 @@ export function TransactionsPage() {
         { id: toastId },
       );
     } finally {
-      setDeletingId(null);
+      setDeleting(false);
     }
   }
 
@@ -200,183 +218,173 @@ export function TransactionsPage() {
 
   return (
     <>
-      <main className="h-full overflow-y-auto overscroll-contain bg-[#FAF6EC] px-5 pb-6 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
-        <header>
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="text-sm font-semibold text-[#F8A055]">账单历史</p>
-              <h1 className="mt-1 text-3xl font-semibold tracking-tight text-[#5C4A32]">
+      <main className="relative flex h-full min-h-0 flex-col bg-[#FAF6EC] pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
+        <header className="shrink-0 px-4 pb-2">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-[#F8A055]">账单历史</p>
+              <h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-[#5C4A32]">
                 账单
               </h1>
             </div>
-            <div className="flex gap-2">
+            <div className="flex shrink-0 items-center gap-1.5">
               <button
                 aria-label="导出报表"
-                className="grid size-11 place-items-center rounded-full border border-[#EFE5D3] bg-white text-[#8A7A5C] shadow-sm transition-all active:scale-95"
+                className={iconBtn}
                 onClick={handleExport}
                 type="button"
               >
-                <Download className="size-4.5" />
+                <Download className="size-4" />
               </button>
               <button
                 aria-label="刷新账单"
-                className="grid size-11 place-items-center rounded-full border border-[#EFE5D3] bg-white text-[#8A7A5C] shadow-sm transition-all active:scale-95 disabled:opacity-50"
+                className={iconBtn}
                 disabled={loading}
                 onClick={() => void loadTransactions(true)}
                 type="button"
               >
-                <RefreshCw className={`size-4.5 ${loading ? "animate-spin" : ""}`} />
+                <RefreshCw
+                  className={`size-4 ${loading ? "animate-spin" : ""}`}
+                />
+              </button>
+              <button
+                aria-label="手动记账"
+                className="grid size-9 place-items-center rounded-full bg-[#F8A055] text-white shadow-sm transition-all active:scale-95"
+                onClick={openCreate}
+                type="button"
+              >
+                <Plus className="size-4.5" strokeWidth={2.5} />
               </button>
             </div>
           </div>
 
-          <div className="mt-5 space-y-3">
+          <div className="mt-3 space-y-2">
             <label className="relative block">
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[#C0B49A]" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-[#C0B49A]" />
               <input
-                className="h-12 w-full rounded-2xl border border-[#EFE5D3] bg-white pl-10 pr-4 text-sm text-[#5C4A32] outline-none shadow-sm transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
+                className="h-9 w-full rounded-xl border border-[#EFE5D3] bg-white pl-9 pr-3 text-sm text-[#5C4A32] outline-none shadow-sm transition-all focus:border-[#F8A055] focus:ring-2 focus:ring-[#F8A055]/15"
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="搜索备注、分类或金额"
                 value={query}
               />
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              <select
-                className="h-11 rounded-2xl border border-[#EFE5D3] bg-white px-3 text-sm text-[#5C4A32] outline-none shadow-sm"
-                onChange={(event) =>
-                  setTypeFilter(event.target.value as "ALL" | TransactionType)
-                }
-                value={typeFilter}
-              >
-                <option value="ALL">全部类型</option>
-                <option value="EXPENSE">支出</option>
-                <option value="INCOME">收入</option>
-              </select>
-              <select
-                className="h-11 rounded-2xl border border-[#EFE5D3] bg-white px-3 text-sm text-[#5C4A32] outline-none shadow-sm"
-                onChange={(event) => setCategoryFilter(event.target.value)}
+
+            <div className="flex items-center gap-2">
+              <div className="flex min-w-0 flex-1 gap-1 rounded-xl bg-[#FFF6D9] p-0.5">
+                {TYPE_PILLS.map(({ key, label }) => {
+                  const active = typeFilter === key;
+                  return (
+                    <button
+                      className={`h-8 flex-1 rounded-lg text-xs font-semibold transition-all active:scale-95 ${
+                        active
+                          ? "bg-white text-[#5C4A32] shadow-sm"
+                          : "text-[#A08B68]"
+                      }`}
+                      key={key}
+                      onClick={() => setTypeFilter(key)}
+                      type="button"
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              <CategoryFilterDropdown
+                onChange={setCategoryFilter}
+                typeFilter={typeFilter}
                 value={categoryFilter}
-              >
-                <option value="ALL">全部分类</option>
-                {CATEGORIES.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
           </div>
-
-          <button
-            className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#F8A055] text-sm font-semibold text-white shadow-sm transition-all active:scale-95"
-            onClick={openCreate}
-            type="button"
-          >
-            <Plus className="size-5" />
-            手动记账
-          </button>
         </header>
 
-        {loading && transactions.length === 0 ? (
-          <div className="grid min-h-80 place-items-center">
-            <LoaderCircle className="size-7 animate-spin text-[#F8A055]" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="mt-8 rounded-3xl border border-dashed border-[#EFE5D3] bg-white px-6 py-14 text-center shadow-sm">
-            <p className="font-medium text-[#5C4A32]">没有匹配的账单</p>
-            <p className="mt-1 text-sm text-[#A08B68]">试试调整筛选或新增一笔</p>
-          </div>
-        ) : (
-          <div className="mt-8 space-y-7">
-            {Object.entries(grouped).map(([date, items]) => (
-              <section key={date}>
-                <h2 className="mb-3 text-sm font-semibold text-[#9A7B55]">
-                  {displayDate(date)}
-                </h2>
-                <div className="space-y-3">
-                  {items.map((item, index) => {
-                    const expense = item.type === "EXPENSE";
-                    const deleting = deletingId === item.id;
-                    return (
-                      <article
-                        className="rounded-3xl border border-[#EFE5D3] bg-white p-4 shadow-sm"
-                        key={item.id ?? `${date}-${index}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`grid size-11 shrink-0 place-items-center rounded-2xl ${
-                              expense
-                                ? "bg-[#FFF6D9] text-[#E07A3D]"
-                                : "bg-[#E8F8F4] text-[#2A9D8F]"
-                            }`}
-                          >
-                            <CategoryIcon category={item.category} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              <p className="font-medium text-[#5C4A32]">
-                                {item.category}
-                              </p>
-                              {expense ? (
-                                <ArrowDownLeft className="size-3.5 text-[#E07A3D]" />
-                              ) : (
-                                <ArrowUpRight className="size-3.5 text-[#2A9D8F]" />
-                              )}
-                            </div>
-                            <p className="truncate text-sm text-[#A08B68]">
-                              {item.note}
-                            </p>
-                          </div>
-                          <p
-                            className={`shrink-0 font-semibold ${
-                              expense ? "text-[#E07A3D]" : "text-[#2A9D8F]"
-                            }`}
-                          >
-                            {expense ? "−" : "+"}
-                            {formatHKD(item.amount)}
-                          </p>
-                        </div>
-                        <div className="mt-3 flex justify-end gap-2 border-t border-[#EFE5D3] pt-3">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 touch-pan-y">
+          {loading && transactions.length === 0 ? (
+            <div className="grid min-h-60 place-items-center">
+              <LoaderCircle className="size-7 animate-spin text-[#F8A055]" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="mt-6 rounded-2xl border border-dashed border-[#EFE5D3] bg-white px-5 py-12 text-center shadow-sm">
+              <p className="font-medium text-[#5C4A32]">没有匹配的账单</p>
+              <p className="mt-1 text-sm text-[#A08B68]">
+                试试调整筛选，或点右上角 + 新增
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-5 pt-2">
+              {Object.entries(grouped).map(([date, items]) => {
+                const expenseSum = dayExpenseTotal(items);
+                const incomeSum = dayIncomeTotal(items);
+                return (
+                  <section key={date}>
+                    <div className="mb-2 flex items-baseline justify-between gap-3 px-0.5">
+                      <h2 className="text-sm font-semibold text-[#9A7B55]">
+                        {displayDate(date)}
+                      </h2>
+                      <p className="shrink-0 text-xs font-medium text-[#A08B68]">
+                        {expenseSum > 0
+                          ? `支出 ${formatHKD(expenseSum)}`
+                          : incomeSum > 0
+                            ? `收入 ${formatHKD(incomeSum)}`
+                            : null}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      {items.map((item, index) => {
+                        const expense = item.type === "EXPENSE";
+                        return (
                           <button
-                            className="flex h-9 items-center gap-1.5 rounded-full bg-[#FFF6D9] px-3 text-xs font-semibold text-[#8A7A5C] transition-all active:scale-95"
+                            className="flex w-full items-center gap-3 rounded-2xl border border-[#EFE5D3] bg-white px-3 py-2.5 text-left shadow-sm transition-all active:scale-[0.99]"
+                            key={item.id ?? `${date}-${index}`}
                             onClick={() => openEdit(item)}
                             type="button"
                           >
-                            <Pencil className="size-3.5" />
-                            编辑
+                            <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-[#FFF6D9] text-[#8A5A12]">
+                              <CategoryIcon
+                                category={item.category}
+                                className="size-4.5"
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-semibold text-[#5C4A32]">
+                                {item.category === "居住"
+                                  ? "住房"
+                                  : item.category}
+                              </p>
+                              <p className="truncate text-xs text-[#A08B68]">
+                                {item.note || item.category}
+                              </p>
+                            </div>
+                            <p
+                              className={`shrink-0 text-sm font-semibold tabular-nums ${
+                                expense ? "text-[#E07A3D]" : "text-[#2A9D8F]"
+                              }`}
+                            >
+                              {expense ? "-" : "+"}
+                              {formatHKD(item.amount)}
+                            </p>
                           </button>
-                          <button
-                            className="flex h-9 items-center gap-1.5 rounded-full bg-[#FFE8E0] px-3 text-xs font-semibold text-[#E07A3D] transition-all active:scale-95 disabled:opacity-50"
-                            disabled={deleting}
-                            onClick={() => void deleteTransaction(item)}
-                            type="button"
-                          >
-                            {deleting ? (
-                              <LoaderCircle className="size-3.5 animate-spin" />
-                            ) : (
-                              <Trash2 className="size-3.5" />
-                            )}
-                            删除
-                          </button>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
+                        );
+                      })}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </main>
 
       <TransactionDialog
         busy={mutating}
+        deleting={deleting}
         onChange={setDraft}
-        onClose={() => !mutating && setDialogMode(null)}
+        onClose={() => !mutating && !deleting && setDialogMode(null)}
+        onDelete={dialogMode === "edit" ? deleteFromDialog : undefined}
         onSubmit={saveDraft}
         open={dialogMode !== null}
-        submitLabel={dialogMode === "edit" ? "保存修改" : "新增账单"}
-        title={dialogMode === "edit" ? "编辑账单" : "手动记账"}
+        submitLabel={dialogMode === "edit" ? "保存" : "新增账单"}
+        title={dialogMode === "edit" ? "账单详情" : "手动记账"}
         value={draft}
       />
     </>
