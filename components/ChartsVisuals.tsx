@@ -15,19 +15,9 @@ import {
 } from "recharts";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { budgetBarColor } from "@/lib/budget";
+import { categoryColor } from "@/lib/category-colors";
 import { formatHKD } from "@/lib/transaction-utils";
 import type { MonthBudgetStats } from "@/lib/types";
-
-const COLORS = [
-  "#F8A055",
-  "#F8C96A",
-  "#E07A3D",
-  "#FFE8B8",
-  "#D4A574",
-  "#C0B49A",
-  "#A3E4D7",
-  "#7EB8A8",
-];
 
 function displayCategory(name: string) {
   return name === "居住" ? "住房" : name;
@@ -71,7 +61,10 @@ export function CategoryPieChart({
               stroke="none"
             >
               {data.map((entry, index) => (
-                <Cell fill={COLORS[index % COLORS.length]} key={entry.name} />
+                <Cell
+                  fill={categoryColor(entry.name, index)}
+                  key={entry.name}
+                />
               ))}
             </Pie>
             <Tooltip
@@ -90,17 +83,14 @@ export function CategoryPieChart({
       <ul className="mt-2 space-y-3">
         {data.map((item, index) => {
           const pct = total > 0 ? (item.value / total) * 100 : 0;
-          const color = COLORS[index % COLORS.length];
+          const color = categoryColor(item.name, index);
           return (
             <li className="flex items-center gap-2.5" key={item.name}>
               <div
                 className="grid size-9 shrink-0 place-items-center rounded-xl"
                 style={{ backgroundColor: `${color}33`, color }}
               >
-                <CategoryIcon
-                  category={item.name}
-                  className="size-4"
-                />
+                <CategoryIcon category={item.name} className="size-4" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex items-center justify-between gap-2">
