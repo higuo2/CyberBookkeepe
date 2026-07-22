@@ -16,7 +16,7 @@ const tabs: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/transactions", label: "账单", icon: ClipboardList },
   { href: "/charts", label: "统计", icon: Donut },
   { href: "/summary", label: "规划", icon: Wallet },
-  { href: "/profile", label: "我的", icon: Settings },
+  { href: "/profile", label: "设置", icon: Settings },
 ];
 
 export function BottomNav() {
