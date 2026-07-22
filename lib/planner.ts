@@ -198,68 +198,18 @@ export const DEFAULT_GOALS: WishlistGoal[] = [
   },
 ];
 
+/** 旧版演示种子 ID（曾在空列表时自动注入并 autoWrite 入账） */
+const LEGACY_DEMO_RECURRING_IDS = new Set([
+  "rec-salary",
+  "rec-transit",
+  "sub-icloud",
+  "sub-netflix",
+  "sub-rent",
+]);
+
+/** 不再提供演示周期项；空列表就是空，避免误自动记账 */
 export function defaultRecurringItems(): RecurringItem[] {
-  return [
-    {
-      id: "rec-salary",
-      name: "每月工资",
-      amount: 20000,
-      direction: "income",
-      recurrence: { kind: "monthly", dayOfMonth: 10, end_date: null },
-      nextDate: nextMonthlyDate(10),
-      remindDays: 1,
-      autoWrite: true,
-      category: "工资",
-    },
-    {
-      id: "rec-transit",
-      name: "工作日交通费",
-      amount: 10.2,
-      direction: "expense",
-      recurrence: {
-        kind: "by_days",
-        by_days: [...WORKDAYS],
-        end_date: "2027-06-30",
-      },
-      nextDate: nextByDaysDate(WORKDAYS),
-      remindDays: 0,
-      autoWrite: true,
-      category: "交通",
-    },
-    {
-      id: "sub-icloud",
-      name: "iCloud+",
-      amount: 21,
-      direction: "expense",
-      recurrence: { kind: "monthly", dayOfMonth: 3, end_date: null },
-      nextDate: nextMonthlyDate(3),
-      remindDays: 3,
-      autoWrite: true,
-      category: "数码",
-    },
-    {
-      id: "sub-netflix",
-      name: "Netflix",
-      amount: 78,
-      direction: "expense",
-      recurrence: { kind: "monthly", dayOfMonth: 3, end_date: null },
-      nextDate: nextMonthlyDate(3),
-      remindDays: 3,
-      autoWrite: true,
-      category: "娱乐",
-    },
-    {
-      id: "sub-rent",
-      name: "房租",
-      amount: 9800,
-      direction: "expense",
-      recurrence: { kind: "monthly", dayOfMonth: 9, end_date: null },
-      nextDate: nextMonthlyDate(9),
-      remindDays: 3,
-      autoWrite: true,
-      category: "居住",
-    },
-  ];
+  return [];
 }
 
 /** @deprecated */
@@ -420,12 +370,20 @@ export function writeGoals(goals: WishlistGoal[]) {
 export function readRecurringItems(): RecurringItem[] {
   const raw = readJson<unknown[]>(SUBS_KEY, []);
   if (!Array.isArray(raw) || raw.length === 0) {
-    return defaultRecurringItems();
+    return [];
   }
   const normalized = raw
     .map(normalizeRecurringItem)
     .filter((item): item is RecurringItem => item !== null);
-  return normalized.length > 0 ? normalized : defaultRecurringItems();
+
+  // 一次性清掉旧演示种子，避免刷新后再次自动写入 Netflix / 房租等
+  const cleaned = normalized.filter(
+    (item) => !LEGACY_DEMO_RECURRING_IDS.has(item.id),
+  );
+  if (cleaned.length !== normalized.length) {
+    writeJson(SUBS_KEY, cleaned);
+  }
+  return cleaned;
 }
 
 export function writeRecurringItems(items: RecurringItem[]) {
