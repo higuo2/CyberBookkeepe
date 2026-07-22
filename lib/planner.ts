@@ -67,6 +67,12 @@ export type RecurringItem = {
   category?: string;
   /** 列表 / 表单展示用图标 */
   emoji?: string;
+  /** 规则生效起始日 YYYY-MM-DD（追溯同步起点） */
+  startDate?: string;
+  /** 创建时间 ISO；与 startDate 一起决定追溯起点 */
+  createdAt?: string;
+  /** 绑定的 AI 对话消息 id（确认幂等） */
+  sourceMessageId?: string;
 };
 
 /** @deprecated 使用 RecurringItem */
@@ -188,24 +194,44 @@ export const DEFAULT_ACCOUNTS: PlannerAccount[] = [
   { id: "cash", name: "现金", emoji: "💵", balance: 420, note: "随身现金" },
 ];
 
-export const DEFAULT_GOALS: WishlistGoal[] = [
-  {
-    id: "goal-phone",
-    title: "换新手机",
-    emoji: "📱",
-    target: 8000,
-    saved: 5200,
-  },
-];
+export const DEFAULT_GOALS: WishlistGoal[] = [];
+
+const DEMO_GOAL_PURGED_KEY = "cyberbookkeeper_demo_goals_purged_v1";
 
 /** 旧版演示种子 ID（曾在空列表时自动注入并 autoWrite 入账） */
-const LEGACY_DEMO_RECURRING_IDS = new Set([
+export const LEGACY_DEMO_RECURRING_IDS = new Set([
   "rec-salary",
   "rec-transit",
   "sub-icloud",
   "sub-netflix",
   "sub-rent",
 ]);
+
+/** 演示项指纹（名称+金额），防止 ID 被改写后仍残留 */
+const LEGACY_DEMO_FINGERPRINTS = new Set([
+  "每月工资|20000",
+  "工资|20000",
+  "工作日交通费|10.2",
+  "icloud+|21",
+  "netflix|78",
+  "房租|9800",
+]);
+
+const DEMO_RECURRING_PURGED_KEY = "cyberbookkeeper_demo_recurring_purged_v2";
+
+function demoFingerprint(name: string, amount: number) {
+  return `${name.trim().toLowerCase()}|${Number(amount)}`;
+}
+
+/** 是否为旧演示周期项（按 ID 或名称+金额） */
+export function isLegacyDemoRecurringItem(item: {
+  id: string;
+  name: string;
+  amount: number;
+}): boolean {
+  if (LEGACY_DEMO_RECURRING_IDS.has(item.id)) return true;
+  return LEGACY_DEMO_FINGERPRINTS.has(demoFingerprint(item.name, item.amount));
+}
 
 /** 不再提供演示周期项；空列表就是空，避免误自动记账 */
 export function defaultRecurringItems(): RecurringItem[] {
@@ -340,6 +366,19 @@ export function normalizeRecurringItem(raw: unknown): RecurringItem | null {
       typeof item.emoji === "string" && item.emoji.trim()
         ? item.emoji.trim()
         : undefined,
+    startDate:
+      typeof item.startDate === "string" &&
+      /^\d{4}-\d{2}-\d{2}$/.test(item.startDate)
+        ? item.startDate
+        : undefined,
+    createdAt:
+      typeof item.createdAt === "string" && item.createdAt
+        ? item.createdAt
+        : undefined,
+    sourceMessageId:
+      typeof item.sourceMessageId === "string" && item.sourceMessageId
+        ? item.sourceMessageId
+        : undefined,
   };
 }
 
@@ -360,7 +399,27 @@ export function writeLedger(entries: AccountLedgerEntry[]) {
 }
 
 export function readGoals(): WishlistGoal[] {
-  return readJson(GOALS_KEY, DEFAULT_GOALS);
+  if (typeof window === "undefined") return [];
+  const raw = readJson<unknown[] | null>(GOALS_KEY, null);
+  if (!Array.isArray(raw)) {
+    writeJson(GOALS_KEY, []);
+    return [];
+  }
+  const cleaned = raw.filter((g) => {
+    if (!g || typeof g !== "object") return false;
+    const row = g as Record<string, unknown>;
+    if (row.id === "goal-phone") return false;
+    if (row.title === "换新手机" && Number(row.saved) === 5200) return false;
+    return true;
+  }) as WishlistGoal[];
+  if (
+    cleaned.length !== raw.length ||
+    localStorage.getItem(DEMO_GOAL_PURGED_KEY) !== "1"
+  ) {
+    writeJson(GOALS_KEY, cleaned);
+    localStorage.setItem(DEMO_GOAL_PURGED_KEY, "1");
+  }
+  return cleaned;
 }
 
 export function writeGoals(goals: WishlistGoal[]) {
@@ -368,26 +427,38 @@ export function writeGoals(goals: WishlistGoal[]) {
 }
 
 export function readRecurringItems(): RecurringItem[] {
+  if (typeof window === "undefined") return [];
+
   const raw = readJson<unknown[]>(SUBS_KEY, []);
   if (!Array.isArray(raw) || raw.length === 0) {
+    // 显式写成 []，避免旧逻辑/缓存误以为「未初始化」
+    if (localStorage.getItem(SUBS_KEY) == null) {
+      writeJson(SUBS_KEY, []);
+    }
     return [];
   }
+
   const normalized = raw
     .map(normalizeRecurringItem)
     .filter((item): item is RecurringItem => item !== null);
 
-  // 一次性清掉旧演示种子，避免刷新后再次自动写入 Netflix / 房租等
-  const cleaned = normalized.filter(
-    (item) => !LEGACY_DEMO_RECURRING_IDS.has(item.id),
-  );
+  const cleaned = normalized.filter((item) => !isLegacyDemoRecurringItem(item));
+  const changed =
+    cleaned.length !== normalized.length ||
+    localStorage.getItem(DEMO_RECURRING_PURGED_KEY) !== "1";
+
   if (cleaned.length !== normalized.length) {
     writeJson(SUBS_KEY, cleaned);
+  }
+  if (changed) {
+    localStorage.setItem(DEMO_RECURRING_PURGED_KEY, "1");
   }
   return cleaned;
 }
 
 export function writeRecurringItems(items: RecurringItem[]) {
-  writeJson(SUBS_KEY, items);
+  const cleaned = items.filter((item) => !isLegacyDemoRecurringItem(item));
+  writeJson(SUBS_KEY, cleaned);
 }
 
 /** @deprecated */
@@ -564,7 +635,7 @@ export function estimateRemainingFixedExpenses(
 
     const occ = occurrenceDateInMonth(item, date);
     if (!occ || occ < today || occ > rangeEnd) continue;
-    const key = `${item.id}:${occ.slice(0, 7)}`;
+    const key = `${item.id}:${occ}`;
     if (loggedKeys?.has(key)) continue;
     total += item.amount;
   }
@@ -670,6 +741,7 @@ export function createRecurringItem(
       nextDate = addDays(new Date(), 7);
     }
   }
+  const today = localDateString();
   return {
     id: uid(),
     name: partial?.name?.trim() || "新周期项",
@@ -681,6 +753,12 @@ export function createRecurringItem(
     autoWrite: partial?.autoWrite !== false,
     category: partial?.category?.trim() || undefined,
     emoji: partial?.emoji?.trim() || undefined,
+    startDate:
+      partial?.startDate && /^\d{4}-\d{2}-\d{2}$/.test(partial.startDate)
+        ? partial.startDate
+        : today,
+    createdAt: partial?.createdAt || new Date().toISOString(),
+    sourceMessageId: partial?.sourceMessageId,
   };
 }
 

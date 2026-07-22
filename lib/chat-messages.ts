@@ -57,18 +57,28 @@ export type UiChatMessage =
 type OmitId<T> = T extends unknown ? Omit<T, "id"> : never;
 export type UiChatMessageDraft = OmitId<UiChatMessage>;
 
+const SOFT_USER_KEY = "cyberbookkeeper_chat_user_id";
+
 /**
- * 仅在已登录 Supabase Auth 时写入真实 uid。
- * 密码门 / 匿名单机模式返回 null（勿写随机 UUID，否则会撞 auth.users 外键）。
+ * 优先 Supabase Auth uid；否则使用本地软用户 ID（单机/密码门，用于对话隔离）。
+ * schema 中 user_id 可为 null 且无 auth.users 外键。
  */
-export async function resolveChatUserId(): Promise<string | null> {
+export async function resolveChatUserId(): Promise<string> {
   try {
     const { data } = await getSupabase().auth.getUser();
     if (data.user?.id) return data.user.id;
   } catch {
     // no auth session
   }
-  return null;
+  if (typeof window === "undefined") {
+    return "00000000-0000-4000-8000-000000000000";
+  }
+  let id = localStorage.getItem(SOFT_USER_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(SOFT_USER_KEY, id);
+  }
+  return id;
 }
 
 export function recordsAggregateStatus(
@@ -170,22 +180,18 @@ export function uiMessageToInsert(msg: UiChatMessageDraft): {
   };
 }
 
-/** 拉取当前用户全部对话（按时间升序） */
+/** 拉取当前用户最近对话（按时间升序，最多 50 条） */
 export async function fetchChatHistory(): Promise<UiChatMessage[]> {
   const userId = await resolveChatUserId();
-  let query = getSupabase()
+  const { data, error } = await getSupabase()
     .from("chat_messages")
     .select("id, user_id, role, content, card_data, status, created_at")
-    .order("created_at", { ascending: true });
-
-  if (userId) {
-    query = query.eq("user_id", userId);
-  }
-
-  const { data, error } = await query;
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(50);
   if (error) throw error;
 
-  const rows = (data ?? []) as ChatMessageRow[];
+  const rows = ([...(data ?? [])] as ChatMessageRow[]).reverse();
 
   return rows
     .map(rowToUiMessage)

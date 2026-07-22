@@ -47,6 +47,7 @@ import {
   syncDueRecurringItems,
 } from "@/lib/recurring-sync";
 import { readBudgetFromStorage } from "@/lib/transaction-utils";
+import { filterActiveTransactions } from "@/lib/utils";
 
 type SheetKind =
   | { type: "goal"; goalId: string | "new"; focusDeposit?: boolean }
@@ -112,7 +113,7 @@ export function PlannerPage() {
     try {
       const monthTx = await fetchMonthTransactions();
       setLoggedKeys(extractLoggedKeys(monthTx));
-      const spent = monthTx
+      const spent = filterActiveTransactions(monthTx)
         .filter((row) => row.type === "EXPENSE")
         .reduce((sum, row) => sum + Number(row.amount), 0);
       setMonthSpent(spent);
@@ -370,25 +371,14 @@ export function PlannerPage() {
           { id: toastId },
         );
       } else {
-        const { updated, created } =
-          await reconcileRecurringItemLedger(savedItem);
+        const { created } = await reconcileRecurringItemLedger(savedItem);
         await refreshMonthLedger();
-        if (updated > 0 && created > 0) {
-          toast.success(
-            `已同步更新 ${updated} 笔账单，并补记 ${created} 笔`,
-            { id: toastId },
-          );
-        } else if (updated > 0) {
-          toast.success(`周期项已更新，已同步 ${updated} 笔关联账单`, {
-            id: toastId,
-          });
-        } else if (created > 0) {
-          toast.success(`周期项已更新，并补记 ${created} 笔到期账单`, {
-            id: toastId,
-          });
-        } else {
-          toast.success("周期项已更新", { id: toastId });
-        }
+        toast.success(
+          created > 0
+            ? `周期项已更新，并补记 ${created} 笔到期账单`
+            : "周期项已更新",
+          { id: toastId },
+        );
       }
     } catch (error) {
       toast.error(

@@ -4,8 +4,10 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import {
   formatAutoSyncToast,
+  purgeLegacyDemoRecurringTransactions,
   syncDueRecurringItems,
 } from "@/lib/recurring-sync";
+import { readRecurringItems } from "@/lib/planner";
 
 /**
  * 全局初始化：登录后任意页面挂载时检查到期周期项并写入主账单。
@@ -21,6 +23,9 @@ export function RecurringAutoSync() {
     const timer = window.setTimeout(() => {
       void (async () => {
         try {
+          // 先清本地演示种子，再清云端误写入的演示账单
+          readRecurringItems();
+          await purgeLegacyDemoRecurringTransactions();
           const created = await syncDueRecurringItems();
           const message = formatAutoSyncToast(created);
           if (message) toast.success(message);

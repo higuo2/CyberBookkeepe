@@ -22,7 +22,7 @@ import {
   prepareDraft,
 } from "@/lib/transaction-utils";
 import type { Transaction, TransactionDraft, TransactionType } from "@/lib/types";
-import { cleanNote, isRecurringNote, withPreservedRecTags } from "@/lib/utils";
+import { cleanNote, filterActiveTransactions, isRecurringNote, markRecurringTxSkipped, withPreservedRecTags } from "@/lib/utils";
 
 function displayDate(date: string) {
   return new Intl.DateTimeFormat("zh-HK", {
@@ -83,7 +83,7 @@ export function TransactionsPage() {
         .select("id, amount, type, category, date, note")
         .order("date", { ascending: false });
       if (error) throw error;
-      setTransactions((data ?? []) as Transaction[]);
+      setTransactions(filterActiveTransactions((data ?? []) as Transaction[]));
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "读取失败，请稍后重试",
@@ -218,31 +218,51 @@ export function TransactionsPage() {
       toast.error("当前无网络，无法删除账单");
       return;
     }
+
+    const original = transactions.find((item) => item.id === editingId);
+    const isRecurring = isRecurringNote(original?.note);
+
     if (
       !window.confirm(
-        `确定彻底删除「${cleanNote(draft.note) || draft.category}」吗？`,
+        isRecurring
+          ? `确定跳过本期「${cleanNote(draft.note) || draft.category}」吗？跳过后不会再自动生成这一期。`
+          : `确定彻底删除「${cleanNote(draft.note) || draft.category}」吗？`,
       )
     ) {
       return;
     }
     setDeleting(true);
-    const toastId = toast.loading("正在删除账单…");
+    const toastId = toast.loading(
+      isRecurring ? "正在跳过本期…" : "正在删除账单…",
+    );
     try {
-      const { error } = await getSupabase()
-        .from("transactions")
-        .delete()
-        .eq("id", editingId);
-      if (error) throw error;
-      setTransactions((current) =>
-        current.filter((item) => item.id !== editingId),
-      );
+      if (isRecurring && original) {
+        const { error } = await getSupabase()
+          .from("transactions")
+          .update({ note: markRecurringTxSkipped(original.note) })
+          .eq("id", editingId);
+        if (error) throw error;
+        setTransactions((current) =>
+          current.filter((item) => item.id !== editingId),
+        );
+        toast.success("已跳过本期，不会再自动生成", { id: toastId });
+      } else {
+        const { error } = await getSupabase()
+          .from("transactions")
+          .delete()
+          .eq("id", editingId);
+        if (error) throw error;
+        setTransactions((current) =>
+          current.filter((item) => item.id !== editingId),
+        );
+        toast.success("账单已删除", { id: toastId });
+      }
       setDialogMode(null);
       setEditingId(null);
       setEditingIsRecurring(false);
-      toast.success("账单已删除", { id: toastId });
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "删除失败，请稍后重试",
+        error instanceof Error ? error.message : "操作失败，请稍后重试",
         { id: toastId },
       );
     } finally {

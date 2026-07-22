@@ -17,6 +17,7 @@ import {
   writeBudgetToStorage,
 } from "@/lib/transaction-utils";
 import type { Transaction } from "@/lib/types";
+import { filterActiveTransactions } from "@/lib/utils";
 
 export function ProfilePage() {
   const [budgetInput, setBudgetInput] = useState("");
@@ -56,7 +57,7 @@ export function ProfilePage() {
         .select("id, amount, type, category, date, note")
         .order("date", { ascending: false });
       if (error) throw error;
-      const rows = (data ?? []) as Transaction[];
+      const rows = filterActiveTransactions((data ?? []) as Transaction[]);
       if (rows.length === 0) {
         toast.error("暂无账单可导出", { id: toastId });
         return;

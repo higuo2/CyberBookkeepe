@@ -9,6 +9,7 @@ import {
   type WeekdayCode,
 } from "@/lib/planner";
 import type { ParsedRecurringData } from "@/lib/types";
+import { localDateString } from "@/lib/transaction-utils";
 
 /** AI by_days：1=周一 … 7=周日 → 内部 WeekdayCode */
 const AI_DAY_TO_CODE: Record<number, WeekdayCode> = {
@@ -32,12 +33,17 @@ export function mapAiDaysToCodes(days?: number[]): WeekdayCode[] {
 /** 将 AI 周期解析结果转为规划页 RecurringItem */
 export function recurringItemFromAiParse(
   data: ParsedRecurringData,
+  options?: { sourceMessageId?: string },
 ): RecurringItem {
   const direction = data.direction === "income" ? "income" : "expense";
   const endDate =
     data.end_date && /^\d{4}-\d{2}-\d{2}$/.test(data.end_date)
       ? data.end_date
       : null;
+  const startDate =
+    data.start_date && /^\d{4}-\d{2}-\d{2}$/.test(data.start_date)
+      ? data.start_date
+      : localDateString();
 
   if (data.period_type === "monthly") {
     const dayOfMonth = Math.min(
@@ -57,6 +63,8 @@ export function recurringItemFromAiParse(
       },
       nextDate: nextMonthlyDate(dayOfMonth),
       emoji: direction === "income" ? "💵" : "☁️",
+      startDate,
+      sourceMessageId: options?.sourceMessageId,
     });
   }
 
@@ -78,13 +86,44 @@ export function recurringItemFromAiParse(
     },
     nextDate: nextByDaysDate(byDays),
     emoji: direction === "income" ? "💵" : "🚌",
+    startDate,
+    sourceMessageId: options?.sourceMessageId,
   });
 }
 
-/** 写入本地周期列表（插到最前），返回新建项 */
-export function persistAiRecurringItem(data: ParsedRecurringData): RecurringItem {
-  const item = recurringItemFromAiParse(data);
-  const next = [item, ...readRecurringItems()];
-  writeRecurringItems(next);
+/**
+ * 幂等写入本地周期列表：
+ * - 同 message_id 已存在 → 返回已有项
+ * - 同 title + amount 已存在 → 返回已有项（防止失败重试重复）
+ */
+export function persistAiRecurringItem(
+  data: ParsedRecurringData,
+  sourceMessageId?: string,
+): RecurringItem {
+  const existing = readRecurringItems();
+
+  if (sourceMessageId) {
+    const byMsg = existing.find((i) => i.sourceMessageId === sourceMessageId);
+    if (byMsg) return byMsg;
+  }
+
+  const byTitleAmount = existing.find(
+    (i) =>
+      i.name.trim() === data.title.trim() &&
+      Number(i.amount) === Number(data.amount),
+  );
+  if (byTitleAmount) {
+    if (sourceMessageId && !byTitleAmount.sourceMessageId) {
+      const patched = { ...byTitleAmount, sourceMessageId };
+      writeRecurringItems(
+        existing.map((i) => (i.id === patched.id ? patched : i)),
+      );
+      return patched;
+    }
+    return byTitleAmount;
+  }
+
+  const item = recurringItemFromAiParse(data, { sourceMessageId });
+  writeRecurringItems([item, ...existing]);
   return item;
 }

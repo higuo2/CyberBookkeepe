@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LoaderCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { filterActiveTransactions } from "@/lib/utils";
 import { getSupabase } from "@/lib/supabase";
 import {
   getMonthRange,
@@ -77,8 +78,12 @@ export function ChartsPage() {
       if (monthRes.error) throw monthRes.error;
       if (weekRes.error) throw weekRes.error;
 
-      setMonthTransactions((monthRes.data ?? []) as Transaction[]);
-      setWeekTransactions((weekRes.data ?? []) as Transaction[]);
+      setMonthTransactions(
+        filterActiveTransactions((monthRes.data ?? []) as Transaction[]),
+      );
+      setWeekTransactions(
+        filterActiveTransactions((weekRes.data ?? []) as Transaction[]),
+      );
       if (showToast) toast.success("统计已更新", { id: "refresh-chart" });
     } catch (error) {
       toast.error(

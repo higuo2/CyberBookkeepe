@@ -28,7 +28,10 @@ import {
   mapAiDaysToCodes,
   persistAiRecurringItem,
 } from "@/lib/ai-recurring";
-import { syncDueRecurringItems } from "@/lib/recurring-sync";
+import {
+  findTransactionByMsgMarker,
+  syncDueRecurringItems,
+} from "@/lib/recurring-sync";
 import {
   WORKDAYS,
   createRecurringItem,
@@ -49,7 +52,7 @@ import type {
   Transaction,
   TransactionDraft,
 } from "@/lib/types";
-import { cleanNote } from "@/lib/utils";
+import { chatMsgMarker, cleanNote, filterActiveTransactions } from "@/lib/utils";
 
 type ChatMessage = UiChatMessage;
 
@@ -91,14 +94,22 @@ function formatHeaderDate(date = new Date()) {
   });
 }
 
-function toDbRow(item: ParsedTransaction | TransactionDraft) {
-  return prepareDraft({
+function toDbRow(
+  item: ParsedTransaction | TransactionDraft,
+  msgMarker?: string,
+) {
+  const prepared = prepareDraft({
     amount: item.amount,
     type: item.type,
     category: item.category,
     date: item.date,
     note: item.note,
   });
+  if (!msgMarker) return prepared;
+  const note = prepared.note?.includes(msgMarker)
+    ? prepared.note
+    : `${prepared.note || ""} ${msgMarker}`.trim();
+  return { ...prepared, note };
 }
 
 function createWelcomeMessage(): ChatMessage {
@@ -221,10 +232,10 @@ export function RecordPage() {
         const today = localDateString();
         const { data } = await getSupabase()
           .from("transactions")
-          .select("amount, type, date")
+          .select("amount, type, date, note")
           .eq("date", today)
           .eq("type", "EXPENSE");
-        const sum = (data ?? []).reduce(
+        const sum = filterActiveTransactions(data ?? []).reduce(
           (acc, row) => acc + Number((row as Transaction).amount),
           0,
         );
@@ -367,25 +378,34 @@ export function RecordPage() {
 
     setActionBusy(true);
     try {
-      const row = toDbRow(record);
-      const { data, error } = await getSupabase()
-        .from("transactions")
-        .insert(row)
-        .select("id")
-        .single();
-      if (error) throw error;
+      const marker = chatMsgMarker(messageId, recordIndex);
+      const existing = await findTransactionByMsgMarker(marker);
+      const row = toDbRow(record, marker);
+      let txId = existing?.id ?? record.id;
+
+      if (!existing) {
+        const { data, error } = await getSupabase()
+          .from("transactions")
+          .insert(row)
+          .select("id")
+          .single();
+        if (error) throw error;
+        txId = data?.id;
+      }
 
       const nextRecords = msg.records.map((r, i) =>
         i === recordIndex
           ? {
               ...r,
               ...row,
-              id: data?.id,
+              id: txId,
               status: "confirmed" as const,
               recordedAt: formatClock(),
             }
           : r,
       );
+
+      await syncBotRecordsCloud(messageId, nextRecords, msg.replyText);
 
       setMessages((prev) =>
         prev.map((m) =>
@@ -394,8 +414,7 @@ export function RecordPage() {
             : m,
         ),
       );
-      await syncBotRecordsCloud(messageId, nextRecords, msg.replyText);
-      if (row.type === "EXPENSE") {
+      if (row.type === "EXPENSE" && !existing) {
         setTodaySpend((prev) => prev + Number(row.amount));
       }
       toast.success("记录成功喵~");
@@ -414,26 +433,22 @@ export function RecordPage() {
 
     setActionBusy(true);
     try {
-      const item = persistAiRecurringItem(msg.item);
+      const item = persistAiRecurringItem(msg.item, messageId);
       if (item.autoWrite !== false) {
-        try {
-          await syncDueRecurringItems([item]);
-        } catch {
-          // ignore sync failure
-        }
+        await syncDueRecurringItems([item]);
       }
+      await syncBotRecurringCloud(
+        messageId,
+        msg.item,
+        msg.replyText,
+        "confirmed",
+      );
       setMessages((prev) =>
         prev.map((m) =>
           m.kind === "bot-recurring" && m.id === messageId
             ? { ...m, status: "confirmed" as const }
             : m,
         ),
-      );
-      await syncBotRecurringCloud(
-        messageId,
-        msg.item,
-        msg.replyText,
-        "confirmed",
       );
       toast.success("记录成功喵~");
     } catch (error) {
@@ -477,15 +492,22 @@ export function RecordPage() {
     }
     setActionBusy(true);
     try {
-      const row = toDbRow(txDraft);
-      const { data, error } = await getSupabase()
-        .from("transactions")
-        .insert(row)
-        .select("id")
-        .single();
-      if (error) throw error;
-
       const { messageId, recordIndex } = txEditTarget;
+      const marker = chatMsgMarker(messageId, recordIndex);
+      const existing = await findTransactionByMsgMarker(marker);
+      const row = toDbRow(txDraft, marker);
+      let txId = existing?.id;
+
+      if (!existing) {
+        const { data, error } = await getSupabase()
+          .from("transactions")
+          .insert(row)
+          .select("id")
+          .single();
+        if (error) throw error;
+        txId = data?.id;
+      }
+
       const msg = messages.find((m) => m.id === messageId);
       const nextRecords =
         msg && msg.kind === "bot-records"
@@ -495,7 +517,7 @@ export function RecordPage() {
                     ...r,
                     ...row,
                     comment: r.comment,
-                    id: data?.id,
+                    id: txId,
                     status: "confirmed" as const,
                     recordedAt: formatClock(),
                   }
@@ -503,16 +525,17 @@ export function RecordPage() {
             )
           : [];
 
+      if (msg && msg.kind === "bot-records") {
+        await syncBotRecordsCloud(messageId, nextRecords, msg.replyText);
+      }
+
       setMessages((prev) =>
         prev.map((m) => {
           if (m.kind !== "bot-records" || m.id !== messageId) return m;
           return { ...m, records: nextRecords };
         }),
       );
-      if (msg && msg.kind === "bot-records") {
-        await syncBotRecordsCloud(messageId, nextRecords, msg.replyText);
-      }
-      if (row.type === "EXPENSE") {
+      if (row.type === "EXPENSE" && !existing) {
         setTodaySpend((prev) => prev + Number(row.amount));
       }
       setTxDialogOpen(false);
@@ -554,46 +577,85 @@ export function RecordPage() {
         Math.max(1, Number(recurringForm.dayOfMonth) || 1),
       );
       const nextDate = computeFormNextDate(recurringForm);
-      const item = createRecurringItem({
-        name: recurringForm.name.trim(),
-        amount,
-        direction: recurringForm.direction,
-        autoWrite: recurringForm.autoWrite,
-        emoji: recurringForm.emoji,
-        recurrence: {
-          kind: recurringForm.kind,
-          dayOfMonth:
-            recurringForm.kind === "monthly" ||
-            recurringForm.kind === "yearly"
-              ? dayOfMonth
-              : undefined,
-          by_days:
-            recurringForm.kind === "by_days"
-              ? recurringForm.byDays
-              : undefined,
-          end_date: recurringForm.endDate || null,
-        },
-        nextDate,
-      });
-      writeRecurringItems([item, ...readRecurringItems()]);
-      if (item.autoWrite !== false) {
-        try {
-          await syncDueRecurringItems([item]);
-        } catch {
-          // ignore
-        }
+      const existing = readRecurringItems().find(
+        (i) => i.sourceMessageId === recurringEditId,
+      );
+      const item =
+        existing ??
+        createRecurringItem({
+          name: recurringForm.name.trim(),
+          amount,
+          direction: recurringForm.direction,
+          autoWrite: recurringForm.autoWrite,
+          emoji: recurringForm.emoji,
+          recurrence: {
+            kind: recurringForm.kind,
+            dayOfMonth:
+              recurringForm.kind === "monthly" ||
+              recurringForm.kind === "yearly"
+                ? dayOfMonth
+                : undefined,
+            by_days:
+              recurringForm.kind === "by_days"
+                ? recurringForm.byDays
+                : undefined,
+            end_date: recurringForm.endDate || null,
+          },
+          nextDate,
+          startDate: localDateString(),
+          sourceMessageId: recurringEditId,
+        });
+
+      if (!existing) {
+        writeRecurringItems([item, ...readRecurringItems()]);
+      } else {
+        const patched = {
+          ...existing,
+          name: recurringForm.name.trim(),
+          amount,
+          direction: recurringForm.direction,
+          autoWrite: recurringForm.autoWrite,
+          emoji: recurringForm.emoji,
+          recurrence: {
+            kind: recurringForm.kind,
+            dayOfMonth:
+              recurringForm.kind === "monthly" ||
+              recurringForm.kind === "yearly"
+                ? dayOfMonth
+                : undefined,
+            by_days:
+              recurringForm.kind === "by_days"
+                ? recurringForm.byDays
+                : undefined,
+            end_date: recurringForm.endDate || null,
+          },
+          nextDate,
+        };
+        writeRecurringItems(
+          readRecurringItems().map((i) =>
+            i.id === existing.id ? patched : i,
+          ),
+        );
+      }
+
+      const saved =
+        readRecurringItems().find((i) => i.sourceMessageId === recurringEditId) ??
+        item;
+
+      if (saved.autoWrite !== false) {
+        await syncDueRecurringItems([saved]);
       }
 
       const updatedItem: ParsedRecurringData = {
-        title: item.name,
-        amount: item.amount,
-        direction: item.direction,
-        category: item.category ?? "其它",
+        title: saved.name,
+        amount: saved.amount,
+        direction: saved.direction,
+        category: saved.category ?? "其它",
         period_type:
-          item.recurrence.kind === "monthly" ? "monthly" : "weekly",
+          saved.recurrence.kind === "monthly" ? "monthly" : "weekly",
         by_days:
-          item.recurrence.kind === "by_days"
-            ? (item.recurrence.by_days ?? []).map((code) => {
+          saved.recurrence.kind === "by_days"
+            ? (saved.recurrence.by_days ?? []).map((code) => {
                 const order: WeekdayCode[] = [
                   "MON",
                   "TUE",
@@ -606,11 +668,21 @@ export function RecordPage() {
                 return order.indexOf(code) + 1;
               })
             : undefined,
-        day_of_month: item.recurrence.dayOfMonth,
-        start_date: localDateString(),
-        end_date: item.recurrence.end_date ?? undefined,
-        auto_record: item.autoWrite !== false,
+        day_of_month: saved.recurrence.dayOfMonth,
+        start_date: saved.startDate ?? localDateString(),
+        end_date: saved.recurrence.end_date ?? undefined,
+        auto_record: saved.autoWrite !== false,
       };
+
+      const prevMsg = messages.find((m) => m.id === recurringEditId);
+      await syncBotRecurringCloud(
+        recurringEditId,
+        updatedItem,
+        prevMsg && prevMsg.kind === "bot-recurring"
+          ? prevMsg.replyText
+          : "已更新周期规则",
+        "confirmed",
+      );
 
       setMessages((prev) =>
         prev.map((m) =>
@@ -622,15 +694,6 @@ export function RecordPage() {
               }
             : m,
         ),
-      );
-      const prevMsg = messages.find((m) => m.id === recurringEditId);
-      await syncBotRecurringCloud(
-        recurringEditId,
-        updatedItem,
-        prevMsg && prevMsg.kind === "bot-recurring"
-          ? prevMsg.replyText
-          : "已更新周期规则",
-        "confirmed",
       );
       setRecurringOpen(false);
       setRecurringEditId(null);
@@ -759,7 +822,7 @@ export function RecordPage() {
                           onClick={() => void confirmRecurring(message.id)}
                           type="button"
                         >
-                          ✓ 确认存入
+                          ✓ {actionBusy ? "处理中…" : "确认存入"}
                         </button>
                       </div>
                     ) : status === "confirmed" ? (
@@ -860,7 +923,7 @@ export function RecordPage() {
                               }
                               type="button"
                             >
-                              ✓ 确认存入
+                              ✓ {actionBusy ? "处理中…" : "确认存入"}
                             </button>
                           </div>
                         ) : record.status === "confirmed" ? (
