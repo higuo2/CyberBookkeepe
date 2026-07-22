@@ -99,7 +99,7 @@ export function CategoryPieChart({
                   <p className="truncate text-sm font-semibold text-[#5C4A32]">
                     {categoryLabel(item.name, t)}
                   </p>
-                  <p className="shrink-0 text-xs font-medium tabular-nums text-[#A08B68]">
+                  <p className="shrink-0 font-numeric text-xs font-medium text-[#A08B68]">
                     {pct.toFixed(0)}%
                   </p>
                 </div>
@@ -113,7 +113,7 @@ export function CategoryPieChart({
                   />
                 </div>
               </div>
-              <p className="w-[5.5rem] shrink-0 text-right text-sm font-semibold tabular-nums text-[#5C4A32]">
+              <p className="w-[5.5rem] shrink-0 text-right font-numeric text-sm font-semibold text-[#4A3E31]">
                 {formatMoney(item.value, currency)}
               </p>
             </li>
@@ -152,7 +152,7 @@ function TrendTooltip({
   return (
     <div className="rounded-xl border border-[#EFE5D3] bg-[#FFFDF0] p-2.5 text-xs text-[#8C6D53] shadow-md">
       <p className="font-medium">{formatTrendDate(point.date, locale)}</p>
-      <p className="mt-1 font-semibold tabular-nums text-[#5C4A32]">
+      <p className="mt-1 font-numeric font-semibold text-[#4A3E31]">
         {expenseLabel(formatMoney(Number(point.amount) || 0, currency))}
       </p>
     </div>

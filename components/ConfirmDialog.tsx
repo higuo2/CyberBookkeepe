@@ -95,14 +95,14 @@ export function SettingsRow({
         {icon}
       </span>
       <span
-        className={`min-w-0 flex-1 text-[15px] font-semibold ${
-          danger ? "text-[#E07A6A]" : "text-[#5C4A32]"
+        className={`min-w-0 flex-1 text-sm font-medium ${
+          danger ? "text-[#E07A6A]" : "text-[#4A3E31]"
         }`}
       >
         {label}
       </span>
       {value ? (
-        <span className="shrink-0 text-sm font-medium text-[#A08875]">
+        <span className="shrink-0 font-numeric text-sm font-medium text-[#8C8273]">
           {value}
         </span>
       ) : null}

@@ -550,7 +550,7 @@ export function PlannerPage() {
                           {item.name}
                         </p>
                         <p
-                          className={`mt-1 text-sm font-semibold ${
+                          className={`mt-1 font-numeric text-sm font-semibold ${
                             isIncome ? "text-[#2A9D8F]" : "text-[#8C6D53]"
                           }`}
                         >
@@ -618,11 +618,11 @@ export function PlannerPage() {
                             </span>
                             <span className="truncate">{goal.title}</span>
                           </p>
-                          <p className="shrink-0 text-xs font-semibold text-[#A08875]">
+                          <p className="shrink-0 font-numeric text-xs font-semibold text-[#8C8273]">
                             {pct.toFixed(0)}%
                           </p>
                         </div>
-                        <p className="mt-1 text-xs text-[#A08875]">
+                        <p className="mt-1 font-numeric text-caption">
                           {t("planner.wishProgress", {
                             saved: formatHKD(goal.saved),
                             target: formatHKD(goal.target),

@@ -239,13 +239,13 @@ export function ChartsPage() {
                   {m.symbol}
                 </span>
               </div>
-              <p className="mt-3 text-xs text-[#A08875]">{t("charts.monthExpense")}</p>
-              <p className="mt-0.5 text-xl font-extrabold tracking-tight text-[#E07A3D]">
+              <p className="mt-3 text-caption">{t("charts.monthExpense")}</p>
+              <p className="mt-0.5 font-numeric text-xl font-semibold tracking-tight text-[#E07A3D]">
                 {formatMoney(totals.expense, code)}
               </p>
-              <p className="mt-2 text-xs text-[#A08875]">
+              <p className="mt-2 text-caption">
                 {t("charts.monthIncome")}{" "}
-                <span className="font-semibold text-[#2A9D8F]">
+                <span className="font-numeric font-semibold text-[#2A9D8F]">
                   {formatMoney(totals.income, code)}
                 </span>
               </p>

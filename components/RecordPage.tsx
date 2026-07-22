@@ -746,10 +746,10 @@ export function RecordPage() {
       <main className="relative flex h-full min-h-0 flex-col bg-[#FAF6EC]">
         <header className="z-20 flex shrink-0 items-center justify-between border-b border-[#EFE5D3] bg-[#FAF6EC] px-5 pb-3 pt-[calc(env(safe-area-inset-top)+12px)]">
           <div>
-            <p className="text-sm font-medium text-[#8A7A5C]">{headerDate}</p>
-            <p className="mt-0.5 text-base font-semibold text-[#5C4A32]">
+            <p className="text-caption">{headerDate}</p>
+            <p className="mt-0.5 text-base font-semibold text-[#4A3E31]">
               {t("record.todaySpend")}{" "}
-              <span className="text-[#E07A3D]">
+              <span className="font-numeric text-[#E07A3D]">
                 {formatMoney(todaySpend, readDefaultCurrency())}
               </span>
             </p>
@@ -820,7 +820,7 @@ export function RecordPage() {
                         </p>
                       </div>
                       <p
-                        className={`mt-1.5 text-sm font-semibold ${
+                        className={`mt-1.5 font-numeric text-sm font-semibold ${
                           item.direction === "income"
                             ? "text-[#2A9D8F]"
                             : "text-[#8C6D53]"
@@ -938,7 +938,7 @@ export function RecordPage() {
                               </p>
                             </div>
                             <p
-                              className={`shrink-0 text-base font-bold ${
+                              className={`shrink-0 font-numeric text-base font-semibold ${
                                 record.type === "EXPENSE"
                                   ? "text-[#E07A3D]"
                                   : "text-[#2A9D8F]"

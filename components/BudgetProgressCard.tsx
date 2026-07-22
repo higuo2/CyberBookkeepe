@@ -132,19 +132,19 @@ export function BudgetProgressCard({
             <div className="mt-3 grid grid-cols-3 gap-2 text-center">
               <div className="rounded-2xl bg-[#FFF6D9] p-2.5">
                 <p className="text-[10px] font-medium text-[#A08875]">{t("budget.used")}</p>
-                <p className="mt-1 text-sm font-semibold text-[#4A3E3D]">
+                <p className="mt-1 font-numeric text-sm font-semibold text-[#4A3E31]">
                   {formatHKD(stats.spent)}
                 </p>
               </div>
               <div className="rounded-2xl bg-[#FFF6D9] p-2.5">
                 <p className="text-[10px] font-medium text-[#A08875]">{t("budget.remaining")}</p>
-                <p className={`mt-1 text-sm font-semibold ${remainingClass}`}>
+                <p className={`mt-1 font-numeric text-sm font-semibold ${remainingClass}`}>
                   {formatHKD(stats.remaining)}
                 </p>
               </div>
               <div className="rounded-2xl bg-[#FFF6D9] p-2.5">
                 <p className="text-[10px] font-medium text-[#A08875]">{t("budget.dailyAvailable")}</p>
-                <p className="mt-1 text-sm font-semibold text-[#4A3E3D]">
+                <p className="mt-1 font-numeric text-sm font-semibold text-[#4A3E31]">
                   {formatDailyAvailable(stats.dailyAvailable, t)}
                 </p>
               </div>

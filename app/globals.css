@@ -4,8 +4,11 @@
   color-scheme: light;
   --cream: #faf6ec;
   --cream-border: #efe5d3;
+  --font-scale: 1;
   background: #faf6ec;
   font-family:
+    "SF Pro Rounded",
+    ui-rounded,
     "PingFang SC",
     "Hiragino Sans GB",
     "Noto Sans SC",
@@ -27,6 +30,7 @@ html {
   overflow-x: hidden;
   background: #faf6ec;
   touch-action: pan-y;
+  font-size: calc(16px * var(--font-scale, 1));
 }
 
 body {
@@ -38,6 +42,7 @@ body {
   background: #faf6ec;
   color: #5c4a32;
   -webkit-overflow-scrolling: touch;
+  font-family: inherit;
 }
 
 #__next,
@@ -70,4 +75,20 @@ button {
 }
 .scrollbar-none::-webkit-scrollbar {
   display: none;
+}
+
+.font-numeric {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Typography tokens (cream app) */
+.text-title {
+  @apply text-lg font-semibold text-[#3A322B];
+}
+.text-body {
+  @apply text-sm font-medium text-[#4A3E31];
+}
+.text-caption {
+  @apply text-xs font-normal text-[#8C8273];
 }

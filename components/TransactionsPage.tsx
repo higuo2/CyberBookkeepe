@@ -565,7 +565,7 @@ export function TransactionsPage() {
                                 </span>
                               ) : null}
                               <p
-                                className={`text-[15px] font-semibold tabular-nums ${
+                                className={`font-numeric text-sm font-semibold ${
                                   expense
                                     ? "text-[#6B5344]"
                                     : "text-[#5B8F7B]"

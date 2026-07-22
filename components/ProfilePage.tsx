@@ -36,7 +36,14 @@ import {
   translateCurrencyLabel,
   writeStoredLocale,
   type Locale,
+  type MessageKey,
 } from "@/lib/i18n";
+import {
+  FONT_FAMILY_STACK,
+  useFont,
+  type FontSize,
+  type FontStyle,
+} from "@/context/FontContext";
 
 const PLANNER_STORAGE_KEYS = [
   "cyberbookkeeper_planner_accounts",
@@ -51,11 +58,37 @@ const PLANNER_STORAGE_KEYS = [
   "cyberbookkeeper_chat_user_id",
 ];
 
+const FONT_STYLE_OPTIONS: {
+  code: FontStyle;
+  labelKey: MessageKey;
+  hintKey?: MessageKey;
+}[] = [
+  { code: "system", labelKey: "settings.fontStyle.system" },
+  {
+    code: "rounded",
+    labelKey: "settings.fontStyle.rounded",
+    hintKey: "settings.fontStyle.roundedHint",
+  },
+  {
+    code: "serif",
+    labelKey: "settings.fontStyle.serif",
+    hintKey: "settings.fontStyle.serifHint",
+  },
+];
+
+const FONT_SIZE_OPTIONS: { code: FontSize; labelKey: MessageKey }[] = [
+  { code: "small", labelKey: "settings.fontSize.small" },
+  { code: "medium", labelKey: "settings.fontSize.medium" },
+  { code: "large", labelKey: "settings.fontSize.large" },
+];
+
 export function ProfilePage() {
   const { locale, setLocale, t } = useI18n();
+  const { fontSize, fontStyle, setFontSize, setFontStyle } = useFont();
   const [currency, setCurrency] = useState<CurrencyCode>("HKD");
   const [isLanguageSheetOpen, setIsLanguageSheetOpen] = useState(false);
   const [isCurrencySheetOpen, setIsCurrencySheetOpen] = useState(false);
+  const [isFontStyleSheetOpen, setIsFontStyleSheetOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [resetting, setResetting] = useState(false);
@@ -81,12 +114,18 @@ export function ProfilePage() {
     toast.success(t("toast.currencySet", { code: next }));
   }
 
-  function handleFontClick() {
-    toast.message(t("toast.fontSoon"));
+  function handleFontStyleChange(next: FontStyle) {
+    setFontStyle(next);
+    setIsFontStyleSheetOpen(false);
   }
 
   function handleTipClick() {
     toast.message(t("toast.tipThanks"));
+  }
+
+  function fontStyleLabel(style: FontStyle) {
+    const option = FONT_STYLE_OPTIONS.find((item) => item.code === style);
+    return option ? t(option.labelKey) : style;
   }
 
   async function exportAll() {
@@ -103,7 +142,9 @@ export function ProfilePage() {
         return;
       }
       exportTransactionsToXlsx(rows, { t });
-      toast.success(t("toast.exportDone", { count: rows.length }), { id: toastId });
+      toast.success(t("toast.exportDone", { count: rows.length }), {
+        id: toastId,
+      });
     } catch (error) {
       toast.error(formatSupabaseError(error), { id: toastId });
     } finally {
@@ -153,16 +194,18 @@ export function ProfilePage() {
   return (
     <main className="h-full overflow-y-auto overscroll-contain bg-[#FFFDF0] px-4 pb-8 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
       <header className="px-1">
-        <p className="text-sm font-semibold text-[#F8A055]">{t("settings.eyebrow")}</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-[#5C4A32]">
+        <p className="text-caption font-semibold text-[#F8A055]">
+          {t("settings.eyebrow")}
+        </p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-[#3A322B]">
           {t("settings.title")}
         </h1>
-        <p className="mt-2 text-sm text-[#9A7B55]">{t("settings.subtitle")}</p>
+        <p className="mt-2 text-sm text-[#8C8273]">{t("settings.subtitle")}</p>
       </header>
 
       {/* 卡片 A：偏好设置 */}
       <section className="mt-6">
-        <p className="mb-2 px-1 text-xs font-semibold tracking-wide text-[#A08875]">
+        <p className="mb-2 px-1 text-caption font-semibold tracking-wide">
           {t("settings.section.preferences")}
         </p>
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm divide-y divide-[#F5F0E8]">
@@ -178,18 +221,81 @@ export function ProfilePage() {
             onClick={() => setIsCurrencySheetOpen(true)}
             value={currency}
           />
+        </div>
+      </section>
+
+      {/* 卡片：字体与字号 */}
+      <section className="mt-5">
+        <p className="mb-2 px-1 text-caption font-semibold tracking-wide">
+          {t("settings.fontSection")}
+        </p>
+        <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
           <SettingsRow
+            chevron
             icon={<Type className="size-4" strokeWidth={2} />}
-            label={t("settings.font")}
-            onClick={handleFontClick}
-            value={t("settings.fontValue")}
+            label={t("settings.fontStyle")}
+            onClick={() => setIsFontStyleSheetOpen(true)}
+            value={fontStyleLabel(fontStyle)}
           />
+
+          <div className="border-t border-[#F5F0E8] px-4 pb-4 pt-3">
+            <p className="text-body">{t("settings.fontSize")}</p>
+            <div className="mt-3 flex items-center gap-3">
+              <span
+                aria-hidden
+                className="select-none text-[11px] font-semibold text-[#8C8273]"
+              >
+                A
+              </span>
+              <div
+                aria-label={t("settings.fontSize")}
+                className="grid flex-1 grid-cols-3 rounded-2xl bg-[#FAF6EC] p-1"
+                role="radiogroup"
+              >
+                {FONT_SIZE_OPTIONS.map((option) => {
+                  const active = fontSize === option.code;
+                  return (
+                    <button
+                      aria-checked={active}
+                      className={`h-9 rounded-xl text-xs font-semibold transition-all active:scale-[0.98] ${
+                        active
+                          ? "bg-white text-[#3A322B] shadow-sm"
+                          : "text-[#8C8273]"
+                      }`}
+                      key={option.code}
+                      onClick={() => setFontSize(option.code)}
+                      role="radio"
+                      type="button"
+                    >
+                      {t(option.labelKey)}
+                    </button>
+                  );
+                })}
+              </div>
+              <span
+                aria-hidden
+                className="select-none text-lg font-semibold leading-none text-[#8C8273]"
+              >
+                A
+              </span>
+            </div>
+
+            <p
+              className="mt-4 rounded-2xl bg-[#FFF6D9] px-3.5 py-3 text-sm leading-6 text-[#4A3E31]"
+              style={{ fontFamily: FONT_FAMILY_STACK[fontStyle] }}
+            >
+              {t("settings.fontPreview")}
+              <span className="mt-1 block font-numeric text-base font-semibold text-[#E07A3D]">
+                HK$1,280.50
+              </span>
+            </p>
+          </div>
         </div>
       </section>
 
       {/* 卡片 B：数据管理 */}
       <section className="mt-5">
-        <p className="mb-2 px-1 text-xs font-semibold tracking-wide text-[#A08875]">
+        <p className="mb-2 px-1 text-caption font-semibold tracking-wide">
           {t("settings.section.data")}
         </p>
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm divide-y divide-[#F5F0E8]">
@@ -206,7 +312,7 @@ export function ProfilePage() {
                 <Download className="size-4" strokeWidth={2} />
               )}
             </span>
-            <span className="min-w-0 flex-1 text-[15px] font-semibold text-[#5C4A32]">
+            <span className="min-w-0 flex-1 text-body font-semibold">
               {t("settings.exportData")}
             </span>
             <ChevronRight className="size-4 shrink-0 text-[#D4C4B0]" />
@@ -222,7 +328,7 @@ export function ProfilePage() {
 
       {/* 卡片 C：关于 */}
       <section className="mt-5">
-        <p className="mb-2 px-1 text-xs font-semibold tracking-wide text-[#A08875]">
+        <p className="mb-2 px-1 text-caption font-semibold tracking-wide">
           {t("settings.section.about")}
         </p>
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm divide-y divide-[#F5F0E8]">
@@ -253,14 +359,57 @@ export function ProfilePage() {
                 className={`flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold transition-all active:scale-[0.99] ${
                   active
                     ? "bg-[#F8A055]/15 text-[#8C6D53] ring-2 ring-[#F8A055]"
-                    : "bg-[#FAF6EC] text-[#5C4A32]"
+                    : "bg-[#FAF6EC] text-[#4A3E31]"
                 }`}
                 key={option.code}
                 onClick={() => handleLanguageChange(option.code, option.label)}
                 type="button"
               >
                 <span>{option.label}</span>
-                {active ? <span className="text-xs">{t("settings.current")}</span> : null}
+                {active ? (
+                  <span className="text-xs">{t("settings.current")}</span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </BottomSheet>
+
+      <BottomSheet
+        onOpenChange={setIsFontStyleSheetOpen}
+        open={isFontStyleSheetOpen}
+        title={t("settings.fontStyleSheetTitle")}
+      >
+        <div className="space-y-2 pt-1">
+          {FONT_STYLE_OPTIONS.map((option) => {
+            const active = fontStyle === option.code;
+            return (
+              <button
+                className={`flex h-14 w-full items-center justify-between rounded-2xl px-4 text-left transition-all active:scale-[0.99] ${
+                  active
+                    ? "bg-[#F8A055]/15 text-[#8C6D53] ring-2 ring-[#F8A055]"
+                    : "bg-[#FAF6EC] text-[#4A3E31]"
+                }`}
+                key={option.code}
+                onClick={() => handleFontStyleChange(option.code)}
+                style={{ fontFamily: FONT_FAMILY_STACK[option.code] }}
+                type="button"
+              >
+                <span>
+                  <span className="block text-sm font-semibold">
+                    {t(option.labelKey)}
+                  </span>
+                  {option.hintKey ? (
+                    <span className="mt-0.5 block text-xs text-[#8C8273]">
+                      {t(option.hintKey)}
+                    </span>
+                  ) : null}
+                </span>
+                {active ? (
+                  <span className="text-xs font-semibold">
+                    {t("settings.current")}
+                  </span>
+                ) : null}
               </button>
             );
           })}
@@ -280,7 +429,7 @@ export function ProfilePage() {
                 className={`flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold transition-all active:scale-[0.99] ${
                   active
                     ? "bg-[#F8A055]/15 text-[#8C6D53] ring-2 ring-[#F8A055]"
-                    : "bg-[#FAF6EC] text-[#5C4A32]"
+                    : "bg-[#FAF6EC] text-[#4A3E31]"
                 }`}
                 key={code}
                 onClick={() => handleCurrencyChange(code)}
@@ -293,11 +442,13 @@ export function ProfilePage() {
                   />
                   {code} ({translateCurrencyLabel(code, t)})
                 </span>
-                {active ? <span className="text-xs">{t("settings.current")}</span> : null}
+                {active ? (
+                  <span className="text-xs">{t("settings.current")}</span>
+                ) : null}
               </button>
             );
           })}
-          <p className="px-1 pt-2 text-xs leading-5 text-[#A08875]">
+          <p className="px-1 pt-2 text-caption leading-5">
             {t("settings.currencyHint")}
           </p>
         </div>
