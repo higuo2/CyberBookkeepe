@@ -15,6 +15,7 @@ import { RecurringBadgeIcon } from "@/components/AppIcons";
 import { BottomSheet } from "@/components/BottomSheet";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { TransactionDialog } from "@/components/TransactionDialog";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { TransactionListSkeleton } from "@/components/ui/Skeleton";
 import { categoryColor } from "@/lib/category-colors";
 import {
@@ -383,44 +384,44 @@ export function TransactionsPage() {
   return (
     <>
       <main className="relative flex h-full min-h-0 flex-col bg-cream-bg pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
-        <header className="shrink-0 px-4 pb-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-medium tracking-wide text-ink-muted">
-                {t("transactions.eyebrow")}
-              </p>
-              <h1 className="mt-0.5 text-[28px] font-semibold tracking-tight text-ink">
-                {t("transactions.title")}
-              </h1>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <button
-                aria-label={searchOpen ? t("transactions.aria.collapseSearch") : t("transactions.aria.expandSearch")}
-                className={headerBtnClass(searchOpen || Boolean(query.trim()))}
-                onClick={() =>
-                  setSearchOpen((open) => {
-                    if (open) setQuery("");
-                    return !open;
-                  })
-                }
-                type="button"
-              >
-                {searchOpen ? (
-                  <X className="size-4" strokeWidth={2} />
-                ) : (
-                  <Search className="size-4" strokeWidth={2} />
-                )}
-              </button>
-              <button
-                aria-label={t("transactions.aria.manualAdd")}
-                className="grid size-9 place-items-center rounded-full bg-ink text-white shadow-sm transition-all duration-150 active:scale-[0.98]"
-                onClick={openCreate}
-                type="button"
-              >
-                <Plus className="size-5" strokeWidth={2.25} />
-              </button>
-            </div>
-          </div>
+        <div className="shrink-0 px-4 pb-3">
+          <PageHeader
+            actions={
+              <>
+                <button
+                  aria-label={
+                    searchOpen
+                      ? t("transactions.aria.collapseSearch")
+                      : t("transactions.aria.expandSearch")
+                  }
+                  className={headerBtnClass(searchOpen || Boolean(query.trim()))}
+                  onClick={() =>
+                    setSearchOpen((open) => {
+                      if (open) setQuery("");
+                      return !open;
+                    })
+                  }
+                  type="button"
+                >
+                  {searchOpen ? (
+                    <X className="size-4" strokeWidth={2} />
+                  ) : (
+                    <Search className="size-4" strokeWidth={2} />
+                  )}
+                </button>
+                <button
+                  aria-label={t("transactions.aria.manualAdd")}
+                  className="grid size-9 place-items-center rounded-full bg-[#EE7828] text-white shadow-sm transition-all active:scale-95"
+                  onClick={openCreate}
+                  type="button"
+                >
+                  <Plus className="size-5" strokeWidth={2.25} />
+                </button>
+              </>
+            }
+            caption={t("transactions.eyebrow")}
+            title={t("transactions.title")}
+          />
 
           {searchOpen ? (
             <label className="relative mt-3 block">
@@ -477,7 +478,7 @@ export function TransactionsPage() {
               )}
             </button>
           </div>
-        </header>
+        </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-5 touch-pan-y">
           {loading && transactions.length === 0 ? (

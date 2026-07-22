@@ -18,7 +18,7 @@ export const en: Messages = {
   "auth.error.notConfigured":
     "Password not configured. Set NEXT_PUBLIC_APP_PASSWORD in .env.local",
 
-  "settings.eyebrow": "Settings",
+  "settings.eyebrow": "Preferences",
   "settings.title": "Settings",
   "settings.subtitle": "Preferences, data, and about the kitty.",
   "settings.section.preferences": "Preferences",

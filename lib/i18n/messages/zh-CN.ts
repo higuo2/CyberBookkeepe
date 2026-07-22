@@ -16,7 +16,7 @@ export const zhCN = {
   "auth.error.notConfigured":
     "未配置访问密码，请在 .env.local 设置 NEXT_PUBLIC_APP_PASSWORD",
 
-  "settings.eyebrow": "Settings",
+  "settings.eyebrow": "偏好与账户",
   "settings.title": "设置",
   "settings.subtitle": "偏好、数据与关于小猫。",
   "settings.section.preferences": "偏好设置",

@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { AppIcon, defaultRecurringIconId } from "@/components/AppIcons";
 import { BottomSheet } from "@/components/BottomSheet";
 import { BudgetProgressCard } from "@/components/BudgetProgressCard";
+import { PageHeader } from "@/components/ui/PageHeader";
 import {
   RecurringEditorSheet,
   computeFormNextDate,
@@ -464,15 +465,12 @@ export function PlannerPage() {
   return (
     <>
       <main className="h-full overflow-y-auto overscroll-contain bg-[#FAF6EC] px-4 pb-5 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
-        <header className="mb-4">
-          <p className="text-sm font-semibold text-[#EE7828]">{t("planner.eyebrow")}</p>
-          <h1 className="mt-0.5 text-2xl font-extrabold tracking-tight text-[#4A3E3D]">
-            {t("planner.title")}
-          </h1>
-          <p className="mt-1 text-sm text-[#A08875]">
-            {t("planner.subtitle")}
-          </p>
-        </header>
+        <PageHeader
+          caption={t("planner.eyebrow")}
+          className="mb-4"
+          description={t("planner.subtitle")}
+          title={t("planner.title")}
+        />
 
         <div className="flex flex-col gap-3">
           <BudgetProgressCard

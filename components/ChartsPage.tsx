@@ -6,6 +6,7 @@ import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { CurrencyIcon } from "@/components/AppIcons";
 import { ChartBlockSkeleton } from "@/components/ui/Skeleton";
+import { PageHeader } from "@/components/ui/PageHeader";
 import {
   CURRENCY_CODES,
   CURRENCY_META,
@@ -177,29 +178,25 @@ export function ChartsPage() {
 
   return (
     <main className="h-full overflow-y-auto overscroll-contain bg-[#FAF6EC] px-4 pb-5 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
-      <header className="flex items-end justify-between">
-        <div>
-          <p className="text-sm font-semibold text-[#EE7828]">{t("charts.eyebrow")}</p>
-          <h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-[#5C4A32]">
-            {t("charts.title")}
-          </h1>
-          <p className="mt-1 text-sm text-[#A08B68]">
-            {t("charts.subtitle")}
-          </p>
-        </div>
-        <button
-          aria-label={t("charts.aria.refresh")}
-          className="grid size-9 place-items-center rounded-full border border-[#EFE5D3] bg-white text-[#8A7A5C] shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
-          disabled={loading}
-          onClick={() => void loadChart(true)}
-          type="button"
-        >
-          <RefreshCw
-            className={`size-4 ${loading ? "animate-spin" : ""}`}
-            strokeWidth={2}
-          />
-        </button>
-      </header>
+      <PageHeader
+        actions={
+          <button
+            aria-label={t("charts.aria.refresh")}
+            className="grid size-9 place-items-center rounded-full border border-[#EFE5D3] bg-white text-[#8A7A5C] shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+            disabled={loading}
+            onClick={() => void loadChart(true)}
+            type="button"
+          >
+            <RefreshCw
+              className={`size-4 ${loading ? "animate-spin" : ""}`}
+              strokeWidth={2}
+            />
+          </button>
+        }
+        caption={t("charts.eyebrow")}
+        description={t("charts.subtitle")}
+        title={t("charts.title")}
+      />
 
       {/* 多币种莫兰迪汇总卡 */}
       <div className="mt-4 -mx-1 flex gap-3 overflow-x-auto px-1 pb-1 touch-pan-x">

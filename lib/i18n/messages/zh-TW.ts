@@ -18,7 +18,7 @@ export const zhTW: Messages = {
   "auth.error.notConfigured":
     "未設定訪問密碼，請在 .env.local 設定 NEXT_PUBLIC_APP_PASSWORD",
 
-  "settings.eyebrow": "Settings",
+  "settings.eyebrow": "偏好與帳戶",
   "settings.title": "設定",
   "settings.subtitle": "偏好、資料與關於小貓。",
   "settings.section.preferences": "偏好設定",

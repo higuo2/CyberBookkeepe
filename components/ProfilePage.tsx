@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { BottomSheet } from "@/components/BottomSheet";
 import { ConfirmDialog, SettingsRow } from "@/components/ConfirmDialog";
 import { CurrencyIcon } from "@/components/AppIcons";
+import { PageHeader } from "@/components/ui/PageHeader";
 import {
   CURRENCY_CODES,
   readDefaultCurrency,
@@ -193,15 +194,12 @@ export function ProfilePage() {
 
   return (
     <main className="h-full overflow-y-auto overscroll-contain bg-[#FFFDF0] px-4 pb-8 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
-      <header className="px-1">
-        <p className="text-caption font-semibold text-[#EE7828]">
-          {t("settings.eyebrow")}
-        </p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-[#3A322B]">
-          {t("settings.title")}
-        </h1>
-        <p className="mt-2 text-sm text-[#8C8273]">{t("settings.subtitle")}</p>
-      </header>
+      <PageHeader
+        caption={t("settings.eyebrow")}
+        className="px-1"
+        description={t("settings.subtitle")}
+        title={t("settings.title")}
+      />
 
       {/* 卡片 A：偏好设置 */}
       <section className="mt-6">
