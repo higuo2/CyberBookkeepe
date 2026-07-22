@@ -1,5 +1,5 @@
-import { SummaryPage } from "@/components/SummaryPage";
+import { PlannerPage } from "@/components/PlannerPage";
 
 export default function Summary() {
-  return <SummaryPage />;
+  return <PlannerPage />;
 }

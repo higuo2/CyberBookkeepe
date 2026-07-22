@@ -1,6 +1,6 @@
 # CyberBookkeeper
 
-移动端优先的 AI 智能记账 PWA（钱包小猫）。奶油色 UI，适配 iPhone 安全区；支持自然语言记账、账单管理、统计图表、AI 总结与 Excel 导出。币种默认 **HKD**。
+移动端优先的 AI 智能记账 PWA（钱包小猫）。奶油色 UI，适配 iPhone 安全区；支持自然语言记账、账单管理、统计图表、规划资产与 Excel 导出。币种默认 **HKD**。
 
 ## 功能一览
 
@@ -8,8 +8,8 @@
 |-----|------|------|
 | 记账 | `/` | 聊天式自然语言记账，多笔解析并自动入库 |
 | 账单 | `/transactions` | 搜索 / 筛选 / 点按编辑 / Excel 导出 |
-| 统计 | `/charts` | 月份切换、分类占比、近 7 日趋势、预算进度 |
-| 总结 | `/summary` | AI 本月财务总结 |
+| 统计 | `/charts` | 近 7 日支出趋势、分类占比 Top 4 |
+| 规划 | `/summary` | 预算进度（含预估固定开销）、周期收支/订阅、愿望存钱罐 |
 | 我的 | `/profile` | 预算设置、全量导出 |
 
 ## 本地启动
@@ -41,4 +41,4 @@ DEEPSEEK_MODEL=deepseek-chat
 
 ## 技术栈
 
-Next.js App Router · Tailwind CSS · Recharts · Supabase · DeepSeek · next-pwa · xlsx · sonner · lucide-react
+Next.js App Router · Tailwind CSS · Recharts · Supabase · DeepSeek · vaul · next-pwa · xlsx · sonner · lucide-react

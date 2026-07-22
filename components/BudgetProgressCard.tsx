@@ -1,0 +1,193 @@
+"use client";
+
+import { FormEvent, useMemo, useState } from "react";
+import { LoaderCircle, Pencil, Save } from "lucide-react";
+import { toast } from "sonner";
+import { BottomSheet } from "@/components/BottomSheet";
+import { budgetBarColor } from "@/lib/budget";
+import {
+  writeBudgetSpendMode,
+  type BudgetSpendMode,
+} from "@/lib/planner";
+import { formatHKD, writeBudgetToStorage } from "@/lib/transaction-utils";
+import type { MonthBudgetStats } from "@/lib/types";
+
+function formatDailyAvailable(amount: number) {
+  const daily = Math.max(0, Math.round(amount));
+  return `HK$${daily.toLocaleString("en-US")} / 天`;
+}
+
+export function BudgetProgressCard({
+  stats,
+  onBudgetSaved,
+  onSpendModeChange,
+}: {
+  stats: MonthBudgetStats;
+  onBudgetSaved?: (budget: number) => void;
+  onSpendModeChange?: (mode: BudgetSpendMode) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const width = useMemo(
+    () => `${Math.min(100, Math.max(0, stats.ratio * 100)).toFixed(1)}%`,
+    [stats.ratio],
+  );
+  const overspent = stats.budget > 0 && stats.ratio > 1;
+  const remainingClass = overspent ? "text-[#EF4444]" : "text-[#8C6D53]";
+
+  function openEditor() {
+    setInput(stats.budget > 0 ? String(stats.budget) : "");
+    setOpen(true);
+  }
+
+  function saveBudget(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const amount = Number(input);
+    if (!Number.isFinite(amount) || amount < 0) {
+      toast.error("请输入有效的预算金额");
+      return;
+    }
+    setSaving(true);
+    try {
+      writeBudgetToStorage(amount);
+      onBudgetSaved?.(amount);
+      setOpen(false);
+      toast.success("本月预算已更新");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function setMode(mode: BudgetSpendMode) {
+    writeBudgetSpendMode(mode);
+    onSpendModeChange?.(mode);
+  }
+
+  return (
+    <>
+      <section className="rounded-2xl border border-[#EFE5D3] bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-extrabold text-[#4A3E3D]">预算进度</h2>
+          <button
+            aria-label="修改预算"
+            className="grid size-8 place-items-center rounded-full text-[#A08875] transition-all hover:bg-[#FFF6D9] active:scale-95"
+            onClick={openEditor}
+            type="button"
+          >
+            <Pencil className="size-3.5" />
+          </button>
+        </div>
+
+        {stats.budget <= 0 ? (
+          <p className="mt-3 text-sm text-[#A08875]">
+            尚未设置预算。点击右上角铅笔图标即可设定本月总预算。
+          </p>
+        ) : (
+          <>
+            <div className="mt-3 grid grid-cols-2 gap-1.5 rounded-2xl bg-[#FFF6D9] p-1">
+              <button
+                className={`h-8 rounded-xl text-[11px] font-bold transition-all active:scale-95 ${
+                  stats.spendMode === "actual"
+                    ? "bg-white text-[#4A3E3D] shadow-sm"
+                    : "text-[#A08875]"
+                }`}
+                onClick={() => setMode("actual")}
+                type="button"
+              >
+                只看已花
+              </button>
+              <button
+                className={`h-8 rounded-xl text-[11px] font-bold transition-all active:scale-95 ${
+                  stats.spendMode === "reserve_fixed"
+                    ? "bg-white text-[#4A3E3D] shadow-sm"
+                    : "text-[#A08875]"
+                }`}
+                onClick={() => setMode("reserve_fixed")}
+                type="button"
+              >
+                预扣固定支出
+              </button>
+            </div>
+            <p className="mt-2 text-[11px] leading-4 text-[#A08875]">
+              {stats.spendMode === "actual"
+                ? "💡 仅根据你目前手动记下的真实账单计算"
+                : "🔒 已帮你提前扣除本月房租、订阅等固定开销"}
+            </p>
+
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-2xl bg-[#FFF6D9] p-2.5">
+                <p className="text-[10px] font-medium text-[#A08875]">已用</p>
+                <p className="mt-1 text-sm font-semibold text-[#4A3E3D]">
+                  {formatHKD(stats.spent)}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-[#FFF6D9] p-2.5">
+                <p className="text-[10px] font-medium text-[#A08875]">剩余</p>
+                <p className={`mt-1 text-sm font-semibold ${remainingClass}`}>
+                  {formatHKD(stats.remaining)}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-[#FFF6D9] p-2.5">
+                <p className="text-[10px] font-medium text-[#A08875]">日均可用</p>
+                <p className="mt-1 text-sm font-semibold text-[#4A3E3D]">
+                  {formatDailyAvailable(stats.dailyAvailable)}
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 h-3 overflow-hidden rounded-full bg-[#FFF6D9]">
+              <div
+                className={`h-full rounded-full transition-all ${budgetBarColor(stats.ratio)}`}
+                style={{ width }}
+              />
+            </div>
+            <p className="mt-1.5 text-xs text-[#A08875]">
+              预算 {formatHKD(stats.budget)} · 已用{" "}
+              {(stats.ratio * 100).toFixed(0)}%
+              {stats.spendMode === "reserve_fixed" && stats.estimatedFixed > 0
+                ? ` · 预留固定 ${formatHKD(stats.estimatedFixed)}`
+                : ""}
+            </p>
+            {overspent && (
+              <p className="mt-1.5 text-xs font-medium text-[#EF4444]">
+                ⚠️ 本月预算已超支
+              </p>
+            )}
+          </>
+        )}
+      </section>
+
+      <BottomSheet onOpenChange={setOpen} open={open} title="修改本月预算">
+        <form className="space-y-4 pt-1" onSubmit={saveBudget}>
+          <label className="block text-xs font-medium text-[#A08875]">
+            本月总预算（HK$）
+            <input
+              autoFocus
+              className="mt-2 h-12 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
+              inputMode="decimal"
+              min="0"
+              onChange={(event) => setInput(event.target.value)}
+              placeholder="例如 15000"
+              step="1"
+              type="number"
+              value={input}
+            />
+          </label>
+          <button
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#F8A055] font-bold text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
+            disabled={saving}
+            type="submit"
+          >
+            {saving ? (
+              <LoaderCircle className="size-5 animate-spin" />
+            ) : (
+              <Save className="size-5" />
+            )}
+            保存预算
+          </button>
+        </form>
+      </BottomSheet>
+    </>
+  );
+}

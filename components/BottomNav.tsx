@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import {
   ClipboardList,
   Donut,
-  Heart,
   MessageCircle,
   Settings,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 
@@ -15,7 +15,7 @@ const tabs: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/", label: "记账", icon: MessageCircle },
   { href: "/transactions", label: "账单", icon: ClipboardList },
   { href: "/charts", label: "统计", icon: Donut },
-  { href: "/summary", label: "总结", icon: Heart },
+  { href: "/summary", label: "规划", icon: Wallet },
   { href: "/profile", label: "我的", icon: Settings },
 ];
 

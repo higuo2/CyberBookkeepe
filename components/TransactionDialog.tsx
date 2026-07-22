@@ -31,6 +31,8 @@ export function TransactionDialog({
   onSubmit,
   onDelete,
   deleting = false,
+  isRecurring = false,
+  onManageRecurring,
 }: {
   open: boolean;
   title: string;
@@ -42,6 +44,9 @@ export function TransactionDialog({
   onSubmit: () => Promise<void>;
   onDelete?: () => Promise<void>;
   deleting?: boolean;
+  /** 周期规则自动生成的账单 */
+  isRecurring?: boolean;
+  onManageRecurring?: () => void;
 }) {
   if (!open) return null;
 
@@ -82,6 +87,14 @@ export function TransactionDialog({
             <X className="size-5" />
           </button>
         </header>
+
+        {isRecurring && (
+          <div className="mt-4 rounded-2xl bg-[#FFF6D9] px-3.5 py-3">
+            <p className="text-sm leading-5 text-[#8C6D53]">
+              💡 此账单由周期规则自动生成
+            </p>
+          </div>
+        )}
 
         <form className="mt-6 space-y-4" onSubmit={submit}>
           <div>
@@ -131,7 +144,7 @@ export function TransactionDialog({
             <label className="text-xs font-medium text-[#9A7B55]">
               金额（HK$）
               <input
-                className={`${fieldClass} mt-2`}
+                className={`${fieldClass} mt-2 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                 inputMode="decimal"
                 min="0.01"
                 onChange={(event) =>
@@ -204,19 +217,31 @@ export function TransactionDialog({
             </button>
 
             {onDelete && (
-              <button
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#FFE8E0] text-sm font-semibold text-[#E07A3D] transition-all active:scale-95 disabled:opacity-50"
-                disabled={locked}
-                onClick={() => void onDelete()}
-                type="button"
-              >
-                {deleting ? (
-                  <LoaderCircle className="size-4 animate-spin" />
-                ) : (
-                  <Trash2 className="size-4" />
+              <div className="flex flex-col gap-2">
+                <button
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#FFE8E0] text-sm font-semibold text-[#E07A3D] transition-all active:scale-95 disabled:opacity-50"
+                  disabled={locked}
+                  onClick={() => void onDelete()}
+                  type="button"
+                >
+                  {deleting ? (
+                    <LoaderCircle className="size-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="size-4" />
+                  )}
+                  {deleting ? "正在删除…" : "删除账单"}
+                </button>
+                {isRecurring && onManageRecurring && (
+                  <button
+                    className="w-full py-1.5 text-center text-xs font-bold text-[#B37233] transition-opacity active:opacity-70"
+                    disabled={locked}
+                    onClick={onManageRecurring}
+                    type="button"
+                  >
+                    ⚙️ 管理周期规则
+                  </button>
                 )}
-                {deleting ? "正在删除…" : "删除账单"}
-              </button>
+              </div>
             )}
           </div>
         </form>

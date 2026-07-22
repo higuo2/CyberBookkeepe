@@ -2,25 +2,15 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  LoaderCircle,
-  RefreshCw,
-  TrendingDown,
-  TrendingUp,
-} from "lucide-react";
+import { LoaderCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { computeBudgetStats } from "@/lib/budget";
 import { getSupabase } from "@/lib/supabase";
 import {
-  formatHKD,
   getMonthRange,
   lastNDays,
-  readBudgetFromStorage,
   sumByCategory,
 } from "@/lib/transaction-utils";
-import type { Transaction, TransactionType } from "@/lib/types";
+import type { Transaction } from "@/lib/types";
 
 const CategoryPieChart = dynamic(
   () =>
@@ -47,101 +37,68 @@ const TrendBarChart = dynamic(
   },
 );
 
-const BudgetProgressCard = dynamic(
-  () =>
-    import("@/components/ChartsVisuals").then((mod) => mod.BudgetProgressCard),
-  { ssr: false },
-);
-
-function startOfMonth(date = new Date()) {
-  return new Date(date.getFullYear(), date.getMonth(), 1);
-}
-
-function formatMonthLabel(date: Date) {
-  return `${date.getFullYear()}年${date.getMonth() + 1}月`;
-}
-
-function budgetAnchorDate(monthCursor: Date) {
-  const now = new Date();
-  if (
-    monthCursor.getFullYear() === now.getFullYear() &&
-    monthCursor.getMonth() === now.getMonth()
-  ) {
-    return now;
-  }
-  return new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 0);
-}
-
 export function ChartsPage() {
-  const [mode, setMode] = useState<TransactionType>("EXPENSE");
-  const [monthCursor, setMonthCursor] = useState(() => startOfMonth());
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [monthTransactions, setMonthTransactions] = useState<Transaction[]>([]);
   const [weekTransactions, setWeekTransactions] = useState<Transaction[]>([]);
-  const [budget, setBudget] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const loadChart = useCallback(
-    async (showToast = false) => {
-      await Promise.resolve();
-      if (!navigator.onLine) {
-        toast.error("当前无网络，无法读取统计");
-        setLoading(false);
-        return;
-      }
+  const loadChart = useCallback(async (showToast = false) => {
+    await Promise.resolve();
+    if (!navigator.onLine) {
+      toast.error("当前无网络，无法读取统计");
+      setLoading(false);
+      return;
+    }
 
-      const { firstDay, lastDay } = getMonthRange(monthCursor);
-      const weekDays = lastNDays(7);
-      const weekStart = weekDays[0];
+    const { firstDay, lastDay } = getMonthRange();
+    const weekDays = lastNDays(7);
+    const weekStart = weekDays[0];
 
-      if (showToast) toast.loading("正在刷新统计…", { id: "refresh-chart" });
-      setLoading(true);
-      setBudget(readBudgetFromStorage());
+    if (showToast) toast.loading("正在刷新统计…", { id: "refresh-chart" });
+    setLoading(true);
 
-      try {
-        const monthQuery = getSupabase()
-          .from("transactions")
-          .select("id, amount, type, category, date, note")
-          .gte("date", firstDay)
-          .lte("date", lastDay)
-          .order("date", { ascending: false });
+    try {
+      const monthQuery = getSupabase()
+        .from("transactions")
+        .select("id, amount, type, category, date, note")
+        .eq("type", "EXPENSE")
+        .gte("date", firstDay)
+        .lte("date", lastDay)
+        .order("date", { ascending: false });
 
-        const weekQuery = getSupabase()
-          .from("transactions")
-          .select("id, amount, type, category, date, note")
-          .eq("type", "EXPENSE")
-          .gte("date", weekStart)
-          .order("date", { ascending: true });
+      const weekQuery = getSupabase()
+        .from("transactions")
+        .select("id, amount, type, category, date, note")
+        .eq("type", "EXPENSE")
+        .gte("date", weekStart)
+        .order("date", { ascending: true });
 
-        const [monthRes, weekRes] = await Promise.all([monthQuery, weekQuery]);
-        if (monthRes.error) throw monthRes.error;
-        if (weekRes.error) throw weekRes.error;
+      const [monthRes, weekRes] = await Promise.all([monthQuery, weekQuery]);
+      if (monthRes.error) throw monthRes.error;
+      if (weekRes.error) throw weekRes.error;
 
-        setTransactions((monthRes.data ?? []) as Transaction[]);
-        setWeekTransactions((weekRes.data ?? []) as Transaction[]);
-        if (showToast) toast.success("统计已更新", { id: "refresh-chart" });
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "读取失败，请稍后重试",
-          showToast ? { id: "refresh-chart" } : undefined,
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    [monthCursor],
-  );
+      setMonthTransactions((monthRes.data ?? []) as Transaction[]);
+      setWeekTransactions((weekRes.data ?? []) as Transaction[]);
+      if (showToast) toast.success("统计已更新", { id: "refresh-chart" });
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "读取失败，请稍后重试",
+        showToast ? { id: "refresh-chart" } : undefined,
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => void loadChart(), 0);
     return () => window.clearTimeout(timer);
   }, [loadChart]);
 
-  const filtered = useMemo(
-    () => transactions.filter((item) => item.type === mode),
-    [transactions, mode],
+  const pieData = useMemo(
+    () => sumByCategory(monthTransactions).slice(0, 4),
+    [monthTransactions],
   );
-  const total = filtered.reduce((sum, item) => sum + Number(item.amount), 0);
-  const pieData = useMemo(() => sumByCategory(filtered), [filtered]);
 
   const trendData = useMemo(() => {
     const days = lastNDays(7);
@@ -157,21 +114,6 @@ export function ChartsPage() {
     });
   }, [weekTransactions]);
 
-  const monthExpense = transactions
-    .filter((item) => item.type === "EXPENSE")
-    .reduce((sum, item) => sum + Number(item.amount), 0);
-  const budgetStats = computeBudgetStats(
-    budget,
-    monthExpense,
-    budgetAnchorDate(monthCursor),
-  );
-
-  function shiftMonth(delta: number) {
-    setMonthCursor(
-      (prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1),
-    );
-  }
-
   return (
     <main className="h-full overflow-y-auto overscroll-contain bg-[#FAF6EC] px-4 pb-5 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
       <header className="flex items-end justify-between">
@@ -180,6 +122,7 @@ export function ChartsPage() {
           <h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-[#5C4A32]">
             统计
           </h1>
+          <p className="mt-1 text-sm text-[#A08B68]">近 7 日趋势与分类占比</p>
         </div>
         <button
           aria-label="刷新统计"
@@ -192,66 +135,25 @@ export function ChartsPage() {
         </button>
       </header>
 
-      <div className="mt-3 grid grid-cols-2 gap-1.5 rounded-2xl bg-[#FFF6D9] p-1">
-        {([
-          { key: "EXPENSE", label: "支出统计", icon: TrendingDown },
-          { key: "INCOME", label: "收入统计", icon: TrendingUp },
-        ] as const).map(({ key, label, icon: Icon }) => (
-          <button
-            className={`flex h-9 items-center justify-center gap-1.5 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
-              mode === key
-                ? "bg-white text-[#5C4A32] shadow-sm"
-                : "text-[#A08B68]"
-            }`}
-            key={key}
-            onClick={() => setMode(key)}
-            type="button"
-          >
-            <Icon className="size-4" />
-            {label}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-3 flex items-center justify-between rounded-2xl border border-[#EFE5D3] bg-white px-2 py-1 shadow-sm">
-        <button
-          aria-label="上一月"
-          className="grid size-8 place-items-center rounded-xl text-[#8C6D53] transition-all active:scale-95 hover:bg-[#FFF6D9]"
-          onClick={() => shiftMonth(-1)}
-          type="button"
-        >
-          <ChevronLeft className="size-5" />
-        </button>
-        <p className="text-sm font-semibold tabular-nums text-[#5C4A32]">
-          {formatMonthLabel(monthCursor)}
-        </p>
-        <button
-          aria-label="下一月"
-          className="grid size-8 place-items-center rounded-xl text-[#8C6D53] transition-all active:scale-95 hover:bg-[#FFF6D9]"
-          onClick={() => shiftMonth(1)}
-          type="button"
-        >
-          <ChevronRight className="size-5" />
-        </button>
-      </div>
-
-      <div className="mt-3 flex flex-col gap-3">
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#F8A055] via-[#F8C96A] to-[#FFE8B8] p-4 text-[#5C4A32] shadow-sm">
-          <div className="absolute -right-10 -top-10 size-28 rounded-full bg-white/25 blur-2xl" />
-          <p className="relative text-sm text-[#8A5A12]/90">
-            本月{mode === "EXPENSE" ? "总支出" : "总收入"}
-          </p>
-          <p className="relative mt-2 text-3xl font-semibold tracking-tight">
-            {formatHKD(total)}
-          </p>
-          <p className="relative mt-1.5 text-xs text-[#8A5A12]/80">
-            {formatMonthLabel(monthCursor)} · {filtered.length} 笔
-          </p>
+      <div className="mt-4 flex flex-col gap-3">
+        <section className="rounded-3xl border border-[#EFE5D3] bg-white p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-[#5C4A32]">近 7 日支出趋势</h2>
+          <div className="mt-1">
+            {loading && weekTransactions.length === 0 ? (
+              <div className="grid h-56 place-items-center">
+                <LoaderCircle className="size-6 animate-spin text-[#F8A055]" />
+              </div>
+            ) : (
+              <TrendBarChart data={trendData} />
+            )}
+          </div>
         </section>
 
         <section className="rounded-3xl border border-[#EFE5D3] bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-[#5C4A32]">分类占比</h2>
-          {loading && filtered.length === 0 ? (
+          <h2 className="text-sm font-semibold text-[#5C4A32]">
+            支出分类占比 Top 4
+          </h2>
+          {loading && monthTransactions.length === 0 ? (
             <div className="grid h-40 place-items-center">
               <LoaderCircle className="size-6 animate-spin text-[#F8A055]" />
             </div>
@@ -260,18 +162,6 @@ export function ChartsPage() {
               <CategoryPieChart data={pieData} />
             </div>
           )}
-        </section>
-
-        <BudgetProgressCard
-          onBudgetSaved={setBudget}
-          stats={budgetStats}
-        />
-
-        <section className="rounded-3xl border border-[#EFE5D3] bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-[#5C4A32]">近 7 日支出趋势</h2>
-          <div className="mt-1">
-            <TrendBarChart data={trendData} />
-          </div>
         </section>
       </div>
     </main>

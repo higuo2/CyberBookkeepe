@@ -7,6 +7,8 @@ export interface Transaction {
   category: string;
   date: string;
   note: string;
+  /** 客户端语义标记；主库无此列，自动记账写入 note 标记 */
+  auto_generated?: boolean;
 }
 
 export type TransactionDraft = Omit<Transaction, "id">;
@@ -38,4 +40,10 @@ export interface MonthBudgetStats {
   remaining: number;
   dailyAvailable: number;
   ratio: number;
+  /** 预估本月剩余固定开销 */
+  estimatedFixed: number;
+  /** actual = 仅已发生；reserve_fixed = 扣除预估固定开销 */
+  spendMode: "actual" | "reserve_fixed";
+  /** 参与剩余计算的占用额（已用，或已用+预估固定） */
+  committed: number;
 }

@@ -16,6 +16,7 @@ import type {
   ParsedTransaction,
   Transaction,
 } from "@/lib/types";
+import { cleanNote } from "@/lib/utils";
 
 type ChatMessage =
   | { id: string; kind: "bot-text"; text: string }
@@ -313,7 +314,8 @@ export function RecordPage() {
                                 : record.category}
                             </p>
                             <p className="truncate text-sm text-[#A08B68]">
-                              {record.note} · {record.recordedAt}
+                              {cleanNote(record.note) || record.category} ·{" "}
+                              {record.recordedAt}
                             </p>
                           </div>
                           <p
