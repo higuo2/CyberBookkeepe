@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-/** Shared tab-page header — caption / title / description hierarchy */
+/** Shared tab-page header — Quiet Luxury hierarchy */
 export function PageHeader({
   caption,
   title,
@@ -18,10 +18,10 @@ export function PageHeader({
     <header className={`shrink-0 ${className}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium text-[#8C8273]">{caption}</p>
-          <h1 className="mt-0.5 text-2xl font-bold text-[#3A322B]">{title}</h1>
+          <p className="text-xs font-medium text-[#9C9285]">{caption}</p>
+          <h1 className="mt-0.5 text-2xl font-bold text-[#2C2420]">{title}</h1>
           {description ? (
-            <p className="mt-1 text-xs text-[#8C8273]">{description}</p>
+            <p className="mt-1 text-xs text-[#9C9285]">{description}</p>
           ) : null}
         </div>
         {actions ? (

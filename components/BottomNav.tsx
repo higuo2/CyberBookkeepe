@@ -3,22 +3,40 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  ClipboardList,
-  Donut,
-  MessageCircle,
-  Settings,
-  Wallet,
+  Edit,
+  PieChart,
+  Receipt,
+  SlidersHorizontal,
+  SquarePen,
+  Target,
   type LucideIcon,
 } from "lucide-react";
 import { useT } from "@/components/LocaleProvider";
 import type { MessageKey } from "@/lib/i18n";
 
-const tabs: { href: string; labelKey: MessageKey; icon: LucideIcon }[] = [
-  { href: "/", labelKey: "nav.record", icon: MessageCircle },
-  { href: "/transactions", labelKey: "nav.transactions", icon: ClipboardList },
-  { href: "/charts", labelKey: "nav.charts", icon: Donut },
-  { href: "/summary", labelKey: "nav.planner", icon: Wallet },
-  { href: "/profile", labelKey: "nav.settings", icon: Settings },
+type Tab = {
+  href: string;
+  labelKey: MessageKey;
+  outline: LucideIcon;
+  solid: LucideIcon;
+};
+
+const tabs: Tab[] = [
+  { href: "/", labelKey: "nav.record", outline: SquarePen, solid: Edit },
+  {
+    href: "/transactions",
+    labelKey: "nav.transactions",
+    outline: Receipt,
+    solid: Receipt,
+  },
+  { href: "/charts", labelKey: "nav.charts", outline: PieChart, solid: PieChart },
+  { href: "/summary", labelKey: "nav.planner", outline: Target, solid: Target },
+  {
+    href: "/profile",
+    labelKey: "nav.settings",
+    outline: SlidersHorizontal,
+    solid: SlidersHorizontal,
+  },
 ];
 
 export function BottomNav() {
@@ -26,29 +44,42 @@ export function BottomNav() {
   const t = useT();
 
   return (
-    <nav className="z-50 shrink-0 bg-[#FAF6EC]/90 pt-1.5 pb-[calc(env(safe-area-inset-bottom)+4px)] backdrop-blur-md shadow-[0_-4px_16px_rgba(92,74,50,0.03)]">
-      <div className="grid grid-cols-5 px-1">
-        {tabs.map(({ href, labelKey, icon: Icon }) => {
+    <nav className="z-50 shrink-0 border-t border-[#EAE5D9]/60 bg-[#F6F4EE]/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg">
+      <div className="flex h-[60px] items-center justify-around px-2">
+        {tabs.map(({ href, labelKey, outline: Outline, solid: Solid }) => {
           const active =
             href === "/" ? pathname === href : pathname.startsWith(href);
+          const Icon = active ? Solid : Outline;
 
           return (
             <Link
               aria-current={active ? "page" : undefined}
-              className={`flex flex-col items-center justify-center gap-0.5 py-0.5 text-[11px] transition-all duration-150 active:scale-[0.98] ${
-                active
-                  ? "font-semibold text-[#8C6D53]"
-                  : "font-medium text-[#C2B5A5]"
-              }`}
+              className="flex flex-col items-center justify-center gap-1 py-1 transition-all duration-200 active:scale-90"
               href={href}
               key={href}
             >
-              <Icon
-                aria-hidden="true"
-                className="size-5"
-                strokeWidth={2.25}
-              />
-              {t(labelKey)}
+              <span
+                className={`transition-all duration-200 ${
+                  active
+                    ? "rounded-full bg-[#F0ECE1] px-3 py-0.5"
+                    : "rounded-full px-3 py-0.5"
+                }`}
+              >
+                <Icon
+                  aria-hidden="true"
+                  className="h-5 w-5"
+                  strokeWidth={active ? 2.25 : 1.75}
+                />
+              </span>
+              <span
+                className={`text-[10px] tracking-tight transition-all duration-200 ${
+                  active
+                    ? "font-bold text-[#2C2420]"
+                    : "font-medium text-[#9C9285]"
+                }`}
+              >
+                {t(labelKey)}
+              </span>
             </Link>
           );
         })}

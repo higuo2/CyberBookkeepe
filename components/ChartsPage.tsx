@@ -177,12 +177,12 @@ export function ChartsPage() {
   const meta = CURRENCY_META[activeCurrency];
 
   return (
-    <main className="h-full overflow-y-auto overscroll-contain bg-[#FAF6EC] px-4 pb-5 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
+    <main className="h-full overflow-y-auto overscroll-contain px-4 pb-5 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
       <PageHeader
         actions={
           <button
             aria-label={t("charts.aria.refresh")}
-            className="grid size-9 place-items-center rounded-full border border-[#EFE5D3] bg-white text-[#8A7A5C] shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+            className="grid size-9 place-items-center rounded-full border border-[#EAE5D9] bg-white text-[#8A7A5C] shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
             disabled={loading}
             onClick={() => void loadChart(true)}
             type="button"
@@ -209,12 +209,12 @@ export function ChartsPage() {
           };
           return (
             <button
-              className={`w-[78%] max-w-[280px] shrink-0 rounded-3xl border p-4 text-left shadow-sm transition-all duration-150 active:scale-[0.98] ${
+              className={`w-[78%] max-w-[280px] shrink-0 rounded-2xl border p-4 text-left shadow-2xs transition-all duration-150 active:scale-[0.98] ${
                 m.cardGradient
               } ${
                 active
-                  ? "border-[#EE7828] ring-2 ring-[#EE7828]/35"
-                  : "border-white/70"
+                  ? "border-[#C86235] ring-2 ring-[#C86235]/25"
+                  : "border-[#EAE5D9]"
               }`}
               key={code}
               onClick={() => setActiveCurrency(code)}
@@ -234,12 +234,12 @@ export function ChartsPage() {
                 </span>
               </div>
               <p className="mt-3 text-caption">{t("charts.monthExpense")}</p>
-              <p className="mt-0.5 font-numeric text-xl font-semibold tracking-tight text-[#E07A3D]">
+              <p className="mt-0.5 font-numeric text-xl font-semibold tracking-tight text-[#B8785C]">
                 {formatMoney(totals.expense, code)}
               </p>
               <p className="mt-2 text-caption">
                 {t("charts.monthIncome")}{" "}
-                <span className="font-numeric font-semibold text-[#2A9D8F]">
+                <span className="font-numeric font-semibold text-[#5B7A66]">
                   {formatMoney(totals.income, code)}
                 </span>
               </p>
@@ -249,7 +249,7 @@ export function ChartsPage() {
       </div>
 
       <div className="mt-3 flex flex-col gap-3">
-        <section className="rounded-3xl border border-[#EFE5D3] bg-white p-4 shadow-sm">
+        <section className="rounded-2xl border border-[#EAE5D9] bg-white p-4 shadow-2xs">
           <h2 className="text-sm font-semibold text-[#5C4A32]">
             {t("charts.trendTitle", { currency: activeCurrency })}
           </h2>
@@ -262,7 +262,7 @@ export function ChartsPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-[#EFE5D3] bg-white p-4 shadow-sm">
+        <section className="rounded-2xl border border-[#EAE5D9] bg-white p-4 shadow-2xs">
           <h2 className="text-sm font-semibold text-[#5C4A32]">
             {t("charts.categoryTitle", { currency: activeCurrency })}
           </h2>

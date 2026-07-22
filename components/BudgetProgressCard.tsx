@@ -1,9 +1,20 @@
 ﻿"use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { AlertTriangle, Lightbulb, LoaderCircle, Lock, Pencil, Save } from "lucide-react";
+import {
+  AlertTriangle,
+  Info,
+  LoaderCircle,
+  Lock,
+  Save,
+} from "lucide-react";
 import { toast } from "sonner";
 import { BottomSheet } from "@/components/BottomSheet";
+import {
+  MetricLabel,
+  MetricValue,
+  PlannerCardHeader,
+} from "@/components/ui/PlannerCardHeader";
 import { budgetBarColor } from "@/lib/budget";
 import {
   writeBudgetSpendMode,
@@ -13,9 +24,9 @@ import { formatHKD, writeBudgetToStorage } from "@/lib/transaction-utils";
 import type { MonthBudgetStats } from "@/lib/types";
 import { useT } from "@/components/LocaleProvider";
 
-function formatDailyAvailable(amount: number, t: ReturnType<typeof useT>) {
+function formatDailyAmount(amount: number) {
   const daily = Math.max(0, Math.round(amount));
-  return t("budget.perDay", { amount: `HK$${daily.toLocaleString("en-US")}` });
+  return `$${daily.toLocaleString("en-US")}`;
 }
 
 export function BudgetProgressCard({
@@ -37,7 +48,6 @@ export function BudgetProgressCard({
     [stats.ratio],
   );
   const overspent = stats.budget > 0 && stats.ratio > 1;
-  const remainingClass = overspent ? "text-danger" : "text-[#8C6D53]";
 
   function openEditor() {
     setInput(stats.budget > 0 ? String(stats.budget) : "");
@@ -69,31 +79,24 @@ export function BudgetProgressCard({
 
   return (
     <>
-      <section className="rounded-2xl border border-[#EFE5D3] bg-white p-4 shadow-sm">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm font-extrabold text-[#4A3E3D]">{t("budget.title")}</h2>
-          <button
-            aria-label={t("budget.aria.edit")}
-            className="grid size-8 place-items-center rounded-full text-[#A08875] transition-all duration-150 hover:bg-[#FFF6D9] active:scale-[0.98]"
-            onClick={openEditor}
-            type="button"
-          >
-            <Pencil className="size-3.5" strokeWidth={2} />
-          </button>
-        </div>
+      <section className="rounded-2xl border border-[#EAE5D9] bg-white p-4 shadow-2xs">
+        <PlannerCardHeader
+          action="pencil"
+          actionAriaLabel={t("budget.aria.edit")}
+          onAction={openEditor}
+          title={t("budget.title")}
+        />
 
         {stats.budget <= 0 ? (
-          <p className="mt-3 text-sm text-[#A08875]">
-            {t("budget.empty")}
-          </p>
+          <p className="text-[13px] text-[#9C9285]">{t("budget.empty")}</p>
         ) : (
           <>
-            <div className="mt-3 grid grid-cols-2 gap-1.5 rounded-2xl bg-[#FFF6D9] p-1">
+            <div className="mt-1 grid grid-cols-2 gap-1.5 rounded-2xl bg-[#F0ECE1] p-1">
               <button
                 className={`h-8 rounded-xl text-[11px] font-bold transition-all duration-150 active:scale-[0.98] ${
                   stats.spendMode === "actual"
-                    ? "bg-white text-[#4A3E3D] shadow-sm"
-                    : "text-[#A08875]"
+                    ? "bg-white text-[#2C2420] shadow-sm"
+                    : "text-[#8C8273]"
                 }`}
                 onClick={() => setMode("actual")}
                 type="button"
@@ -103,8 +106,8 @@ export function BudgetProgressCard({
               <button
                 className={`h-8 rounded-xl text-[11px] font-bold transition-all duration-150 active:scale-[0.98] ${
                   stats.spendMode === "reserve_fixed"
-                    ? "bg-white text-[#4A3E3D] shadow-sm"
-                    : "text-[#A08875]"
+                    ? "bg-white text-[#2C2420] shadow-sm"
+                    : "text-[#8C8273]"
                 }`}
                 onClick={() => setMode("reserve_fixed")}
                 type="button"
@@ -112,61 +115,71 @@ export function BudgetProgressCard({
                 {t("budget.mode.withFixed")}
               </button>
             </div>
-            <p className="mt-2 flex items-start gap-1 text-[11px] leading-4 text-[#A08875]">
+
+            <p className="mt-2 flex items-start text-[12px] leading-4 text-[#8C8273]">
               {stats.spendMode === "actual" ? (
                 <>
-                  <Lightbulb
-                    className="mt-px size-3.5 shrink-0"
+                  <Info
+                    className="mr-1 mt-px inline size-3.5 shrink-0 text-[#A89F91]"
                     strokeWidth={2}
                   />
                   {t("budget.hint.spentOnly")}
                 </>
               ) : (
                 <>
-                  <Lock className="mt-px size-3.5 shrink-0" strokeWidth={2} />
+                  <Lock
+                    className="mr-1 mt-px inline size-3.5 shrink-0 text-[#A89F91]"
+                    strokeWidth={2}
+                  />
                   {t("budget.hint.withFixed")}
                 </>
               )}
             </p>
 
-            <div className="mt-3 grid grid-cols-3 divide-x divide-[#EFE5D3] text-center">
+            <div className="mt-3 grid grid-cols-3 divide-x divide-[#EAE5D9] text-center">
               <div className="px-1.5">
-                <p className="text-[10px] font-medium text-[#A08875]">{t("budget.used")}</p>
-                <p className="mt-1 font-numeric text-sm font-semibold text-[#4A3E31]">
-                  {formatHKD(stats.spent)}
-                </p>
+                <MetricLabel>{t("budget.used")}</MetricLabel>
+                <MetricValue>{formatHKD(stats.spent)}</MetricValue>
               </div>
               <div className="px-1.5">
-                <p className="text-[10px] font-medium text-[#A08875]">{t("budget.remaining")}</p>
-                <p className={`mt-1 font-numeric text-sm font-semibold ${remainingClass}`}>
+                <MetricLabel>{t("budget.remaining")}</MetricLabel>
+                <MetricValue
+                  className={overspent ? "text-danger" : "text-[#2C2420]"}
+                >
                   {formatHKD(stats.remaining)}
-                </p>
+                </MetricValue>
               </div>
               <div className="px-1.5">
-                <p className="text-[10px] font-medium text-[#A08875]">{t("budget.dailyAvailable")}</p>
-                <p className="mt-1 font-numeric text-sm font-semibold text-[#4A3E31]">
-                  {formatDailyAvailable(stats.dailyAvailable, t)}
-                </p>
+                <MetricLabel>{t("budget.dailyAvailable")}</MetricLabel>
+                <MetricValue>
+                  {formatDailyAmount(stats.dailyAvailable)}
+                  <span className="text-[12px] font-normal text-[#8C8273]">
+                    {t("budget.perDayUnit")}
+                  </span>
+                </MetricValue>
               </div>
             </div>
-            <div className="mt-3 h-3 overflow-hidden rounded-full bg-[#FFF6D9]">
+
+            <div className="mt-3 h-3 overflow-hidden rounded-full bg-[#F0ECE1]">
               <div
                 className={`h-full rounded-full transition-all ${budgetBarColor(stats.ratio)}`}
                 style={{ width }}
               />
             </div>
-            <p className="mt-1.5 font-numeric text-xs text-[#A08875]">
+            <p className="mt-2 font-numeric text-[12px] text-[#8C8273]">
               {t("budget.summary", {
                 budget: formatHKD(stats.budget),
                 used: `${(stats.ratio * 100).toFixed(0)}%`,
               })}
               {stats.spendMode === "reserve_fixed" && stats.estimatedFixed > 0
-                ? t("budget.reservedFixed", { amount: formatHKD(stats.estimatedFixed) })
+                ? t("budget.reservedFixed", {
+                    amount: formatHKD(stats.estimatedFixed),
+                  })
                 : ""}
             </p>
             {overspent && (
-              <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-danger">
-                <AlertTriangle className="h-4 w-4 shrink-0" strokeWidth={2} />
+              <p className="mt-1.5 flex items-center gap-1.5 text-[12px] font-medium text-danger">
+                <AlertTriangle className="size-3.5 shrink-0" strokeWidth={2} />
                 {t("budget.overspent")}
               </p>
             )}
@@ -176,11 +189,11 @@ export function BudgetProgressCard({
 
       <BottomSheet onOpenChange={setOpen} open={open} title={t("budget.editTitle")}>
         <form className="space-y-4 pt-1" onSubmit={saveBudget}>
-          <label className="block text-xs font-medium text-[#A08875]">
+          <label className="block text-xs font-medium text-[#8C8273]">
             {t("budget.totalLabel")}
             <input
               autoFocus
-              className="mt-2 h-12 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#EE7828] focus:ring-4 focus:ring-[#EE7828]/15"
+              className="mt-2 h-12 w-full rounded-2xl border border-[#EAE5D9] bg-[#F0ECE1] px-3 text-sm text-[#2C2420] outline-none transition-all focus:border-[#C86235] focus:ring-4 focus:ring-[#C86235]/15"
               inputMode="decimal"
               min="0"
               onChange={(event) => setInput(event.target.value)}
@@ -191,7 +204,7 @@ export function BudgetProgressCard({
             />
           </label>
           <button
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#EE7828] font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#C86235] font-bold text-white shadow-2xs transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
             disabled={saving}
             type="submit"
           >

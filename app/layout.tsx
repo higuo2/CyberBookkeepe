@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { AppShell } from "@/components/AppShell";
 import "./globals.css";
 
-const CREAM = "#FAF6EC";
+const CREAM = "#F6F4EE";
 
 export const metadata: Metadata = {
   title: "CyberBookkeeper",
@@ -37,8 +37,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html className="h-dvh overflow-x-hidden bg-[#FAF6EC]" lang="zh-CN">
-      <body className="h-dvh overflow-x-hidden bg-[#FAF6EC] touch-pan-y overscroll-none">
+    <html className="min-h-screen overflow-x-hidden bg-[#F6F4EE] antialiased" lang="zh-CN">
+      <body className="min-h-screen overflow-x-hidden bg-[#F6F4EE] text-[#3A322B] antialiased touch-pan-y overscroll-none">
         <AppShell>{children}</AppShell>
       </body>
     </html>

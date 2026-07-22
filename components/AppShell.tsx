@@ -13,8 +13,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <LocaleProvider>
         <AuthGate>
           <RecurringAutoSync />
-          <div className="mx-auto flex h-dvh w-full max-w-md flex-col overflow-x-hidden bg-[#FAF6EC] touch-pan-y sm:border-x sm:border-[#EFE5D3] sm:shadow-[0_0_48px_rgba(92,74,50,0.06)]">
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#FAF6EC]">
+          <div className="mx-auto flex h-dvh w-full max-w-md flex-col overflow-x-hidden touch-pan-y sm:border-x sm:border-[#EAE5D9] sm:shadow-[0_0_48px_rgba(60,50,40,0.05)]">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               {children}
             </div>
             <BottomNav />

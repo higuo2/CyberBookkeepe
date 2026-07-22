@@ -56,17 +56,17 @@ export function emptyRecurringForm(): RecurringFormState {
 }
 
 const numberFieldClass =
-  "mt-2 h-12 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#EE7828] focus:ring-4 focus:ring-[#EE7828]/15 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+  "mt-2 h-12 w-full rounded-2xl border border-[#EAE5D9] bg-[#F0ECE1] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#C86235] focus:ring-4 focus:ring-[#C86235]/15 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
 const textFieldClass =
-  "h-12 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#EE7828] focus:ring-4 focus:ring-[#EE7828]/15";
+  "h-12 w-full rounded-2xl border border-[#EAE5D9] bg-[#F0ECE1] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#C86235] focus:ring-4 focus:ring-[#C86235]/15";
 
 const selectFieldClass =
   `${numberFieldClass} appearance-none bg-[length:14px_14px] bg-[right_14px_center] bg-no-repeat pr-10 ` +
   `bg-[url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23A08875' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")]`;
 
 const dateFieldClass =
-  "relative h-12 w-full cursor-pointer rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 pr-10 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#EE7828] focus:ring-4 focus:ring-[#EE7828]/15 " +
+  "relative h-12 w-full cursor-pointer rounded-2xl border border-[#EAE5D9] bg-[#F0ECE1] px-3 pr-10 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#C86235] focus:ring-4 focus:ring-[#C86235]/15 " +
   "[&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0";
 
 export function computeFormNextDate(form: RecurringFormState): string {
@@ -129,7 +129,7 @@ export function RecurringEditorSheet({
     >
       <form className="space-y-4 pt-1" onSubmit={onSubmit}>
         {/* 收 / 支 Segmented Control */}
-        <div className="grid grid-cols-2 gap-1.5 rounded-2xl bg-[#FFF6D9] p-1.5">
+        <div className="grid grid-cols-2 gap-1.5 rounded-2xl bg-[#F0ECE1] p-1.5">
           {(
             [
               {
@@ -150,8 +150,8 @@ export function RecurringEditorSheet({
                 className={`flex h-11 items-center justify-center gap-1.5 rounded-xl text-sm font-bold transition-all duration-150 active:scale-[0.98] ${
                   active
                     ? key === "expense"
-                      ? "bg-white text-[#E07A3D] shadow-sm"
-                      : "bg-white text-[#2A9D8F] shadow-sm"
+                      ? "bg-white text-[#B8785C] shadow-sm"
+                      : "bg-white text-[#5B7A66] shadow-sm"
                     : "text-[#A08875]"
                 }`}
                 key={key}
@@ -182,7 +182,7 @@ export function RecurringEditorSheet({
           <div className="mt-2 flex items-center gap-2">
             <button
               aria-label={t("recurring.aria.pickIcon")}
-              className="grid size-12 shrink-0 place-items-center rounded-xl border border-[#EFE5D3] bg-[#FAF6EC] text-[#6E6559] shadow-sm transition-all duration-150 active:scale-[0.98]"
+              className="grid size-12 shrink-0 place-items-center rounded-xl border border-[#EAE5D9] bg-[#F0ECE1] text-[#6E6559] shadow-sm transition-all duration-150 active:scale-[0.98]"
               onClick={() => setEmojiOpen((v) => !v)}
               type="button"
             >
@@ -199,7 +199,7 @@ export function RecurringEditorSheet({
             />
           </div>
           {emojiOpen && (
-            <div className="mt-2 rounded-2xl border border-[#EFE5D3] bg-white p-2.5 shadow-sm">
+            <div className="mt-2 rounded-2xl border border-[#EAE5D9] bg-white p-2.5 shadow-sm">
               <div className="grid grid-cols-7 gap-1.5">
                 {RECURRING_EMOJIS.map((iconId) => {
                   const active = form.emoji === iconId;
@@ -207,8 +207,8 @@ export function RecurringEditorSheet({
                     <button
                       className={`grid size-10 place-items-center rounded-xl transition-all duration-150 active:scale-[0.98] ${
                         active
-                          ? "bg-[#EE7828]/20 text-[#8C6D53] ring-2 ring-[#EE7828]"
-                          : "bg-[#FAF6EC] text-[#9C9181]"
+                          ? "bg-[#C86235]/20 text-[#8C6D53] ring-2 ring-[#C86235]"
+                          : "bg-[#F0ECE1] text-[#9C9181]"
                       }`}
                       key={iconId}
                       onClick={() => {
@@ -271,8 +271,8 @@ export function RecurringEditorSheet({
                   <button
                     className={`grid size-9 place-items-center rounded-full text-xs font-bold transition-all duration-150 active:scale-[0.98] ${
                       active
-                        ? "bg-[#EE7828] text-white"
-                        : "bg-[#FAF6EC] text-[#A08875]"
+                        ? "bg-[#C86235] text-white"
+                        : "bg-[#F0ECE1] text-[#A08875]"
                     }`}
                     key={code}
                     onClick={() => toggleWeekday(code)}
@@ -284,7 +284,7 @@ export function RecurringEditorSheet({
               })}
             </div>
             <button
-              className="mt-2 text-xs font-semibold text-[#EE7828]"
+              className="mt-2 text-xs font-semibold text-[#9C9285]"
               onClick={() => patch({ byDays: [...WORKDAYS] })}
               type="button"
             >
@@ -394,13 +394,13 @@ export function RecurringEditorSheet({
           </label>
         </div>
 
-        <label className="flex items-center justify-between gap-3 rounded-2xl bg-[#FFF6D9] px-3.5 py-3.5">
+        <label className="flex items-center justify-between gap-3 rounded-2xl bg-[#F0ECE1] px-3.5 py-3.5">
           <span className="text-sm font-semibold text-[#4A3E3D]">
             {t("recurring.autoWrite")}
           </span>
           <input
             checked={form.autoWrite}
-            className="size-5 accent-[#EE7828]"
+            className="size-5 accent-[#C86235]"
             onChange={(event) => patch({ autoWrite: event.target.checked })}
             type="checkbox"
           />
@@ -408,18 +408,18 @@ export function RecurringEditorSheet({
 
         {!isNew && onEarlyWrite && (
           <button
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#EFE5D3] bg-white text-sm font-bold text-[#8C6D53] shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#EAE5D9] bg-white text-sm font-bold text-[#8C6D53] shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
             disabled={earlyWriting}
             onClick={() => void onEarlyWrite()}
             type="button"
           >
-            <Zap className="size-4 text-[#EE7828]" strokeWidth={2.25} />
+            <Zap className="size-4 text-[#C86235]" strokeWidth={2.25} />
             {earlyWriting ? t("recurring.earlyWriting") : t("recurring.earlyWrite")}
           </button>
         )}
 
         <button
-          className="w-full rounded-xl bg-[#EE7828] py-3.5 text-base font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+          className="w-full rounded-xl bg-[#C86235] py-3.5 text-base font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
           type="submit"
         >
           {t("recurring.saveSettings")}

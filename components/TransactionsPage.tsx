@@ -17,7 +17,7 @@ import { CategoryIcon } from "@/components/CategoryIcon";
 import { TransactionDialog } from "@/components/TransactionDialog";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { TransactionListSkeleton } from "@/components/ui/Skeleton";
-import { categoryColor } from "@/lib/category-colors";
+import { categoryIconStyle } from "@/lib/category-colors";
 import {
   insertTransactionDraft,
   updateTransactionDraft,
@@ -111,18 +111,14 @@ function formatDayExpenseSummary(
 }
 
 function categoryIconTone(category: string) {
-  const color = categoryColor(category);
-  return {
-    backgroundColor: `${color}26`,
-    color,
-  };
+  return categoryIconStyle(category);
 }
 
 function headerBtnClass(active = false) {
   return `grid size-9 place-items-center rounded-full border transition-all duration-150 active:scale-[0.98] ${
     active
-      ? "border-brand-primary/40 bg-[#FFF1E0] text-expense"
-      : "border-cream-border bg-cream-card text-ink-body shadow-sm"
+      ? "border-brand-primary/30 bg-cream-bg-soft text-brand-primary"
+      : "border-cream-border bg-cream-card text-ink-body shadow-quiet"
   }`;
 }
 
@@ -383,7 +379,7 @@ export function TransactionsPage() {
 
   return (
     <>
-      <main className="relative flex h-full min-h-0 flex-col bg-cream-bg pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
+      <main className="relative flex h-full min-h-0 flex-col pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
         <div className="shrink-0 px-4 pb-3">
           <PageHeader
             actions={
@@ -411,7 +407,7 @@ export function TransactionsPage() {
                 </button>
                 <button
                   aria-label={t("transactions.aria.manualAdd")}
-                  className="grid size-9 place-items-center rounded-full bg-[#EE7828] text-white shadow-sm transition-all active:scale-95"
+                  className="grid size-9 place-items-center rounded-full bg-[#C86235] text-white shadow-sm transition-all active:scale-95"
                   onClick={openCreate}
                   type="button"
                 >
@@ -428,7 +424,7 @@ export function TransactionsPage() {
               <Search className="pointer-events-none absolute left-3.5 top-1/2 size-3.5 -translate-y-1/2 text-[#C0B49A]" strokeWidth={2} />
               <input
                 autoFocus
-                className="h-10 w-full rounded-2xl border border-cream-border bg-cream-card pl-10 pr-3 text-sm text-ink outline-none shadow-sm transition-all placeholder:text-ink-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                className="h-10 w-full rounded-2xl border border-cream-border bg-[#F0ECE1] pl-10 pr-3 text-sm text-ink outline-none transition-all placeholder:text-ink-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t("transactions.searchPlaceholder")}
                 value={query}
@@ -437,7 +433,7 @@ export function TransactionsPage() {
           ) : null}
 
           <div className="mt-3 flex items-center gap-2.5">
-            <div className="flex min-w-0 flex-1 rounded-xl bg-[#EBE6DC] p-[3px]">
+            <div className="flex min-w-0 flex-1 rounded-xl bg-[#F0ECE1] p-[3px]">
               {TYPE_SEGMENTS.map(({ key, labelKey }) => {
                 const active = typeFilter === key;
                 return (
@@ -461,8 +457,8 @@ export function TransactionsPage() {
               aria-label={t("transactions.aria.moreFilters")}
               className={`flex h-9 shrink-0 items-center gap-1 rounded-xl border px-2.5 text-[13px] font-semibold transition-all duration-150 active:scale-[0.98] ${
                 filterActiveCount > 0
-                  ? "border-cream-border bg-[#FFF6E8] text-expense"
-                  : "border-cream-border bg-cream-card text-ink-body shadow-sm"
+                  ? "border-cream-border bg-cream-bg-soft text-expense"
+                  : "border-cream-border bg-cream-card text-ink-body shadow-quiet"
               }`}
               onClick={() => setFilterOpen(true)}
               type="button"
@@ -484,7 +480,7 @@ export function TransactionsPage() {
           {loading && transactions.length === 0 ? (
             <TransactionListSkeleton />
           ) : filtered.length === 0 ? (
-            <div className="mt-4 rounded-2xl border border-dashed border-cream-border bg-cream-card/70 px-5 py-14 text-center">
+            <div className="mt-4 rounded-2xl border border-dashed border-[#EAE5D9] bg-white px-5 py-14 text-center shadow-2xs">
               <p className="font-medium text-ink-title">{t("transactions.emptyTitle")}</p>
               <p className="mt-1 text-sm text-[#9A8B78]">
                 {recurringOnly
@@ -513,7 +509,7 @@ export function TransactionsPage() {
                       ) : null}
                     </div>
 
-                    <div className="overflow-hidden rounded-2xl border border-cream-border bg-cream-card shadow-sm divide-y divide-cream-border">
+                    <div className="overflow-hidden rounded-2xl border border-[#EAE5D9] bg-white shadow-2xs divide-y divide-[#F0ECE1]">
                       {items.map((item, index) => {
                         const expense = item.type === "EXPENSE";
                         const recurring = isRecurringNote(item.note);
@@ -632,11 +628,11 @@ export function TransactionsPage() {
 
         <section>
           <div className="mb-3 flex items-center justify-between gap-2">
-            <p className="text-xs font-medium text-[#8C8273]">
+            <p className="text-xs font-medium text-[#9C9285]">
               {categorySectionTitle}
             </p>
             {typeFilter === "ALL" ? (
-              <div className="flex rounded-xl bg-[#EFE8DC] p-0.5">
+              <div className="flex rounded-xl bg-[#F0ECE1] p-0.5">
                 {(
                   [
                     { key: "EXPENSE" as const, label: t("transactions.expenseCategories") },
@@ -713,7 +709,7 @@ export function TransactionsPage() {
         </section>
 
         <section>
-          <div className="flex items-center justify-between rounded-2xl border border-cream-border bg-cream-card/80 p-3.5">
+          <div className="flex items-center justify-between rounded-2xl border border-[#EAE5D9] bg-white p-3.5 shadow-2xs">
             <p className="flex items-center gap-1.5 text-sm font-medium text-ink-body">
               <RecurringBadgeIcon className="size-3.5 text-brand-primary" />
               {t("transactions.recurringOnly")}

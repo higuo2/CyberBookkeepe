@@ -12,7 +12,8 @@ import {
   XAxis,
 } from "recharts";
 import { CategoryIcon } from "@/components/CategoryIcon";
-import { categoryColor } from "@/lib/category-colors";
+import { categoryColor, categoryIconStyle } from "@/lib/category-colors";
+import { cream } from "@/lib/cream-theme";
 import {
   DEFAULT_CURRENCY,
   formatMoney,
@@ -39,8 +40,8 @@ export function CategoryPieChart({
     return (
       <div className="grid h-36 place-items-center text-center">
         <div>
-          <p className="font-medium text-[#5C4A32]">{t("charts.emptyTitle")}</p>
-          <p className="mt-1 text-sm text-[#A08B68]">{t("charts.emptyHint")}</p>
+          <p className="font-medium text-ink">{t("charts.emptyTitle")}</p>
+          <p className="mt-1 text-sm text-ink-muted">{t("charts.emptyHint")}</p>
         </div>
       </div>
     );
@@ -71,10 +72,10 @@ export function CategoryPieChart({
             </Pie>
             <Tooltip
               contentStyle={{
-                border: "1px solid #EFE5D3",
+                border: `1px solid ${cream.hex.creamBorder}`,
                 borderRadius: "16px",
-                background: "#FAF6EC",
-                boxShadow: "0 8px 24px rgba(92,74,50,.08)",
+                background: cream.hex.creamBgSoft,
+                boxShadow: "0 4px 20px -4px rgba(60,50,40,0.06)",
               }}
               formatter={(value) => formatMoney(Number(value), currency)}
             />
@@ -86,24 +87,25 @@ export function CategoryPieChart({
         {data.map((item, index) => {
           const pct = total > 0 ? (item.value / total) * 100 : 0;
           const color = categoryColor(item.name, index);
+          const iconStyle = categoryIconStyle(item.name, index);
           return (
             <li className="flex items-center gap-2" key={item.name}>
               <div
                 className="grid size-8 shrink-0 place-items-center rounded-xl"
-                style={{ backgroundColor: `${color}33`, color }}
+                style={iconStyle}
               >
                 <CategoryIcon category={item.name} className="size-3.5" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="mb-0.5 flex items-center justify-between gap-2">
-                  <p className="truncate text-sm font-semibold text-[#5C4A32]">
+                  <p className="truncate text-sm font-semibold text-ink">
                     {categoryLabel(item.name, t)}
                   </p>
-                  <p className="shrink-0 font-numeric text-xs font-medium text-[#A08B68]">
+                  <p className="shrink-0 font-numeric text-xs font-medium text-ink-muted">
                     {pct.toFixed(0)}%
                   </p>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-[#FFF6D9]">
+                <div className="h-1.5 overflow-hidden rounded-full bg-cream-bg-soft">
                   <div
                     className="h-full rounded-full transition-all"
                     style={{
@@ -113,7 +115,7 @@ export function CategoryPieChart({
                   />
                 </div>
               </div>
-              <p className="w-[5.5rem] shrink-0 text-right font-numeric text-sm font-semibold text-[#4A3E31]">
+              <p className="w-[5.5rem] shrink-0 text-right font-numeric text-sm font-semibold text-ink-body">
                 {formatMoney(item.value, currency)}
               </p>
             </li>
@@ -150,9 +152,9 @@ function TrendTooltip({
   if (!point?.date) return null;
 
   return (
-    <div className="rounded-xl border border-[#EFE5D3] bg-[#FFFDF0] p-2.5 text-xs text-[#8C6D53] shadow-md">
+    <div className="rounded-xl border border-cream-border bg-cream-bg-soft p-2.5 text-xs text-ink-muted shadow-quiet">
       <p className="font-medium">{formatTrendDate(point.date, locale)}</p>
-      <p className="mt-1 font-numeric font-semibold text-[#4A3E31]">
+      <p className="mt-1 font-numeric font-semibold text-ink-body">
         {expenseLabel(formatMoney(Number(point.amount) || 0, currency))}
       </p>
     </div>
@@ -171,16 +173,10 @@ export function TrendBarChart({
     <div className="h-56 w-full">
       <ResponsiveContainer height="100%" width="100%">
         <BarChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
-          <defs>
-            <linearGradient id="creamBarGradient" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="#EE7828" />
-              <stop offset="100%" stopColor="#FFE8B8" />
-            </linearGradient>
-          </defs>
           <XAxis
             axisLine={false}
             dataKey="label"
-            tick={{ fill: "#C2B5A5", fontSize: 10 }}
+            tick={{ fill: cream.hex.inkMuted, fontSize: 10 }}
             tickLine={false}
           />
           <Tooltip
@@ -191,13 +187,14 @@ export function TrendBarChart({
                 locale={locale}
               />
             }
-            cursor={{ fill: "rgba(248, 160, 85, 0.08)" }}
+            cursor={{ fill: "rgba(200, 98, 53, 0.06)" }}
           />
           <Bar
             dataKey="amount"
-            fill="url(#creamBarGradient)"
+            fill={cream.hex.brandPrimary}
+            fillOpacity={0.85}
             maxBarSize={36}
-            radius={[8, 8, 0, 0]}
+            radius={[6, 6, 0, 0]}
           />
         </BarChart>
       </ResponsiveContainer>

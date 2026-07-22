@@ -193,7 +193,7 @@ export function ProfilePage() {
   }
 
   return (
-    <main className="h-full overflow-y-auto overscroll-contain bg-[#FFFDF0] px-4 pb-8 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
+    <main className="h-full overflow-y-auto overscroll-contain px-4 pb-8 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
       <PageHeader
         caption={t("settings.eyebrow")}
         className="px-1"
@@ -206,7 +206,7 @@ export function ProfilePage() {
         <p className="mb-2 px-1 text-caption font-semibold tracking-wide">
           {t("settings.section.preferences")}
         </p>
-        <div className="overflow-hidden rounded-2xl bg-white shadow-sm divide-y divide-[#F5F0E8]">
+        <div className="overflow-hidden rounded-2xl border border-[#EAE5D9] bg-white shadow-2xs divide-y divide-[#F0ECE1]">
           <SettingsRow
             icon={<Globe className="size-4" strokeWidth={2} />}
             label={t("settings.language")}
@@ -227,7 +227,7 @@ export function ProfilePage() {
         <p className="mb-2 px-1 text-caption font-semibold tracking-wide">
           {t("settings.fontSection")}
         </p>
-        <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-[#EAE5D9] bg-white shadow-2xs">
           <SettingsRow
             chevron
             icon={<Type className="size-4" strokeWidth={2} />}
@@ -236,18 +236,18 @@ export function ProfilePage() {
             value={fontStyleLabel(fontStyle)}
           />
 
-          <div className="border-t border-[#F5F0E8] px-4 pb-4 pt-3">
+          <div className="border-t border-[#F0ECE1] px-4 pb-4 pt-3">
             <p className="text-body">{t("settings.fontSize")}</p>
             <div className="mt-3 flex items-center gap-3">
               <span
                 aria-hidden
-                className="select-none text-[11px] font-semibold text-[#8C8273]"
+                className="select-none text-[11px] font-semibold text-[#9C9285]"
               >
                 A
               </span>
               <div
                 aria-label={t("settings.fontSize")}
-                className="grid flex-1 grid-cols-3 rounded-2xl bg-[#FAF6EC] p-1"
+                className="grid flex-1 grid-cols-3 rounded-2xl bg-[#F0ECE1] p-1"
                 role="radiogroup"
               >
                 {FONT_SIZE_OPTIONS.map((option) => {
@@ -257,8 +257,8 @@ export function ProfilePage() {
                       aria-checked={active}
                       className={`h-9 rounded-xl text-xs font-semibold transition-all duration-150 active:scale-[0.98] ${
                         active
-                          ? "bg-white text-[#3A322B] shadow-sm"
-                          : "text-[#8C8273]"
+                          ? "bg-white text-[#2C2420] shadow-sm"
+                          : "text-[#9C9285]"
                       }`}
                       key={option.code}
                       onClick={() => setFontSize(option.code)}
@@ -272,19 +272,19 @@ export function ProfilePage() {
               </div>
               <span
                 aria-hidden
-                className="select-none text-lg font-semibold leading-none text-[#8C8273]"
+                className="select-none text-lg font-semibold leading-none text-[#9C9285]"
               >
                 A
               </span>
             </div>
 
             <p
-              className="mt-4 rounded-2xl bg-[#FFF6D9] px-3.5 py-3 text-sm leading-6 text-[#4A3E31]"
+              className="mt-4 rounded-2xl bg-[#F0ECE1] px-3.5 py-3 text-sm leading-6 text-[#4A3E31]"
               style={{ fontFamily: FONT_FAMILY_STACK[fontStyle] }}
             >
               {t("settings.fontPreview")}
-              <span className="mt-1 block font-numeric text-base font-semibold text-[#E07A3D]">
-                HK$1,280.50
+              <span className="mt-1 block font-numeric text-base font-semibold text-[#B8785C]">
+                $1,280.50
               </span>
             </p>
           </div>
@@ -296,14 +296,14 @@ export function ProfilePage() {
         <p className="mb-2 px-1 text-caption font-semibold tracking-wide">
           {t("settings.section.data")}
         </p>
-        <div className="overflow-hidden rounded-2xl bg-white shadow-sm divide-y divide-[#F5F0E8]">
+        <div className="overflow-hidden rounded-2xl border border-[#EAE5D9] bg-white shadow-2xs divide-y divide-[#F0ECE1]">
           <button
-            className="flex w-full items-center gap-3 px-4 py-4 text-left transition-all duration-150 active:scale-[0.98] active:bg-[#FAF6EC]/80 disabled:opacity-50"
+            className="flex w-full items-center gap-3 px-4 py-4 text-left transition-all duration-150 active:scale-[0.98] active:bg-[#F0ECE1]/80 disabled:opacity-50"
             disabled={exporting}
             onClick={() => void exportAll()}
             type="button"
           >
-            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#FFF6D9] text-[#C4956A]">
+            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#F0ECE1] text-[#8C7A6B]">
               {exporting ? (
                 <LoaderCircle className="size-4 animate-spin" strokeWidth={2} />
               ) : (
@@ -329,7 +329,7 @@ export function ProfilePage() {
         <p className="mb-2 px-1 text-caption font-semibold tracking-wide">
           {t("settings.section.about")}
         </p>
-        <div className="overflow-hidden rounded-2xl bg-white shadow-sm divide-y divide-[#F5F0E8]">
+        <div className="overflow-hidden rounded-2xl border border-[#EAE5D9] bg-white shadow-2xs divide-y divide-[#F0ECE1]">
           <SettingsRow
             icon={<Heart className="size-4" strokeWidth={2} />}
             label={t("settings.tipCat")}
@@ -356,8 +356,8 @@ export function ProfilePage() {
               <button
                 className={`flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold transition-all duration-150 active:scale-[0.98] ${
                   active
-                    ? "bg-[#EE7828]/15 text-[#8C6D53] ring-2 ring-[#EE7828]"
-                    : "bg-[#FAF6EC] text-[#4A3E31]"
+                    ? "bg-[#C86235]/15 text-[#8C6D53] ring-2 ring-[#C86235]"
+                    : "bg-[#F0ECE1] text-[#4A3E31]"
                 }`}
                 key={option.code}
                 onClick={() => handleLanguageChange(option.code, option.label)}
@@ -385,8 +385,8 @@ export function ProfilePage() {
               <button
                 className={`flex h-14 w-full items-center justify-between rounded-2xl px-4 text-left transition-all duration-150 active:scale-[0.98] ${
                   active
-                    ? "bg-[#EE7828]/15 text-[#8C6D53] ring-2 ring-[#EE7828]"
-                    : "bg-[#FAF6EC] text-[#4A3E31]"
+                    ? "bg-[#C86235]/15 text-[#8C6D53] ring-2 ring-[#C86235]"
+                    : "bg-[#F0ECE1] text-[#4A3E31]"
                 }`}
                 key={option.code}
                 onClick={() => handleFontStyleChange(option.code)}
@@ -398,7 +398,7 @@ export function ProfilePage() {
                     {t(option.labelKey)}
                   </span>
                   {option.hintKey ? (
-                    <span className="mt-0.5 block text-xs text-[#8C8273]">
+                    <span className="mt-0.5 block text-xs text-[#9C9285]">
                       {t(option.hintKey)}
                     </span>
                   ) : null}
@@ -426,8 +426,8 @@ export function ProfilePage() {
               <button
                 className={`flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold transition-all duration-150 active:scale-[0.98] ${
                   active
-                    ? "bg-[#EE7828]/15 text-[#8C6D53] ring-2 ring-[#EE7828]"
-                    : "bg-[#FAF6EC] text-[#4A3E31]"
+                    ? "bg-[#C86235]/15 text-[#8C6D53] ring-2 ring-[#C86235]"
+                    : "bg-[#F0ECE1] text-[#4A3E31]"
                 }`}
                 key={code}
                 onClick={() => handleCurrencyChange(code)}

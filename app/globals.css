@@ -3,20 +3,22 @@
 
 :root {
   color-scheme: light;
-  /* Core cream palette */
-  --cream-bg: #faf6ec;
+  /* Quiet Luxury / Parchment */
+  --cream-bg: #f6f4ee;
+  --cream-bg-soft: #fbf9f5;
   --cream-card: #ffffff;
-  --cream-border: #efe5d3;
+  --cream-border: #eae5d9;
+  --cream-divide: #f0ece1;
   --cream: var(--cream-bg);
-  /* Semantic */
-  --brand-primary: #ee7828;
-  --expense: #e07a3d;
-  --income: #2a9d8f;
-  --danger: #c9786e;
+  /* Semantic — Morandi */
+  --brand-primary: #c86235;
+  --expense: #b8785c;
+  --income: #5b7a66;
+  --danger: #a87870;
   /* Ink */
-  --ink: #3a322b;
-  --ink-body: #4a3e31;
-  --ink-muted: #8c8273;
+  --ink: #2c2420;
+  --ink-body: #5a5046;
+  --ink-muted: #9c9285;
   --font-scale: 1;
   background: var(--cream-bg);
   font-family:
@@ -33,15 +35,16 @@
     sans-serif;
 }
 
-/* Tailwind v4 theme → utilities: bg-brand-primary, text-expense, border-cream-border… */
 @theme inline {
   --color-brand-primary: var(--brand-primary);
   --color-expense: var(--expense);
   --color-income: var(--income);
   --color-danger: var(--danger);
   --color-cream-bg: var(--cream-bg);
+  --color-cream-bg-soft: var(--cream-bg-soft);
   --color-cream-card: var(--cream-card);
   --color-cream-border: var(--cream-border);
+  --color-cream-divide: var(--cream-divide);
   --color-ink: var(--ink);
   --color-ink-body: var(--ink-body);
   --color-ink-muted: var(--ink-muted);
@@ -53,21 +56,25 @@
 }
 
 html {
+  min-height: 100%;
   height: 100dvh;
   overflow-x: hidden;
-  background: var(--cream-bg);
+  background: #f6f4ee;
   touch-action: pan-y;
   font-size: calc(16px * var(--font-scale, 1));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
+  min-height: 100%;
   height: 100dvh;
   margin: 0;
   overflow-x: hidden;
   overscroll-behavior: none;
   touch-action: pan-y;
-  background: var(--cream-bg);
-  color: var(--ink-body);
+  background: #f6f4ee;
+  color: #3a322b;
   -webkit-overflow-scrolling: touch;
   font-family: inherit;
 }
@@ -75,7 +82,7 @@ body {
 #__next,
 #root {
   min-height: 100dvh;
-  background: var(--cream-bg);
+  background: #f6f4ee;
 }
 
 button,
@@ -91,7 +98,7 @@ button {
 @media (min-width: 512px) {
   body {
     background:
-      radial-gradient(circle at top, rgb(255 232 184 / 40%), transparent 32rem),
+      radial-gradient(circle at top, rgb(200 180 150 / 12%), transparent 28rem),
       var(--cream-bg);
   }
 }
@@ -109,7 +116,19 @@ button {
   font-feature-settings: "tnum";
 }
 
-/* Typography tokens (cream app) */
+/* Quiet luxury card surface — Level 1 */
+.card-quiet {
+  border: 1px solid #eae5d9;
+  background: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 1px rgb(0 0 0 / 0.05);
+}
+
+/* Level 2 inset well */
+.inset-well {
+  background: #f0ece1;
+}
+
 .text-title {
   @apply text-lg font-semibold text-ink;
 }

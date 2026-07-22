@@ -35,12 +35,12 @@ export function ConfirmDialog({
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/35 px-6 backdrop-blur-sm"
       role="dialog"
     >
-      <div className="w-full max-w-sm rounded-3xl bg-[#FFFDF0] p-5 shadow-xl">
+      <div className="w-full max-w-sm rounded-3xl bg-[#FBF9F5] p-5 shadow-xl">
         <h2 className="text-lg font-extrabold text-[#4A3E3D]">{title}</h2>
         <p className="mt-2 text-sm leading-6 text-[#9A7B55]">{description}</p>
         <div className="mt-5 flex gap-3">
           <button
-            className="h-11 flex-1 rounded-2xl border border-[#EFE5D3] bg-white text-sm font-semibold text-[#8C6D53] transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+            className="h-11 flex-1 rounded-2xl border border-[#EAE5D9] bg-white text-sm font-semibold text-[#8C6D53] transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
             disabled={busy}
             onClick={onCancel}
             type="button"
@@ -87,14 +87,14 @@ export function SettingsRow({
     <Comp
       className={`flex w-full items-center gap-3 px-4 py-4 text-left transition-all duration-150 ${
         interactive
-          ? "active:scale-[0.98] active:bg-[#FAF6EC]/80"
+          ? "active:scale-[0.98] active:bg-[#F0ECE1]/80"
           : ""
       } ${disabled ? "opacity-80" : ""}`}
       disabled={interactive ? disabled : undefined}
       onClick={interactive ? onClick : undefined}
       type={interactive ? "button" : undefined}
     >
-      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#FFF6D9] text-[#C4956A]">
+      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#F0ECE1] text-[#8C7A6B]">
         {icon}
       </span>
       <span
@@ -105,7 +105,7 @@ export function SettingsRow({
         {label}
       </span>
       {value ? (
-        <span className="shrink-0 font-numeric text-sm font-medium text-[#8C8273]">
+        <span className="shrink-0 font-numeric text-sm font-medium text-[#9C9285]">
           {value}
         </span>
       ) : null}

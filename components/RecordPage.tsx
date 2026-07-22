@@ -744,13 +744,13 @@ export function RecordPage() {
 
   return (
     <>
-      <main className="relative flex h-full min-h-0 flex-col bg-[#FAF6EC]">
-        <header className="z-20 flex shrink-0 items-center justify-between border-b border-[#EFE5D3] bg-[#FAF6EC] px-5 pb-3 pt-[calc(env(safe-area-inset-top)+12px)]">
+      <main className="relative flex h-full min-h-0 flex-col">
+        <header className="z-20 flex shrink-0 items-center justify-between border-b border-[#EAE5D9]/60 px-5 pb-3 pt-[calc(env(safe-area-inset-top)+12px)]">
           <div>
             <p className="text-caption">{headerDate}</p>
             <p className="mt-0.5 text-base font-semibold text-[#4A3E31]">
               {t("record.todaySpend")}{" "}
-              <span className="font-numeric text-[#E07A3D]">
+              <span className="font-numeric text-[#B8785C]">
                 {formatMoney(todaySpend, readDefaultCurrency())}
               </span>
             </p>
@@ -810,7 +810,7 @@ export function RecordPage() {
                     <p className="text-[15px] leading-6 text-[#5C4A32]">
                       {message.replyText}
                     </p>
-                    <div className="mt-3 rounded-2xl bg-[#FFF6D9] p-3">
+                    <div className="mt-3 rounded-2xl bg-[#F2ECE4] p-3">
                       <div className="flex items-center gap-2">
                         <span className="inline-flex items-center gap-1 rounded-full bg-[#F4E8D1] px-1.5 py-0.5 text-[10px] font-semibold text-[#B37233]">
                           <RefreshCw className="size-3.5" strokeWidth={2} />
@@ -823,7 +823,7 @@ export function RecordPage() {
                       <p
                         className={`mt-1.5 font-numeric text-sm font-semibold ${
                           item.direction === "income"
-                            ? "text-[#2A9D8F]"
+                            ? "text-[#5B7A66]"
                             : "text-[#8C6D53]"
                         }`}
                       >
@@ -854,7 +854,7 @@ export function RecordPage() {
                           </span>
                         </button>
                         <button
-                          className="h-10 flex-1 rounded-xl bg-[#EE7828] text-sm font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+                          className="h-10 flex-1 rounded-xl bg-[#C86235] text-sm font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
                           disabled={actionBusy}
                           onClick={() => void confirmRecurring(message.id)}
                           type="button"
@@ -866,7 +866,7 @@ export function RecordPage() {
                         </button>
                       </div>
                     ) : status === "confirmed" ? (
-                      <p className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#2A9D8F]">
+                      <p className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#5B7A66]">
                         <CheckCircle2 className="size-3.5" strokeWidth={2} />
                         {t("record.savedToPlanner")}
                       </p>
@@ -920,9 +920,9 @@ export function RecordPage() {
                           {record.comment}
                         </p>
 
-                        <div className="mt-3 rounded-2xl bg-[#FFF6D9] p-3">
+                        <div className="mt-3 rounded-2xl bg-[#F2ECE4] p-3">
                           <div className="flex items-center gap-3">
-                            <div className="grid size-11 shrink-0 place-items-center rounded-full bg-[#F8C96A] text-[#8A5A12] shadow-sm">
+                            <div className="grid size-11 shrink-0 place-items-center rounded-full bg-[#F2ECE4] text-[#8C7A6B] shadow-quiet">
                               {record.category === "其它支出" ||
                               record.category === "其它" ? (
                                 <Star className="size-5 fill-current" strokeWidth={2} />
@@ -944,8 +944,8 @@ export function RecordPage() {
                             <p
                               className={`shrink-0 font-numeric text-base font-semibold ${
                                 record.type === "EXPENSE"
-                                  ? "text-[#E07A3D]"
-                                  : "text-[#2A9D8F]"
+                                  ? "text-[#B8785C]"
+                                  : "text-[#5B7A66]"
                               }`}
                             >
                               {record.type === "EXPENSE" ? "-" : "+"}
@@ -973,7 +973,7 @@ export function RecordPage() {
                               </span>
                             </button>
                             <button
-                              className="h-10 flex-1 rounded-xl bg-[#EE7828] text-sm font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+                              className="h-10 flex-1 rounded-xl bg-[#C86235] text-sm font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
                               disabled={actionBusy}
                               onClick={() =>
                                 void confirmTransaction(message.id, index)
@@ -989,7 +989,7 @@ export function RecordPage() {
                             </button>
                           </div>
                         ) : record.status === "confirmed" ? (
-                          <p className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#2A9D8F]">
+                          <p className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#5B7A66]">
                             <CheckCircle2
                               className="size-3.5"
                               strokeWidth={2}
@@ -1015,13 +1015,13 @@ export function RecordPage() {
           )}
         </div>
 
-        <div className="z-30 shrink-0 border-t border-[#EFE5D3]/80 bg-[#FAF6EC] px-0 pb-[max(8px,env(safe-area-inset-bottom))] pt-2">
+        <div className="z-30 shrink-0 border-t border-[#EAE5D9]/60 bg-[#F6F4EE]/85 px-0 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 backdrop-blur-lg">
           <div className="mb-2 flex gap-2 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {QUICK_CHIPS.map((chip) => {
               const Icon = chip.Icon;
               return (
                 <button
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#EFE5D3] bg-white px-3.5 py-1.5 text-sm font-medium text-[#6B5A40] shadow-sm transition-all duration-150 active:scale-[0.98]"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#EAE5D9] bg-white px-3.5 py-1.5 text-sm font-medium text-[#6B5A40] shadow-sm transition-all duration-150 active:scale-[0.98]"
                   key={chip.labelKey}
                   onClick={() => handleChip(chip)}
                   type="button"
@@ -1034,7 +1034,7 @@ export function RecordPage() {
           </div>
 
           <form
-            className="mx-4 flex items-center gap-2 rounded-2xl border border-[#EFE5D3] bg-white px-2 py-1.5 shadow-sm"
+            className="mx-4 flex items-center gap-2 rounded-2xl border border-[#EAE5D9] bg-white px-2 py-1.5 shadow-sm"
             onSubmit={onSubmit}
           >
             <button
@@ -1057,7 +1057,7 @@ export function RecordPage() {
             />
             <button
               aria-label={t("record.aria.send")}
-              className="grid size-10 shrink-0 place-items-center rounded-full bg-[#EE7828] text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+              className="grid size-10 shrink-0 place-items-center rounded-full bg-[#C86235] text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
               disabled={busy || !historyReady || !input.trim()}
               type="submit"
             >

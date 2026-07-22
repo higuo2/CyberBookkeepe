@@ -1,19 +1,20 @@
 /** @type {import('tailwindcss').Config} */
 /**
- * Tailwind v4 primarily reads colors from `@theme` in `app/globals.css`.
- * This config mirrors the same semantic tokens for tooling / documentation.
+ * Quiet Luxury / Parchment — mirrored from `app/globals.css` `@theme`.
  */
 const colors = {
-  "brand-primary": "#EE7828",
-  expense: "#E07A3D",
-  income: "#2A9D8F",
-  danger: "#C9786E",
-  "cream-bg": "#FAF6EC",
+  "brand-primary": "#C86235",
+  expense: "#B8785C",
+  income: "#5B7A66",
+  danger: "#A87870",
+  "cream-bg": "#F6F4EE",
+  "cream-bg-soft": "#FBF9F5",
   "cream-card": "#FFFFFF",
-  "cream-border": "#EFE5D3",
-  ink: "#3A322B",
-  "ink-body": "#4A3E31",
-  "ink-muted": "#8C8273",
+  "cream-border": "#EAE5D9",
+  "cream-divide": "#F0ECE1",
+  ink: "#2C2420",
+  "ink-body": "#5A5046",
+  "ink-muted": "#9C9285",
 };
 
 module.exports = {
@@ -26,6 +27,10 @@ module.exports = {
   theme: {
     extend: {
       colors,
+      boxShadow: {
+        quiet: "0 4px 20px -4px rgba(60, 50, 40, 0.03)",
+        "2xs": "0 1px rgb(0 0 0 / 0.05)",
+      },
     },
   },
   plugins: [],

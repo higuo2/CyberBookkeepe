@@ -19,33 +19,33 @@ export const CURRENCY_META: Record<
     label: string;
     symbol: string;
     flag: string;
-    /** 统计页横向卡片背景（Tailwind 类） */
+    /** 统计页横向卡片背景（羊皮纸微差） */
     cardGradient: string;
   }
 > = {
   HKD: {
     label: "港币",
-    symbol: "HK$",
+    symbol: "$",
     flag: "🇭🇰",
-    cardGradient: "bg-gradient-to-br from-[#FFFDF7] to-[#FFEEDD]",
+    cardGradient: "bg-white",
   },
   CNY: {
     label: "人民币",
     symbol: "¥",
     flag: "🇨🇳",
-    cardGradient: "bg-gradient-to-br from-[#FFF5F5] to-[#FFE2E2]",
+    cardGradient: "bg-white",
   },
   JPY: {
     label: "日元",
     symbol: "¥",
     flag: "🇯🇵",
-    cardGradient: "bg-gradient-to-br from-[#FAF5FF] to-[#F3E8FF]",
+    cardGradient: "bg-white",
   },
   KRW: {
     label: "韩元",
     symbol: "₩",
     flag: "🇰🇷",
-    cardGradient: "bg-gradient-to-br from-[#F0F9FF] to-[#E0F2FE]",
+    cardGradient: "bg-white",
   },
 };
 

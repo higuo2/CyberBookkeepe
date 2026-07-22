@@ -119,7 +119,7 @@ export function CategoryFilterDropdown({
       <button
         aria-expanded={open}
         aria-haspopup="listbox"
-        className="flex h-9 max-w-[9.5rem] items-center gap-1 rounded-xl border border-[#EFE5D3] bg-white py-0 pl-2.5 pr-2 text-xs font-medium text-[#5C4A32] shadow-sm transition-all duration-150 active:scale-[0.98]"
+        className="flex h-9 max-w-[9.5rem] items-center gap-1 rounded-xl border border-[#EAE5D9] bg-white py-0 pl-2.5 pr-2 text-xs font-medium text-[#5C4A32] shadow-sm transition-all duration-150 active:scale-[0.98]"
         onClick={() => setOpen((prev) => !prev)}
         type="button"
       >
@@ -134,7 +134,7 @@ export function CategoryFilterDropdown({
 
       {open && (
         <div
-          className="absolute right-0 z-40 mt-1.5 w-52 overflow-hidden rounded-2xl border border-[#EFE5D3] bg-[#FFFDF0] shadow-xl"
+          className="absolute right-0 z-40 mt-1.5 w-52 overflow-hidden rounded-2xl border border-[#EAE5D9] bg-[#FBF9F5] shadow-xl"
           role="listbox"
         >
           <ul className="max-h-64 overflow-y-auto overscroll-contain py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -167,7 +167,7 @@ export function CategoryFilterDropdown({
                     aria-selected={selected}
                     type="button"
                   >
-                    <span className="grid size-7 shrink-0 place-items-center rounded-xl bg-[#FFF6D9] text-[#8A5A12]">
+                    <span className="grid size-7 shrink-0 place-items-center rounded-xl bg-[#F2ECE4] text-[#8A5A12]">
                       {item.value === "ALL" ? (
                         <LayoutGrid className="size-3.5" strokeWidth={2} />
                       ) : (

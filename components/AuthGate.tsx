@@ -45,21 +45,21 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   if (!ready) {
-    return <div className="mx-auto h-dvh w-full max-w-md bg-[#FAF6EC]" />;
+    return <div className="mx-auto h-dvh w-full max-w-md" />;
   }
 
   if (!authenticated) {
     return (
-      <main className="mx-auto grid h-dvh w-full max-w-md place-items-center overflow-x-hidden bg-[#FAF6EC] px-6 pt-[calc(env(safe-area-inset-top)+12px)] pb-[calc(env(safe-area-inset-bottom)+12px)] touch-pan-y">
-        <section className="w-full max-w-sm rounded-3xl bg-white p-7 shadow-sm">
-          <div className="mb-6 grid size-16 place-items-center rounded-full bg-[#FFE8B8] shadow-sm">
+      <main className="mx-auto grid h-dvh w-full max-w-md place-items-center overflow-x-hidden px-6 pt-[calc(env(safe-area-inset-top)+12px)] pb-[calc(env(safe-area-inset-bottom)+12px)] touch-pan-y">
+        <section className="w-full max-w-sm rounded-2xl border border-[#EAE5D9] bg-white p-7 shadow-2xs">
+          <div className="mb-6 grid size-16 place-items-center rounded-full bg-[#F0ECE1]">
             <CatAvatar size={52} />
           </div>
-          <p className="text-sm font-medium text-[#EE7828]">{t("auth.brand")}</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#5C4A32]">
+          <p className="text-sm font-medium text-[#9C9285]">{t("auth.brand")}</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#2C2420]">
             {t("auth.welcome")}
           </h1>
-          <p className="mt-2 text-sm leading-6 text-[#9A7B55]">
+          <p className="mt-2 text-sm leading-6 text-[#9C9285]">
             {t("auth.subtitle")}
           </p>
 
@@ -70,7 +70,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             <input
               autoComplete="current-password"
               autoFocus
-              className="h-13 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-4 text-base text-[#5C4A32] outline-none transition-all focus:border-[#EE7828] focus:ring-4 focus:ring-[#EE7828]/15"
+              className="h-13 w-full rounded-2xl border border-[#EAE5D9] bg-[#F0ECE1] px-4 text-base text-[#5C4A32] outline-none transition-all focus:border-[#C86235] focus:ring-4 focus:ring-[#C86235]/15"
               id="app-password"
               onChange={(event) => {
                 setPassword(event.target.value);
@@ -82,7 +82,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             />
             {error && <p className="text-sm text-danger">{error}</p>}
             <button
-              className="h-13 w-full rounded-2xl bg-[#EE7828] font-medium text-white shadow-sm transition-all duration-150 active:scale-[0.98]"
+              className="h-13 w-full rounded-2xl bg-[#C86235] font-medium text-white shadow-2xs transition-all duration-150 active:scale-[0.98]"
               type="submit"
             >
               {t("auth.submit")}
