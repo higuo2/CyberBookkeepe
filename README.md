@@ -15,7 +15,7 @@
 ## 本地启动
 
 1. 复制 `.env.local.example` 为 `.env.local`，填入密钥与访问密码。
-2. 在 Supabase SQL Editor 执行 `supabase/schema.sql`。
+2. 在 Supabase SQL Editor 执行 `supabase/schema.sql`（含 `transactions` 与 `chat_messages`）。
 3. 安装并启动：
 
 ```bash

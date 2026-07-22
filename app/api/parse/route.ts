@@ -287,6 +287,28 @@ export async function POST(request: Request) {
     body && typeof body === "object" && "today" in body
       ? (body as { today?: unknown }).today
       : undefined;
+  const historyRaw =
+    body && typeof body === "object" && "history" in body
+      ? (body as { history?: unknown }).history
+      : undefined;
+
+  const history: { role: "user" | "assistant"; content: string }[] = [];
+  if (Array.isArray(historyRaw)) {
+    for (const item of historyRaw.slice(-12)) {
+      if (!item || typeof item !== "object") continue;
+      const row = item as { role?: unknown; content?: unknown };
+      if (
+        (row.role === "user" || row.role === "assistant") &&
+        typeof row.content === "string" &&
+        row.content.trim()
+      ) {
+        history.push({
+          role: row.role,
+          content: row.content.trim().slice(0, 500),
+        });
+      }
+    }
+  }
 
   if (typeof text !== "string" || !text.trim()) {
     return fail("EMPTY_INPUT", "请先跟小猫说一笔账吧", 400);
@@ -324,6 +346,10 @@ export async function POST(request: Request) {
           role: "system",
           content: buildSystemPrompt(today, expenseCats, incomeCats),
         },
+        ...history.map((h) => ({
+          role: h.role as "user" | "assistant",
+          content: h.content,
+        })),
         { role: "user", content: text.trim() },
       ],
     });

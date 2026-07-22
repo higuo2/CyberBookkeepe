@@ -14,6 +14,17 @@ import {
 } from "@/components/RecurringEditorSheet";
 import { TransactionDialog } from "@/components/TransactionDialog";
 import {
+  fetchChatHistory,
+  formatChatPersistError,
+  insertChatMessage,
+  recordsAggregateStatus,
+  toParseHistory,
+  updateChatMessage,
+  type ChatCardStatus,
+  type PendingRecord,
+  type UiChatMessage,
+} from "@/lib/chat-messages";
+import {
   mapAiDaysToCodes,
   persistAiRecurringItem,
 } from "@/lib/ai-recurring";
@@ -40,31 +51,7 @@ import type {
 } from "@/lib/types";
 import { cleanNote } from "@/lib/utils";
 
-type CardStatus = "pending" | "confirmed" | "cancelled";
-
-type PendingRecord = ParsedTransaction & {
-  id?: string;
-  recordedAt?: string;
-  status: CardStatus;
-};
-
-type ChatMessage =
-  | { id: string; kind: "bot-text"; text: string }
-  | { id: string; kind: "user"; text: string }
-  | {
-      id: string;
-      kind: "bot-records";
-      records: PendingRecord[];
-      replyText?: string;
-    }
-  | {
-      id: string;
-      kind: "bot-recurring";
-      replyText: string;
-      item: ParsedRecurringData;
-      status: CardStatus;
-    }
-  | { id: string; kind: "bot-error"; text: string };
+type ChatMessage = UiChatMessage;
 
 const QUICK_CHIPS: {
   label: string;
@@ -104,10 +91,6 @@ function formatHeaderDate(date = new Date()) {
   });
 }
 
-function uid() {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
 function toDbRow(item: ParsedTransaction | TransactionDraft) {
   return prepareDraft({
     amount: item.amount,
@@ -124,6 +107,41 @@ function createWelcomeMessage(): ChatMessage {
     kind: "bot-text",
     text: `${greetingByHour(new Date().getHours())}，我是你的钱包小猫。今天想记什么账？解析后请点「确认存入」哦～`,
   };
+}
+
+async function syncBotRecordsCloud(
+  messageId: string,
+  records: PendingRecord[],
+  replyText?: string,
+) {
+  if (messageId === "welcome") return;
+  await updateChatMessage(messageId, {
+    status: recordsAggregateStatus(records),
+    content: replyText ?? "",
+    card_data: {
+      kind: "bot-records",
+      replyText,
+      records,
+    },
+  });
+}
+
+async function syncBotRecurringCloud(
+  messageId: string,
+  item: ParsedRecurringData,
+  replyText: string,
+  status: ChatCardStatus,
+) {
+  if (messageId === "welcome") return;
+  await updateChatMessage(messageId, {
+    status,
+    content: replyText,
+    card_data: {
+      kind: "bot-recurring",
+      replyText,
+      item,
+    },
+  });
 }
 
 function recurringFormFromAi(data: ParsedRecurringData): RecurringFormState {
@@ -168,10 +186,9 @@ export function RecordPage() {
   const router = useRouter();
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [historyReady, setHistoryReady] = useState(false);
   const [todaySpend, setTodaySpend] = useState(0);
-  const [messages, setMessages] = useState<ChatMessage[]>(() => [
-    createWelcomeMessage(),
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [actionBusy, setActionBusy] = useState(false);
 
   const [txDialogOpen, setTxDialogOpen] = useState(false);
@@ -220,6 +237,21 @@ export function RecordPage() {
   }, []);
 
   useEffect(() => {
+    const timer = window.setTimeout(async () => {
+      try {
+        const history = await fetchChatHistory();
+        setMessages(history.length > 0 ? history : [createWelcomeMessage()]);
+      } catch {
+        setMessages([createWelcomeMessage()]);
+        toast.message("对话记录暂未同步，可先继续记账");
+      } finally {
+        setHistoryReady(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     feedRef.current?.scrollTo({
       top: feedRef.current.scrollHeight,
       behavior: "smooth",
@@ -238,13 +270,25 @@ export function RecordPage() {
 
     setInput("");
     setBusy(true);
-    setMessages((prev) => [...prev, { id: uid(), kind: "user", text }]);
+
+    const prior = messages.filter((m) => m.id !== "welcome");
+    let userSaved: ChatMessage | null = null;
 
     try {
+      userSaved = await insertChatMessage({ kind: "user", text });
+      setMessages((prev) => {
+        const base = prev.filter((m) => m.id !== "welcome");
+        return [...base, userSaved!];
+      });
+
       const response = await fetch("/api/parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, today: localDateString() }),
+        body: JSON.stringify({
+          text,
+          today: localDateString(),
+          history: toParseHistory([...prior, userSaved]),
+        }),
       });
       const payload = (await response.json()) as ParseApiResponse;
 
@@ -255,16 +299,13 @@ export function RecordPage() {
       }
 
       if (payload.is_recurring) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: uid(),
-            kind: "bot-recurring",
-            replyText: payload.reply_text,
-            item: payload.data,
-            status: "pending",
-          },
-        ]);
+        const assistant = await insertChatMessage({
+          kind: "bot-recurring",
+          replyText: payload.reply_text,
+          item: payload.data,
+          status: "pending",
+        });
+        setMessages((prev) => [...prev, assistant]);
         return;
       }
 
@@ -275,22 +316,33 @@ export function RecordPage() {
         status: "pending" as const,
       }));
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: uid(),
-          kind: "bot-records",
-          records,
-          replyText: payload.reply_text,
-        },
-      ]);
+      const assistant = await insertChatMessage({
+        kind: "bot-records",
+        records,
+        replyText: payload.reply_text,
+      });
+      setMessages((prev) => [...prev, assistant]);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "网络异常，请稍后重试";
-      setMessages((prev) => [
-        ...prev,
-        { id: uid(), kind: "bot-error", text: message },
-      ]);
+      const message = formatChatPersistError(error);
+      try {
+        if (!userSaved) {
+          // 用户消息未入库时，至少本地展示
+          setMessages((prev) => [
+            ...prev.filter((m) => m.id !== "welcome"),
+            { id: `local-u-${Date.now()}`, kind: "user", text },
+          ]);
+        }
+        const errMsg = await insertChatMessage({
+          kind: "bot-error",
+          text: message,
+        });
+        setMessages((prev) => [...prev, errMsg]);
+      } catch {
+        setMessages((prev) => [
+          ...prev,
+          { id: `local-err-${Date.now()}`, kind: "bot-error", text: message },
+        ]);
+      }
       toast.error(message);
     } finally {
       setBusy(false);
@@ -323,25 +375,26 @@ export function RecordPage() {
         .single();
       if (error) throw error;
 
-      setMessages((prev) =>
-        prev.map((m) => {
-          if (m.kind !== "bot-records" || m.id !== messageId) return m;
-          return {
-            ...m,
-            records: m.records.map((r, i) =>
-              i === recordIndex
-                ? {
-                    ...r,
-                    ...row,
-                    id: data?.id,
-                    status: "confirmed" as const,
-                    recordedAt: formatClock(),
-                  }
-                : r,
-            ),
-          };
-        }),
+      const nextRecords = msg.records.map((r, i) =>
+        i === recordIndex
+          ? {
+              ...r,
+              ...row,
+              id: data?.id,
+              status: "confirmed" as const,
+              recordedAt: formatClock(),
+            }
+          : r,
       );
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.kind === "bot-records" && m.id === messageId
+            ? { ...m, records: nextRecords }
+            : m,
+        ),
+      );
+      await syncBotRecordsCloud(messageId, nextRecords, msg.replyText);
       if (row.type === "EXPENSE") {
         setTodaySpend((prev) => prev + Number(row.amount));
       }
@@ -375,6 +428,12 @@ export function RecordPage() {
             ? { ...m, status: "confirmed" as const }
             : m,
         ),
+      );
+      await syncBotRecurringCloud(
+        messageId,
+        msg.item,
+        msg.replyText,
+        "confirmed",
       );
       toast.success("记录成功喵~");
     } catch (error) {
@@ -427,12 +486,10 @@ export function RecordPage() {
       if (error) throw error;
 
       const { messageId, recordIndex } = txEditTarget;
-      setMessages((prev) =>
-        prev.map((m) => {
-          if (m.kind !== "bot-records" || m.id !== messageId) return m;
-          return {
-            ...m,
-            records: m.records.map((r, i) =>
+      const msg = messages.find((m) => m.id === messageId);
+      const nextRecords =
+        msg && msg.kind === "bot-records"
+          ? msg.records.map((r, i) =>
               i === recordIndex
                 ? {
                     ...r,
@@ -443,10 +500,18 @@ export function RecordPage() {
                     recordedAt: formatClock(),
                   }
                 : r,
-            ),
-          };
+            )
+          : [];
+
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.kind !== "bot-records" || m.id !== messageId) return m;
+          return { ...m, records: nextRecords };
         }),
       );
+      if (msg && msg.kind === "bot-records") {
+        await syncBotRecordsCloud(messageId, nextRecords, msg.replyText);
+      }
       if (row.type === "EXPENSE") {
         setTodaySpend((prev) => prev + Number(row.amount));
       }
@@ -558,6 +623,15 @@ export function RecordPage() {
             : m,
         ),
       );
+      const prevMsg = messages.find((m) => m.id === recurringEditId);
+      await syncBotRecurringCloud(
+        recurringEditId,
+        updatedItem,
+        prevMsg && prevMsg.kind === "bot-recurring"
+          ? prevMsg.replyText
+          : "已更新周期规则",
+        "confirmed",
+      );
       setRecurringOpen(false);
       setRecurringEditId(null);
       toast.success("记录成功喵~");
@@ -597,7 +671,16 @@ export function RecordPage() {
           className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-2 touch-pan-y"
           ref={feedRef}
         >
-          {messages.map((message) => {
+          {!historyReady ? (
+            <div className="flex items-end gap-2 pt-4">
+              <CatAvatar size={36} thinking />
+              <div className="rounded-[1.5rem] rounded-bl-md border border-[#F0E6D6] bg-[#FFFDF7] px-4 py-3 text-sm text-[#9A7B55] shadow-sm">
+                正在加载对话记录…
+              </div>
+            </div>
+          ) : null}
+          {historyReady &&
+            messages.map((message) => {
             if (message.kind === "user") {
               return (
                 <div className="flex justify-end" key={message.id}>
@@ -833,7 +916,7 @@ export function RecordPage() {
             </button>
             <input
               className="h-10 min-w-0 flex-1 bg-transparent text-[15px] text-[#5C4A32] outline-none placeholder:text-[#C0B49A]"
-              disabled={busy}
+              disabled={busy || !historyReady}
               onChange={(event) => setInput(event.target.value)}
               placeholder="像聊天一样记一笔..."
               ref={inputRef}
@@ -842,7 +925,7 @@ export function RecordPage() {
             <button
               aria-label="发送"
               className="grid size-10 shrink-0 place-items-center rounded-full bg-[#EE7828] text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
-              disabled={busy || !input.trim()}
+              disabled={busy || !historyReady || !input.trim()}
               type="submit"
             >
               <SendHorizontal className="size-5" />
