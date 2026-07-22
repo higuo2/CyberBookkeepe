@@ -194,7 +194,7 @@ export function ProfilePage() {
   return (
     <main className="h-full overflow-y-auto overscroll-contain bg-[#FFFDF0] px-4 pb-8 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
       <header className="px-1">
-        <p className="text-caption font-semibold text-[#F8A055]">
+        <p className="text-caption font-semibold text-[#EE7828]">
           {t("settings.eyebrow")}
         </p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight text-[#3A322B]">
@@ -257,7 +257,7 @@ export function ProfilePage() {
                   return (
                     <button
                       aria-checked={active}
-                      className={`h-9 rounded-xl text-xs font-semibold transition-all active:scale-[0.98] ${
+                      className={`h-9 rounded-xl text-xs font-semibold transition-all duration-150 active:scale-[0.98] ${
                         active
                           ? "bg-white text-[#3A322B] shadow-sm"
                           : "text-[#8C8273]"
@@ -300,14 +300,14 @@ export function ProfilePage() {
         </p>
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm divide-y divide-[#F5F0E8]">
           <button
-            className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors active:bg-[#FAF6EC]/80 disabled:opacity-50"
+            className="flex w-full items-center gap-3 px-4 py-4 text-left transition-all duration-150 active:scale-[0.98] active:bg-[#FAF6EC]/80 disabled:opacity-50"
             disabled={exporting}
             onClick={() => void exportAll()}
             type="button"
           >
             <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#FFF6D9] text-[#C4956A]">
               {exporting ? (
-                <LoaderCircle className="size-4 animate-spin" />
+                <LoaderCircle className="size-4 animate-spin" strokeWidth={2} />
               ) : (
                 <Download className="size-4" strokeWidth={2} />
               )}
@@ -315,7 +315,7 @@ export function ProfilePage() {
             <span className="min-w-0 flex-1 text-body font-semibold">
               {t("settings.exportData")}
             </span>
-            <ChevronRight className="size-4 shrink-0 text-[#D4C4B0]" />
+            <ChevronRight className="size-4 shrink-0 text-[#D4C4B0]" strokeWidth={2} />
           </button>
           <SettingsRow
             danger
@@ -356,9 +356,9 @@ export function ProfilePage() {
             const active = locale === option.code;
             return (
               <button
-                className={`flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold transition-all active:scale-[0.99] ${
+                className={`flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold transition-all duration-150 active:scale-[0.98] ${
                   active
-                    ? "bg-[#F8A055]/15 text-[#8C6D53] ring-2 ring-[#F8A055]"
+                    ? "bg-[#EE7828]/15 text-[#8C6D53] ring-2 ring-[#EE7828]"
                     : "bg-[#FAF6EC] text-[#4A3E31]"
                 }`}
                 key={option.code}
@@ -385,9 +385,9 @@ export function ProfilePage() {
             const active = fontStyle === option.code;
             return (
               <button
-                className={`flex h-14 w-full items-center justify-between rounded-2xl px-4 text-left transition-all active:scale-[0.99] ${
+                className={`flex h-14 w-full items-center justify-between rounded-2xl px-4 text-left transition-all duration-150 active:scale-[0.98] ${
                   active
-                    ? "bg-[#F8A055]/15 text-[#8C6D53] ring-2 ring-[#F8A055]"
+                    ? "bg-[#EE7828]/15 text-[#8C6D53] ring-2 ring-[#EE7828]"
                     : "bg-[#FAF6EC] text-[#4A3E31]"
                 }`}
                 key={option.code}
@@ -426,9 +426,9 @@ export function ProfilePage() {
             const active = currency === code;
             return (
               <button
-                className={`flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold transition-all active:scale-[0.99] ${
+                className={`flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold transition-all duration-150 active:scale-[0.98] ${
                   active
-                    ? "bg-[#F8A055]/15 text-[#8C6D53] ring-2 ring-[#F8A055]"
+                    ? "bg-[#EE7828]/15 text-[#8C6D53] ring-2 ring-[#EE7828]"
                     : "bg-[#FAF6EC] text-[#4A3E31]"
                 }`}
                 key={code}
@@ -439,6 +439,7 @@ export function ProfilePage() {
                   <CurrencyIcon
                     className={`size-4 ${active ? "text-[#8C6D53]" : "text-[#A08875]"}`}
                     code={code}
+                    strokeWidth={2}
                   />
                   {code} ({translateCurrencyLabel(code, t)})
                 </span>

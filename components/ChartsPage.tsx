@@ -1,10 +1,11 @@
-"use client";
+﻿"use client";
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { LoaderCircle, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { CurrencyIcon } from "@/components/AppIcons";
+import { ChartBlockSkeleton } from "@/components/ui/Skeleton";
 import {
   CURRENCY_CODES,
   CURRENCY_META,
@@ -32,11 +33,7 @@ const CategoryPieChart = dynamic(
     import("@/components/ChartsVisuals").then((mod) => mod.CategoryPieChart),
   {
     ssr: false,
-    loading: () => (
-      <div className="grid h-40 place-items-center">
-        <LoaderCircle className="size-6 animate-spin text-[#F8A055]" />
-      </div>
-    ),
+    loading: () => <ChartBlockSkeleton />,
   },
 );
 
@@ -44,11 +41,7 @@ const TrendBarChart = dynamic(
   () => import("@/components/ChartsVisuals").then((mod) => mod.TrendBarChart),
   {
     ssr: false,
-    loading: () => (
-      <div className="grid h-64 place-items-center">
-        <LoaderCircle className="size-6 animate-spin text-[#F8A055]" />
-      </div>
-    ),
+    loading: () => <ChartBlockSkeleton tall />,
   },
 );
 
@@ -186,7 +179,7 @@ export function ChartsPage() {
     <main className="h-full overflow-y-auto overscroll-contain bg-[#FAF6EC] px-4 pb-5 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
       <header className="flex items-end justify-between">
         <div>
-          <p className="text-sm font-semibold text-[#F8A055]">{t("charts.eyebrow")}</p>
+          <p className="text-sm font-semibold text-[#EE7828]">{t("charts.eyebrow")}</p>
           <h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-[#5C4A32]">
             {t("charts.title")}
           </h1>
@@ -196,12 +189,15 @@ export function ChartsPage() {
         </div>
         <button
           aria-label={t("charts.aria.refresh")}
-          className="grid size-9 place-items-center rounded-full border border-[#EFE5D3] bg-white text-[#8A7A5C] shadow-sm transition-all active:scale-95 disabled:opacity-50"
+          className="grid size-9 place-items-center rounded-full border border-[#EFE5D3] bg-white text-[#8A7A5C] shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
           disabled={loading}
           onClick={() => void loadChart(true)}
           type="button"
         >
-          <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw
+            className={`size-4 ${loading ? "animate-spin" : ""}`}
+            strokeWidth={2}
+          />
         </button>
       </header>
 
@@ -216,11 +212,11 @@ export function ChartsPage() {
           };
           return (
             <button
-              className={`w-[78%] max-w-[280px] shrink-0 rounded-3xl border p-4 text-left shadow-sm transition-all active:scale-[0.98] ${
+              className={`w-[78%] max-w-[280px] shrink-0 rounded-3xl border p-4 text-left shadow-sm transition-all duration-150 active:scale-[0.98] ${
                 m.cardGradient
               } ${
                 active
-                  ? "border-[#F8A055] ring-2 ring-[#F8A055]/35"
+                  ? "border-[#EE7828] ring-2 ring-[#EE7828]/35"
                   : "border-white/70"
               }`}
               key={code}
@@ -232,6 +228,7 @@ export function ChartsPage() {
                   <CurrencyIcon
                     className="size-4 text-[#8C6D53]"
                     code={code}
+                    strokeWidth={2}
                   />
                   {code} {translateCurrencyLabel(code, t)}
                 </p>
@@ -261,9 +258,7 @@ export function ChartsPage() {
           </h2>
           <div className="mt-1">
             {loading && weekTransactions.length === 0 ? (
-              <div className="grid h-56 place-items-center">
-                <LoaderCircle className="size-6 animate-spin text-[#F8A055]" />
-              </div>
+              <ChartBlockSkeleton tall />
             ) : (
               <TrendBarChart currency={activeCurrency} data={trendData} />
             )}
@@ -275,9 +270,7 @@ export function ChartsPage() {
             {t("charts.categoryTitle", { currency: activeCurrency })}
           </h2>
           {loading && monthTransactions.length === 0 ? (
-            <div className="grid h-40 place-items-center">
-              <LoaderCircle className="size-6 animate-spin text-[#F8A055]" />
-            </div>
+            <ChartBlockSkeleton />
           ) : (
             <div className="mt-1">
               <CategoryPieChart currency={activeCurrency} data={pieData} />

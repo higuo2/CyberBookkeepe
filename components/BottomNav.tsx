@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -35,7 +35,7 @@ export function BottomNav() {
           return (
             <Link
               aria-current={active ? "page" : undefined}
-              className={`flex flex-col items-center justify-center gap-0.5 py-0.5 text-[11px] transition-all active:scale-95 ${
+              className={`flex flex-col items-center justify-center gap-0.5 py-0.5 text-[11px] transition-all duration-150 active:scale-[0.98] ${
                 active
                   ? "font-semibold text-[#8C6D53]"
                   : "font-medium text-[#C2B5A5]"
@@ -45,7 +45,8 @@ export function BottomNav() {
             >
               <Icon
                 aria-hidden="true"
-                className={`size-6 ${active ? "stroke-[2.25]" : "stroke-[1.75]"}`}
+                className="size-5"
+                strokeWidth={2.25}
               />
               {t(labelKey)}
             </Link>

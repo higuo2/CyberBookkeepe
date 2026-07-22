@@ -1,11 +1,24 @@
 @import "tailwindcss";
+@config "../tailwind.config.js";
 
 :root {
   color-scheme: light;
-  --cream: #faf6ec;
+  /* Core cream palette */
+  --cream-bg: #faf6ec;
+  --cream-card: #ffffff;
   --cream-border: #efe5d3;
+  --cream: var(--cream-bg);
+  /* Semantic */
+  --brand-primary: #ee7828;
+  --expense: #e07a3d;
+  --income: #2a9d8f;
+  --danger: #c9786e;
+  /* Ink */
+  --ink: #3a322b;
+  --ink-body: #4a3e31;
+  --ink-muted: #8c8273;
   --font-scale: 1;
-  background: #faf6ec;
+  background: var(--cream-bg);
   font-family:
     "SF Pro Rounded",
     ui-rounded,
@@ -20,6 +33,20 @@
     sans-serif;
 }
 
+/* Tailwind v4 theme → utilities: bg-brand-primary, text-expense, border-cream-border… */
+@theme inline {
+  --color-brand-primary: var(--brand-primary);
+  --color-expense: var(--expense);
+  --color-income: var(--income);
+  --color-danger: var(--danger);
+  --color-cream-bg: var(--cream-bg);
+  --color-cream-card: var(--cream-card);
+  --color-cream-border: var(--cream-border);
+  --color-ink: var(--ink);
+  --color-ink-body: var(--ink-body);
+  --color-ink-muted: var(--ink-muted);
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
@@ -28,7 +55,7 @@
 html {
   height: 100dvh;
   overflow-x: hidden;
-  background: #faf6ec;
+  background: var(--cream-bg);
   touch-action: pan-y;
   font-size: calc(16px * var(--font-scale, 1));
 }
@@ -39,8 +66,8 @@ body {
   overflow-x: hidden;
   overscroll-behavior: none;
   touch-action: pan-y;
-  background: #faf6ec;
-  color: #5c4a32;
+  background: var(--cream-bg);
+  color: var(--ink-body);
   -webkit-overflow-scrolling: touch;
   font-family: inherit;
 }
@@ -48,7 +75,7 @@ body {
 #__next,
 #root {
   min-height: 100dvh;
-  background: #faf6ec;
+  background: var(--cream-bg);
 }
 
 button,
@@ -65,7 +92,7 @@ button {
   body {
     background:
       radial-gradient(circle at top, rgb(255 232 184 / 40%), transparent 32rem),
-      #faf6ec;
+      var(--cream-bg);
   }
 }
 
@@ -84,11 +111,11 @@ button {
 
 /* Typography tokens (cream app) */
 .text-title {
-  @apply text-lg font-semibold text-[#3A322B];
+  @apply text-lg font-semibold text-ink;
 }
 .text-body {
-  @apply text-sm font-medium text-[#4A3E31];
+  @apply text-sm font-medium text-ink-body;
 }
 .text-caption {
-  @apply text-xs font-normal text-[#8C8273];
+  @apply text-xs font-normal text-ink-muted;
 }

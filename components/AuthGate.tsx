@@ -51,11 +51,11 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   if (!authenticated) {
     return (
       <main className="mx-auto grid h-dvh w-full max-w-md place-items-center overflow-x-hidden bg-[#FAF6EC] px-6 pt-[calc(env(safe-area-inset-top)+12px)] pb-[calc(env(safe-area-inset-bottom)+12px)] touch-pan-y">
-        <section className="w-full max-w-sm rounded-[2rem] bg-white p-7 shadow-sm">
+        <section className="w-full max-w-sm rounded-3xl bg-white p-7 shadow-sm">
           <div className="mb-6 grid size-16 place-items-center rounded-full bg-[#FFE8B8] shadow-sm">
             <CatAvatar size={52} />
           </div>
-          <p className="text-sm font-medium text-[#F8A055]">{t("auth.brand")}</p>
+          <p className="text-sm font-medium text-[#EE7828]">{t("auth.brand")}</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#5C4A32]">
             {t("auth.welcome")}
           </h1>
@@ -70,7 +70,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             <input
               autoComplete="current-password"
               autoFocus
-              className="h-13 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-4 text-base text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
+              className="h-13 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-4 text-base text-[#5C4A32] outline-none transition-all focus:border-[#EE7828] focus:ring-4 focus:ring-[#EE7828]/15"
               id="app-password"
               onChange={(event) => {
                 setPassword(event.target.value);
@@ -80,9 +80,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
               type="password"
               value={password}
             />
-            {error && <p className="text-sm text-rose-500">{error}</p>}
+            {error && <p className="text-sm text-danger">{error}</p>}
             <button
-              className="h-13 w-full rounded-2xl bg-[#F8A055] font-medium text-white shadow-sm transition-all active:scale-95"
+              className="h-13 w-full rounded-2xl bg-[#EE7828] font-medium text-white shadow-sm transition-all duration-150 active:scale-[0.98]"
               type="submit"
             >
               {t("auth.submit")}

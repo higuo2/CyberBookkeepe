@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { Lightbulb, LoaderCircle, Lock, Pencil, Save } from "lucide-react";
+import { AlertTriangle, Lightbulb, LoaderCircle, Lock, Pencil, Save } from "lucide-react";
 import { toast } from "sonner";
 import { BottomSheet } from "@/components/BottomSheet";
 import { budgetBarColor } from "@/lib/budget";
@@ -37,7 +37,7 @@ export function BudgetProgressCard({
     [stats.ratio],
   );
   const overspent = stats.budget > 0 && stats.ratio > 1;
-  const remainingClass = overspent ? "text-[#EF4444]" : "text-[#8C6D53]";
+  const remainingClass = overspent ? "text-danger" : "text-[#8C6D53]";
 
   function openEditor() {
     setInput(stats.budget > 0 ? String(stats.budget) : "");
@@ -74,11 +74,11 @@ export function BudgetProgressCard({
           <h2 className="text-sm font-extrabold text-[#4A3E3D]">{t("budget.title")}</h2>
           <button
             aria-label={t("budget.aria.edit")}
-            className="grid size-8 place-items-center rounded-full text-[#A08875] transition-all hover:bg-[#FFF6D9] active:scale-95"
+            className="grid size-8 place-items-center rounded-full text-[#A08875] transition-all duration-150 hover:bg-[#FFF6D9] active:scale-[0.98]"
             onClick={openEditor}
             type="button"
           >
-            <Pencil className="size-3.5" />
+            <Pencil className="size-3.5" strokeWidth={2} />
           </button>
         </div>
 
@@ -90,7 +90,7 @@ export function BudgetProgressCard({
           <>
             <div className="mt-3 grid grid-cols-2 gap-1.5 rounded-2xl bg-[#FFF6D9] p-1">
               <button
-                className={`h-8 rounded-xl text-[11px] font-bold transition-all active:scale-95 ${
+                className={`h-8 rounded-xl text-[11px] font-bold transition-all duration-150 active:scale-[0.98] ${
                   stats.spendMode === "actual"
                     ? "bg-white text-[#4A3E3D] shadow-sm"
                     : "text-[#A08875]"
@@ -101,7 +101,7 @@ export function BudgetProgressCard({
                 {t("budget.mode.spentOnly")}
               </button>
               <button
-                className={`h-8 rounded-xl text-[11px] font-bold transition-all active:scale-95 ${
+                className={`h-8 rounded-xl text-[11px] font-bold transition-all duration-150 active:scale-[0.98] ${
                   stats.spendMode === "reserve_fixed"
                     ? "bg-white text-[#4A3E3D] shadow-sm"
                     : "text-[#A08875]"
@@ -116,14 +116,14 @@ export function BudgetProgressCard({
               {stats.spendMode === "actual" ? (
                 <>
                   <Lightbulb
-                    className="mt-px size-3 shrink-0"
-                    strokeWidth={2.25}
+                    className="mt-px size-3.5 shrink-0"
+                    strokeWidth={2}
                   />
                   {t("budget.hint.spentOnly")}
                 </>
               ) : (
                 <>
-                  <Lock className="mt-px size-3 shrink-0" strokeWidth={2.25} />
+                  <Lock className="mt-px size-3.5 shrink-0" strokeWidth={2} />
                   {t("budget.hint.withFixed")}
                 </>
               )}
@@ -155,7 +155,7 @@ export function BudgetProgressCard({
                 style={{ width }}
               />
             </div>
-            <p className="mt-1.5 text-xs text-[#A08875]">
+            <p className="mt-1.5 font-numeric text-xs text-[#A08875]">
               {t("budget.summary", {
                 budget: formatHKD(stats.budget),
                 used: `${(stats.ratio * 100).toFixed(0)}%`,
@@ -165,8 +165,9 @@ export function BudgetProgressCard({
                 : ""}
             </p>
             {overspent && (
-              <p className="mt-1.5 text-xs font-medium text-[#EF4444]">
-                ⚠️ {t("budget.overspent")}
+              <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-danger">
+                <AlertTriangle className="h-4 w-4 shrink-0" strokeWidth={2} />
+                {t("budget.overspent")}
               </p>
             )}
           </>
@@ -179,7 +180,7 @@ export function BudgetProgressCard({
             {t("budget.totalLabel")}
             <input
               autoFocus
-              className="mt-2 h-12 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
+              className="mt-2 h-12 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#EE7828] focus:ring-4 focus:ring-[#EE7828]/15"
               inputMode="decimal"
               min="0"
               onChange={(event) => setInput(event.target.value)}
@@ -190,14 +191,14 @@ export function BudgetProgressCard({
             />
           </label>
           <button
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#F8A055] font-bold text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#EE7828] font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
             disabled={saving}
             type="submit"
           >
             {saving ? (
-              <LoaderCircle className="size-5 animate-spin" />
+              <LoaderCircle className="size-5 animate-spin" strokeWidth={2.25} />
             ) : (
-              <Save className="size-5" />
+              <Save className="size-5" strokeWidth={2.25} />
             )}
             {t("budget.save")}
           </button>

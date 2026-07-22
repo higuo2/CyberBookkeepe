@@ -89,7 +89,7 @@ export function CategoryPieChart({
           return (
             <li className="flex items-center gap-2" key={item.name}>
               <div
-                className="grid size-8 shrink-0 place-items-center rounded-lg"
+                className="grid size-8 shrink-0 place-items-center rounded-xl"
                 style={{ backgroundColor: `${color}33`, color }}
               >
                 <CategoryIcon category={item.name} className="size-3.5" />
@@ -173,7 +173,7 @@ export function TrendBarChart({
         <BarChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
           <defs>
             <linearGradient id="creamBarGradient" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="#F8A055" />
+              <stop offset="0%" stopColor="#EE7828" />
               <stop offset="100%" stopColor="#FFE8B8" />
             </linearGradient>
           </defs>

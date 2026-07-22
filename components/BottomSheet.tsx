@@ -29,7 +29,7 @@ export function BottomSheet({
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-[80] bg-black/30 backdrop-blur-sm" />
         <Drawer.Content
-          className="fixed inset-x-0 bottom-0 z-[90] mx-auto flex max-h-[92dvh] w-full max-w-md flex-col rounded-t-[28px] bg-[#FFFDF0] outline-none"
+          className="fixed inset-x-0 bottom-0 z-[90] mx-auto flex max-h-[92dvh] w-full max-w-md flex-col rounded-t-3xl bg-[#FFFDF0] outline-none"
           onPointerDownOutside={(event) => {
             const target = event.target as HTMLElement | null;
             if (target?.closest?.("input[type='date'], select")) {

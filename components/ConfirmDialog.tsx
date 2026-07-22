@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { ChevronRight } from "lucide-react";
 import { useT } from "@/components/LocaleProvider";
 
 /** 居中确认弹窗（奶油风） */
@@ -39,7 +40,7 @@ export function ConfirmDialog({
         <p className="mt-2 text-sm leading-6 text-[#9A7B55]">{description}</p>
         <div className="mt-5 flex gap-3">
           <button
-            className="h-11 flex-1 rounded-2xl border border-[#EFE5D3] bg-white text-sm font-semibold text-[#8C6D53] transition-all active:scale-95 disabled:opacity-50"
+            className="h-11 flex-1 rounded-2xl border border-[#EFE5D3] bg-white text-sm font-semibold text-[#8C6D53] transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
             disabled={busy}
             onClick={onCancel}
             type="button"
@@ -47,8 +48,8 @@ export function ConfirmDialog({
             {cancelLabel ?? t("common.cancel")}
           </button>
           <button
-            className={`h-11 flex-1 rounded-2xl text-sm font-bold text-white shadow-sm transition-all active:scale-95 disabled:opacity-50 ${
-              confirmDanger ? "bg-[#E07A6A]" : "bg-[#F8A055]"
+            className={`h-11 flex-1 rounded-2xl text-sm font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50 ${
+              confirmDanger ? "bg-danger" : "bg-brand-primary"
             }`}
             disabled={busy}
             onClick={onConfirm}
@@ -84,8 +85,10 @@ export function SettingsRow({
 
   return (
     <Comp
-      className={`flex w-full items-center gap-3 px-4 py-4 text-left transition-colors ${
-        interactive ? "active:bg-[#FAF6EC]/80" : ""
+      className={`flex w-full items-center gap-3 px-4 py-4 text-left transition-all duration-150 ${
+        interactive
+          ? "active:scale-[0.98] active:bg-[#FAF6EC]/80"
+          : ""
       } ${disabled ? "opacity-80" : ""}`}
       disabled={interactive ? disabled : undefined}
       onClick={interactive ? onClick : undefined}
@@ -96,7 +99,7 @@ export function SettingsRow({
       </span>
       <span
         className={`min-w-0 flex-1 text-sm font-medium ${
-          danger ? "text-[#E07A6A]" : "text-[#4A3E31]"
+          danger ? "text-danger" : "text-ink-body"
         }`}
       >
         {label}
@@ -107,9 +110,11 @@ export function SettingsRow({
         </span>
       ) : null}
       {chevron && interactive ? (
-        <span className="shrink-0 text-[#D4C4B0]" aria-hidden>
-          ›
-        </span>
+        <ChevronRight
+          aria-hidden
+          className="size-4 shrink-0 text-[#D4C4B0]"
+          strokeWidth={2}
+        />
       ) : null}
     </Comp>
   );

@@ -21,12 +21,14 @@ import {
 
 export function CategoryIcon({
   category,
-  className = "size-5",
+  className = "size-4",
+  strokeWidth = 2,
 }: {
   category: string;
   className?: string;
+  strokeWidth?: number;
 }) {
-  const props = { className, "aria-hidden": true as const };
+  const props = { className, strokeWidth, "aria-hidden": true as const };
 
   if (category === "ALL" || category.includes("全部")) {
     return <LayoutGrid {...props} />;

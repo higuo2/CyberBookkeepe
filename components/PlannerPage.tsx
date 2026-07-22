@@ -65,7 +65,7 @@ type SheetKind =
   | null;
 
 const fieldClass =
-  "mt-2 h-12 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+  "mt-2 h-12 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#EE7828] focus:ring-4 focus:ring-[#EE7828]/15 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
 function IconPicker({
   options,
@@ -82,9 +82,9 @@ function IconPicker({
         const active = value === iconId;
         return (
           <button
-            className={`grid size-10 place-items-center rounded-xl transition-all active:scale-95 ${
+            className={`grid size-10 place-items-center rounded-xl transition-all duration-150 active:scale-[0.98] ${
               active
-                ? "bg-[#F8A055]/20 text-[#8C6D53] ring-2 ring-[#F8A055]"
+                ? "bg-[#EE7828]/20 text-[#8C6D53] ring-2 ring-[#EE7828]"
                 : "bg-[#FAF6EC] text-[#9C9181]"
             }`}
             key={iconId}
@@ -465,7 +465,7 @@ export function PlannerPage() {
     <>
       <main className="h-full overflow-y-auto overscroll-contain bg-[#FAF6EC] px-4 pb-5 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
         <header className="mb-4">
-          <p className="text-sm font-semibold text-[#F8A055]">{t("planner.eyebrow")}</p>
+          <p className="text-sm font-semibold text-[#EE7828]">{t("planner.eyebrow")}</p>
           <h1 className="mt-0.5 text-2xl font-extrabold tracking-tight text-[#4A3E3D]">
             {t("planner.title")}
           </h1>
@@ -488,11 +488,11 @@ export function PlannerPage() {
               </h2>
               <button
                 aria-label={t("planner.aria.addRecurring")}
-                className="grid size-8 place-items-center rounded-full bg-[#FFF6D9] text-[#8C6D53] transition-all active:scale-95"
+                className="grid size-8 place-items-center rounded-full bg-[#FFF6D9] text-[#8C6D53] transition-all duration-150 active:scale-[0.98]"
                 onClick={() => openRecurring()}
                 type="button"
               >
-                <Plus className="size-4" strokeWidth={2.5} />
+                <Plus className="size-4" strokeWidth={2.25} />
               </button>
             </div>
             <div className="space-y-2">
@@ -502,20 +502,20 @@ export function PlannerPage() {
                 const isIncome = item.direction === "income";
                 return (
                   <button
-                    className="relative w-full rounded-2xl border border-[#EFE5D3] bg-[#FFFDF0] p-3 text-left transition-all active:scale-[0.99]"
+                    className="relative w-full rounded-2xl border border-[#EFE5D3] bg-[#FFFDF0] p-3 text-left transition-all duration-150 active:scale-[0.98]"
                     key={item.id}
                     onClick={() => openRecurring(item)}
                     type="button"
                   >
                     {status.kind === "logged" && (
                       <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#E7F6F2] px-2 py-0.5 text-[10px] font-bold text-[#2A9D8F]">
-                        <CheckCircle2 className="size-3" strokeWidth={2.5} />
+                        <CheckCircle2 className="size-3.5" strokeWidth={2} />
                         {t("planner.loggedThisMonth")}
                       </span>
                     )}
                     {status.kind === "upcoming" && (
                       <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#FFE8D6] px-2 py-0.5 text-[10px] font-bold text-[#E07A3D]">
-                        <Clock className="size-3" strokeWidth={2.5} />
+                        <Clock className="size-3.5" strokeWidth={2} />
                         {status.days === 0
                           ? t("planner.today")
                           : t("planner.inDays", { days: status.days })}
@@ -551,7 +551,7 @@ export function PlannerPage() {
                         </p>
                         <p
                           className={`mt-1 font-numeric text-sm font-semibold ${
-                            isIncome ? "text-[#2A9D8F]" : "text-[#8C6D53]"
+                            isIncome ? "text-income" : "text-expense"
                           }`}
                         >
                           {amountLine}
@@ -571,19 +571,19 @@ export function PlannerPage() {
 
           <section className="rounded-2xl border border-[#EFE5D3] bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-[#F8A055]">
-                <PiggyBank className="size-4.5" />
+              <div className="flex items-center gap-2 text-[#EE7828]">
+                <PiggyBank className="size-4" strokeWidth={2} />
                 <h2 className="text-sm font-extrabold text-[#4A3E3D]">
                   {t("planner.wishlistSection")}
                 </h2>
               </div>
               <button
                 aria-label={t("planner.aria.addWish")}
-                className="grid size-8 place-items-center rounded-full bg-[#FFF6D9] text-[#8C6D53] transition-all active:scale-95"
+                className="grid size-8 place-items-center rounded-full bg-[#FFF6D9] text-[#8C6D53] transition-all duration-150 active:scale-[0.98]"
                 onClick={() => openGoal()}
                 type="button"
               >
-                <Plus className="size-4" strokeWidth={2.5} />
+                <Plus className="size-4" strokeWidth={2.25} />
               </button>
             </div>
             {goals.length === 0 ? (
@@ -630,13 +630,13 @@ export function PlannerPage() {
                         </p>
                         <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[#FFF6D9]">
                           <div
-                            className="h-full rounded-full bg-[#F8A055] transition-all"
+                            className="h-full rounded-full bg-[#EE7828] transition-all"
                             style={{ width: `${pct}%` }}
                           />
                         </div>
                       </button>
                       <button
-                        className="mt-3 flex h-10 w-full items-center justify-center rounded-xl bg-[#F8A055] text-sm font-bold text-white transition-all active:scale-95"
+                        className="mt-3 flex h-10 w-full items-center justify-center rounded-xl bg-[#EE7828] text-sm font-bold text-white transition-all duration-150 active:scale-[0.98]"
                         onClick={() => openGoal(goal, true)}
                         type="button"
                       >
@@ -741,19 +741,19 @@ export function PlannerPage() {
             </>
           )}
           <button
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#F8A055] font-bold text-white shadow-sm transition-all active:scale-95"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#EE7828] font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98]"
             type="submit"
           >
-            <Save className="size-4.5" />
+            <Save className="size-5" strokeWidth={2.25} />
             {isNewGoal ? t("planner.addWish") : t("planner.save")}
           </button>
           {activeGoal && (
             <button
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#FFE8E0] text-sm font-bold text-[#E07A3D] transition-all active:scale-95"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#FFE8E0] text-sm font-bold text-[#E07A3D] transition-all duration-150 active:scale-[0.98]"
               onClick={deleteGoal}
               type="button"
             >
-              <Trash2 className="size-4" />
+              <Trash2 className="size-4" strokeWidth={2} />
               {t("planner.deleteWish")}
             </button>
           )}

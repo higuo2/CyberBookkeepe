@@ -56,17 +56,17 @@ export function emptyRecurringForm(): RecurringFormState {
 }
 
 const numberFieldClass =
-  "mt-2 h-12 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+  "mt-2 h-12 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#EE7828] focus:ring-4 focus:ring-[#EE7828]/15 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
 const textFieldClass =
-  "h-12 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15";
+  "h-12 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#EE7828] focus:ring-4 focus:ring-[#EE7828]/15";
 
 const selectFieldClass =
   `${numberFieldClass} appearance-none bg-[length:14px_14px] bg-[right_14px_center] bg-no-repeat pr-10 ` +
   `bg-[url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23A08875' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")]`;
 
 const dateFieldClass =
-  "relative h-12 w-full cursor-pointer rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 pr-10 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15 " +
+  "relative h-12 w-full cursor-pointer rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 pr-10 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#EE7828] focus:ring-4 focus:ring-[#EE7828]/15 " +
   "[&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0";
 
 export function computeFormNextDate(form: RecurringFormState): string {
@@ -147,7 +147,7 @@ export function RecurringEditorSheet({
             const active = form.direction === key;
             return (
               <button
-                className={`flex h-11 items-center justify-center gap-1.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${
+                className={`flex h-11 items-center justify-center gap-1.5 rounded-xl text-sm font-bold transition-all duration-150 active:scale-[0.98] ${
                   active
                     ? key === "expense"
                       ? "bg-white text-[#E07A3D] shadow-sm"
@@ -182,7 +182,7 @@ export function RecurringEditorSheet({
           <div className="mt-2 flex items-center gap-2">
             <button
               aria-label={t("recurring.aria.pickIcon")}
-              className="grid size-12 shrink-0 place-items-center rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] text-[#6E6559] shadow-sm transition-all active:scale-95"
+              className="grid size-12 shrink-0 place-items-center rounded-xl border border-[#EFE5D3] bg-[#FAF6EC] text-[#6E6559] shadow-sm transition-all duration-150 active:scale-[0.98]"
               onClick={() => setEmojiOpen((v) => !v)}
               type="button"
             >
@@ -205,9 +205,9 @@ export function RecurringEditorSheet({
                   const active = form.emoji === iconId;
                   return (
                     <button
-                      className={`grid size-10 place-items-center rounded-xl transition-all active:scale-95 ${
+                      className={`grid size-10 place-items-center rounded-xl transition-all duration-150 active:scale-[0.98] ${
                         active
-                          ? "bg-[#F8A055]/20 text-[#8C6D53] ring-2 ring-[#F8A055]"
+                          ? "bg-[#EE7828]/20 text-[#8C6D53] ring-2 ring-[#EE7828]"
                           : "bg-[#FAF6EC] text-[#9C9181]"
                       }`}
                       key={iconId}
@@ -269,9 +269,9 @@ export function RecurringEditorSheet({
                 const active = form.byDays.includes(code);
                 return (
                   <button
-                    className={`grid size-9 place-items-center rounded-full text-xs font-bold transition-all active:scale-95 ${
+                    className={`grid size-9 place-items-center rounded-full text-xs font-bold transition-all duration-150 active:scale-[0.98] ${
                       active
-                        ? "bg-[#F8A055] text-white"
+                        ? "bg-[#EE7828] text-white"
                         : "bg-[#FAF6EC] text-[#A08875]"
                     }`}
                     key={code}
@@ -284,14 +284,14 @@ export function RecurringEditorSheet({
               })}
             </div>
             <button
-              className="mt-2 text-xs font-semibold text-[#F8A055]"
+              className="mt-2 text-xs font-semibold text-[#EE7828]"
               onClick={() => patch({ byDays: [...WORKDAYS] })}
               type="button"
             >
               {t("recurring.oneClickWorkdays")}
             </button>
             <p className="mt-2 flex items-start gap-1 text-xs leading-5 text-[#A08875]">
-              <Lightbulb className="mt-0.5 size-3 shrink-0" strokeWidth={2.25} />
+              <Lightbulb className="mt-0.5 size-3.5 shrink-0" strokeWidth={2} />
               {t("recurring.nextChargeDate", { date: nextDateHint })}
             </p>
           </div>
@@ -309,7 +309,7 @@ export function RecurringEditorSheet({
               />
             </label>
             <p className="mt-2 flex items-start gap-1 text-xs leading-5 text-[#A08875]">
-              <Lightbulb className="mt-0.5 size-3 shrink-0" strokeWidth={2.25} />
+              <Lightbulb className="mt-0.5 size-3.5 shrink-0" strokeWidth={2} />
               {t("recurring.nextChargeDate", { date: nextDateHint })}
             </p>
           </div>
@@ -347,7 +347,7 @@ export function RecurringEditorSheet({
               </label>
             </div>
             <p className="flex items-start gap-1 text-xs leading-5 text-[#A08875]">
-              <Lightbulb className="mt-0.5 size-3 shrink-0" strokeWidth={2.25} />
+              <Lightbulb className="mt-0.5 size-3.5 shrink-0" strokeWidth={2} />
               {t("recurring.nextChargeDate", { date: nextDateHint })}
             </p>
           </div>
@@ -408,18 +408,18 @@ export function RecurringEditorSheet({
 
         {!isNew && onEarlyWrite && (
           <button
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#EFE5D3] bg-white text-sm font-bold text-[#8C6D53] shadow-sm transition-all active:scale-95 disabled:opacity-50"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#EFE5D3] bg-white text-sm font-bold text-[#8C6D53] shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
             disabled={earlyWriting}
             onClick={() => void onEarlyWrite()}
             type="button"
           >
-            <Zap className="size-4 text-[#F8A055]" />
+            <Zap className="size-4 text-[#EE7828]" strokeWidth={2.25} />
             {earlyWriting ? t("recurring.earlyWriting") : t("recurring.earlyWrite")}
           </button>
         )}
 
         <button
-          className="w-full rounded-xl bg-[#EE7828] py-3.5 text-base font-bold text-white shadow-sm transition-all active:scale-[0.99] disabled:opacity-50"
+          className="w-full rounded-xl bg-[#EE7828] py-3.5 text-base font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
           type="submit"
         >
           {t("recurring.saveSettings")}

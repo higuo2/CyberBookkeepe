@@ -6,6 +6,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Bus,
   ChartColumn,
+  Check,
   CheckCircle2,
   Coffee,
   Mic,
@@ -764,7 +765,7 @@ export function RecordPage() {
           {!historyReady ? (
             <div className="flex items-end gap-2 pt-4">
               <CatAvatar size={36} thinking />
-              <div className="rounded-[1.5rem] rounded-bl-md border border-[#F0E6D6] bg-[#FFFDF7] px-4 py-3 text-sm text-[#9A7B55] shadow-sm">
+              <div className="rounded-2xl rounded-bl-md border border-[#F0E6D6] bg-[#FFFDF7] px-4 py-3 text-sm text-[#9A7B55] shadow-sm">
                 {t("record.loadingHistory")}
               </div>
             </div>
@@ -774,7 +775,7 @@ export function RecordPage() {
             if (message.kind === "user") {
               return (
                 <div className="flex justify-end" key={message.id}>
-                  <div className="max-w-[80%] rounded-[1.5rem] rounded-br-md bg-[#D1EBE1] px-4 py-2.5 text-[15px] leading-6 text-[#3D4A45] shadow-sm">
+                  <div className="max-w-[80%] rounded-2xl rounded-br-md bg-[#D1EBE1] px-4 py-2.5 text-[15px] leading-6 text-[#3D4A45] shadow-sm">
                     {message.text}
                   </div>
                 </div>
@@ -786,9 +787,9 @@ export function RecordPage() {
                 <div className="flex items-end gap-2" key={message.id}>
                   <CatAvatar size={36} />
                   <div
-                    className={`max-w-[82%] rounded-[1.5rem] rounded-bl-md px-4 py-3 text-[15px] leading-6 shadow-sm ${
+                    className={`max-w-[82%] rounded-2xl rounded-bl-md px-4 py-3 text-[15px] leading-6 shadow-sm ${
                       message.kind === "bot-error"
-                        ? "bg-rose-50 text-rose-600"
+                        ? "bg-danger/10 text-danger"
                         : "border border-[#F0E6D6] bg-[#FFFDF7] text-[#5C4A32]"
                     }`}
                   >
@@ -812,7 +813,7 @@ export function RecordPage() {
                     <div className="mt-3 rounded-2xl bg-[#FFF6D9] p-3">
                       <div className="flex items-center gap-2">
                         <span className="inline-flex items-center gap-1 rounded-full bg-[#F4E8D1] px-1.5 py-0.5 text-[10px] font-semibold text-[#B37233]">
-                          <RefreshCw className="size-2.5" strokeWidth={2.5} />
+                          <RefreshCw className="size-3.5" strokeWidth={2} />
                           {t("record.badge.period")}
                         </span>
                         <p className="truncate text-sm font-extrabold text-[#4A3E3D]">
@@ -842,28 +843,31 @@ export function RecordPage() {
                     {status === "pending" ? (
                       <div className="mt-3 flex gap-2">
                         <button
-                          className="h-10 flex-1 rounded-xl border border-[#E8D5B5] bg-white text-sm font-semibold text-[#8C6D53] transition-all active:scale-95 disabled:opacity-50"
+                          className="h-10 flex-1 rounded-xl border border-[#E8D5B5] bg-white text-sm font-semibold text-[#8C6D53] transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
                           disabled={actionBusy}
                           onClick={() => openCustomRecurring(message.id)}
                           type="button"
                         >
                           <span className="inline-flex items-center justify-center gap-1">
-                            <Pencil className="size-3.5" strokeWidth={2.25} />
+                            <Pencil className="size-3.5" strokeWidth={2} />
                             {t("record.custom")}
                           </span>
                         </button>
                         <button
-                          className="h-10 flex-1 rounded-xl bg-[#EE7828] text-sm font-bold text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
+                          className="h-10 flex-1 rounded-xl bg-[#EE7828] text-sm font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
                           disabled={actionBusy}
                           onClick={() => void confirmRecurring(message.id)}
                           type="button"
                         >
-                          ✓ {actionBusy ? t("record.processing") : t("record.confirmSave")}
+                          <span className="inline-flex items-center justify-center gap-1">
+                            <Check className="size-3.5" strokeWidth={2.25} />
+                            {actionBusy ? t("record.processing") : t("record.confirmSave")}
+                          </span>
                         </button>
                       </div>
                     ) : status === "confirmed" ? (
                       <p className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#2A9D8F]">
-                        <CheckCircle2 className="size-3.5" strokeWidth={2.5} />
+                        <CheckCircle2 className="size-3.5" strokeWidth={2} />
                         {t("record.savedToPlanner")}
                       </p>
                     ) : null}
@@ -877,7 +881,7 @@ export function RecordPage() {
                 {message.replyText ? (
                   <div className="flex items-end gap-2">
                     <CatAvatar size={36} />
-                    <div className="max-w-[82%] rounded-[1.5rem] rounded-bl-md border border-[#F0E6D6] bg-[#FFFDF7] px-4 py-3 text-[15px] leading-6 text-[#5C4A32] shadow-sm">
+                    <div className="max-w-[82%] rounded-2xl rounded-bl-md border border-[#F0E6D6] bg-[#FFFDF7] px-4 py-3 text-[15px] leading-6 text-[#5C4A32] shadow-sm">
                       {message.replyText}
                     </div>
                   </div>
@@ -921,7 +925,7 @@ export function RecordPage() {
                             <div className="grid size-11 shrink-0 place-items-center rounded-full bg-[#F8C96A] text-[#8A5A12] shadow-sm">
                               {record.category === "其它支出" ||
                               record.category === "其它" ? (
-                                <Star className="size-5 fill-current" />
+                                <Star className="size-5 fill-current" strokeWidth={2} />
                               ) : (
                                 <CategoryIcon
                                   category={record.category}
@@ -956,7 +960,7 @@ export function RecordPage() {
                         {record.status === "pending" ? (
                           <div className="mt-3 flex gap-2">
                             <button
-                              className="h-10 flex-1 rounded-xl border border-[#E8D5B5] bg-white text-sm font-semibold text-[#8C6D53] transition-all active:scale-95 disabled:opacity-50"
+                              className="h-10 flex-1 rounded-xl border border-[#E8D5B5] bg-white text-sm font-semibold text-[#8C6D53] transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
                               disabled={actionBusy}
                               onClick={() =>
                                 openCustomTransaction(message.id, index)
@@ -964,26 +968,31 @@ export function RecordPage() {
                               type="button"
                             >
                               <span className="inline-flex items-center justify-center gap-1">
-                                <Pencil className="size-3.5" strokeWidth={2.25} />
+                                <Pencil className="size-3.5" strokeWidth={2} />
                                 {t("record.custom")}
                               </span>
                             </button>
                             <button
-                              className="h-10 flex-1 rounded-xl bg-[#EE7828] text-sm font-bold text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
+                              className="h-10 flex-1 rounded-xl bg-[#EE7828] text-sm font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
                               disabled={actionBusy}
                               onClick={() =>
                                 void confirmTransaction(message.id, index)
                               }
                               type="button"
                             >
-                              ✓ {actionBusy ? t("record.processing") : t("record.confirmSave")}
+                              <span className="inline-flex items-center justify-center gap-1">
+                                <Check className="size-3.5" strokeWidth={2.25} />
+                                {actionBusy
+                                  ? t("record.processing")
+                                  : t("record.confirmSave")}
+                              </span>
                             </button>
                           </div>
                         ) : record.status === "confirmed" ? (
                           <p className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#2A9D8F]">
                             <CheckCircle2
                               className="size-3.5"
-                              strokeWidth={2.5}
+                              strokeWidth={2}
                             />
                             {t("record.savedToLedger")}
                           </p>
@@ -999,7 +1008,7 @@ export function RecordPage() {
           {busy && (
             <div className="flex items-end gap-2">
               <CatAvatar size={36} thinking />
-              <div className="rounded-[1.5rem] rounded-bl-md border border-[#F0E6D6] bg-[#FFFDF7] px-4 py-3 text-sm text-[#9A7B55] shadow-sm">
+              <div className="rounded-2xl rounded-bl-md border border-[#F0E6D6] bg-[#FFFDF7] px-4 py-3 text-sm text-[#9A7B55] shadow-sm">
                 {t("record.thinking")}
               </div>
             </div>
@@ -1012,12 +1021,12 @@ export function RecordPage() {
               const Icon = chip.Icon;
               return (
                 <button
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#EFE5D3] bg-white px-3.5 py-1.5 text-sm font-medium text-[#6B5A40] shadow-sm transition-all active:scale-95"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#EFE5D3] bg-white px-3.5 py-1.5 text-sm font-medium text-[#6B5A40] shadow-sm transition-all duration-150 active:scale-[0.98]"
                   key={chip.labelKey}
                   onClick={() => handleChip(chip)}
                   type="button"
                 >
-                  <Icon className="size-3.5 text-[#B37233]" strokeWidth={2.25} />
+                  <Icon className="size-3.5 text-[#B37233]" strokeWidth={2} />
                   {t(chip.labelKey)}
                 </button>
               );
@@ -1025,18 +1034,18 @@ export function RecordPage() {
           </div>
 
           <form
-            className="mx-4 flex items-center gap-2 rounded-[1.75rem] border border-[#EFE5D3] bg-white px-2 py-1.5 shadow-sm"
+            className="mx-4 flex items-center gap-2 rounded-2xl border border-[#EFE5D3] bg-white px-2 py-1.5 shadow-sm"
             onSubmit={onSubmit}
           >
             <button
               aria-label={t("record.aria.voice")}
-              className="grid size-10 shrink-0 place-items-center rounded-full bg-[#FFF3E0] text-[#B37233] transition-all active:scale-95"
+              className="grid size-10 shrink-0 place-items-center rounded-full bg-[#FFF3E0] text-[#B37233] transition-all duration-150 active:scale-[0.98]"
               onClick={() =>
                 toast.message(t("toast.voiceSoon"))
               }
               type="button"
             >
-              <Mic className="size-5" />
+              <Mic className="size-5" strokeWidth={2.25} />
             </button>
             <input
               className="h-10 min-w-0 flex-1 bg-transparent text-[15px] text-[#5C4A32] outline-none placeholder:text-[#C0B49A]"
@@ -1048,11 +1057,11 @@ export function RecordPage() {
             />
             <button
               aria-label={t("record.aria.send")}
-              className="grid size-10 shrink-0 place-items-center rounded-full bg-[#EE7828] text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
+              className="grid size-10 shrink-0 place-items-center rounded-full bg-[#EE7828] text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
               disabled={busy || !historyReady || !input.trim()}
               type="submit"
             >
-              <SendHorizontal className="size-5" />
+              <SendHorizontal className="size-5" strokeWidth={2.25} />
             </button>
           </form>
         </div>

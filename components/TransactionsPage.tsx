@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   ChevronDown,
   LayoutGrid,
-  LoaderCircle,
   Plus,
   Search,
   Settings2,
@@ -16,6 +15,7 @@ import { RecurringBadgeIcon } from "@/components/AppIcons";
 import { BottomSheet } from "@/components/BottomSheet";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { TransactionDialog } from "@/components/TransactionDialog";
+import { TransactionListSkeleton } from "@/components/ui/Skeleton";
 import { categoryColor } from "@/lib/category-colors";
 import {
   insertTransactionDraft,
@@ -60,12 +60,12 @@ const TYPE_SEGMENTS: { key: "ALL" | TransactionType; labelKey: MessageKey }[] = 
 ];
 
 const FILTER_PILL_BASE =
-  "flex h-10 items-center justify-center gap-2 rounded-xl px-3 text-xs font-medium transition-all active:scale-[0.97]";
+  "flex h-10 items-center justify-center gap-2 rounded-xl px-3 text-xs font-medium transition-all duration-150 active:scale-[0.98]";
 const FILTER_PILL_IDLE =
-  "border border-[#E8E2D8] bg-white/90 text-[#6E6559] shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:bg-[#F7F2EA]";
+  "border border-cream-border bg-cream-card/90 text-ink-muted shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:bg-[#F7F2EA]";
 const FILTER_PILL_ACTIVE =
-  "border border-[#3A322B] bg-[#3A322B] text-white shadow-[0_1px_2px_rgba(58,50,43,0.2)]";
-const FILTER_ICON_IDLE = "size-3.5 shrink-0 text-[#9C9181]";
+  "border border-ink bg-ink text-white shadow-[0_1px_2px_rgba(58,50,43,0.2)]";
+const FILTER_ICON_IDLE = "size-3.5 shrink-0 text-ink-muted";
 const FILTER_ICON_ACTIVE = "size-3.5 shrink-0 text-white";
 
 
@@ -118,10 +118,10 @@ function categoryIconTone(category: string) {
 }
 
 function headerBtnClass(active = false) {
-  return `grid size-9 place-items-center rounded-full border transition-all active:scale-95 ${
+  return `grid size-9 place-items-center rounded-full border transition-all duration-150 active:scale-[0.98] ${
     active
-      ? "border-[#F8A055]/40 bg-[#FFF1E0] text-[#E07A3D]"
-      : "border-black/5 bg-white text-[#6B5B4A] shadow-sm"
+      ? "border-brand-primary/40 bg-[#FFF1E0] text-expense"
+      : "border-cream-border bg-cream-card text-ink-body shadow-sm"
   }`;
 }
 
@@ -382,14 +382,14 @@ export function TransactionsPage() {
 
   return (
     <>
-      <main className="relative flex h-full min-h-0 flex-col bg-[#F7F4EE] pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
+      <main className="relative flex h-full min-h-0 flex-col bg-cream-bg pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
         <header className="shrink-0 px-4 pb-3">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs font-medium tracking-wide text-[#C4A484]">
+              <p className="text-xs font-medium tracking-wide text-ink-muted">
                 {t("transactions.eyebrow")}
               </p>
-              <h1 className="mt-0.5 text-[28px] font-semibold tracking-tight text-[#3D3429]">
+              <h1 className="mt-0.5 text-[28px] font-semibold tracking-tight text-ink">
                 {t("transactions.title")}
               </h1>
             </div>
@@ -406,28 +406,28 @@ export function TransactionsPage() {
                 type="button"
               >
                 {searchOpen ? (
-                  <X className="size-4" strokeWidth={2.25} />
+                  <X className="size-4" strokeWidth={2} />
                 ) : (
-                  <Search className="size-4" strokeWidth={2.25} />
+                  <Search className="size-4" strokeWidth={2} />
                 )}
               </button>
               <button
                 aria-label={t("transactions.aria.manualAdd")}
-                className="grid size-9 place-items-center rounded-full bg-[#3D3429] text-white shadow-sm transition-all active:scale-95"
+                className="grid size-9 place-items-center rounded-full bg-ink text-white shadow-sm transition-all duration-150 active:scale-[0.98]"
                 onClick={openCreate}
                 type="button"
               >
-                <Plus className="size-4.5" strokeWidth={2.5} />
+                <Plus className="size-5" strokeWidth={2.25} />
               </button>
             </div>
           </div>
 
           {searchOpen ? (
             <label className="relative mt-3 block">
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 size-3.5 -translate-y-1/2 text-[#C0B49A]" />
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 size-3.5 -translate-y-1/2 text-[#C0B49A]" strokeWidth={2} />
               <input
                 autoFocus
-                className="h-10 w-full rounded-2xl border border-black/5 bg-white pl-10 pr-3 text-sm text-[#3D3429] outline-none shadow-sm transition-all placeholder:text-[#C0B49A] focus:border-[#D4C4A8] focus:ring-2 focus:ring-[#E8DCC8]/60"
+                className="h-10 w-full rounded-2xl border border-cream-border bg-cream-card pl-10 pr-3 text-sm text-ink outline-none shadow-sm transition-all placeholder:text-ink-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t("transactions.searchPlaceholder")}
                 value={query}
@@ -441,10 +441,10 @@ export function TransactionsPage() {
                 const active = typeFilter === key;
                 return (
                   <button
-                    className={`h-8 flex-1 rounded-[10px] text-[13px] font-semibold transition-all active:scale-[0.98] ${
+                    className={`h-8 flex-1 rounded-xl text-[13px] font-semibold transition-all duration-150 active:scale-[0.98] ${
                       active
-                        ? "bg-white text-[#3D3429] shadow-sm"
-                        : "text-[#8A7A68]"
+                        ? "bg-cream-card text-ink shadow-sm"
+                        : "text-ink-muted"
                     }`}
                     key={key}
                     onClick={() => setTypeFilter(key)}
@@ -458,22 +458,22 @@ export function TransactionsPage() {
 
             <button
               aria-label={t("transactions.aria.moreFilters")}
-              className={`flex h-9 shrink-0 items-center gap-1 rounded-xl border px-2.5 text-[13px] font-semibold transition-all active:scale-95 ${
+              className={`flex h-9 shrink-0 items-center gap-1 rounded-xl border px-2.5 text-[13px] font-semibold transition-all duration-150 active:scale-[0.98] ${
                 filterActiveCount > 0
-                  ? "border-[#E8D5B5] bg-[#FFF6E8] text-[#9A6B3A]"
-                  : "border-black/5 bg-white text-[#6B5B4A] shadow-sm"
+                  ? "border-cream-border bg-[#FFF6E8] text-expense"
+                  : "border-cream-border bg-cream-card text-ink-body shadow-sm"
               }`}
               onClick={() => setFilterOpen(true)}
               type="button"
             >
-              <Settings2 className="size-3.5" strokeWidth={2.25} />
+              <Settings2 className="size-3.5" strokeWidth={2} />
               <span>{t("transactions.filter")}</span>
               {filterActiveCount > 0 ? (
-                <span className="grid size-4 place-items-center rounded-full bg-[#E07A3D] text-[10px] font-bold text-white">
+                <span className="grid size-4 place-items-center rounded-full bg-expense text-[10px] font-bold text-white">
                   {filterActiveCount}
                 </span>
               ) : (
-                <ChevronDown className="size-3.5 opacity-50" />
+                <ChevronDown className="size-3.5 opacity-50" strokeWidth={2} />
               )}
             </button>
           </div>
@@ -481,12 +481,10 @@ export function TransactionsPage() {
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-5 touch-pan-y">
           {loading && transactions.length === 0 ? (
-            <div className="grid min-h-60 place-items-center">
-              <LoaderCircle className="size-7 animate-spin text-[#C4A484]" />
-            </div>
+            <TransactionListSkeleton />
           ) : filtered.length === 0 ? (
-            <div className="mt-4 rounded-2xl border border-dashed border-black/8 bg-white/70 px-5 py-14 text-center">
-              <p className="font-medium text-[#3D3429]">{t("transactions.emptyTitle")}</p>
+            <div className="mt-4 rounded-2xl border border-dashed border-cream-border bg-cream-card/70 px-5 py-14 text-center">
+              <p className="font-medium text-ink-title">{t("transactions.emptyTitle")}</p>
               <p className="mt-1 text-sm text-[#9A8B78]">
                 {recurringOnly
                   ? t("transactions.empty.recurringHint")
@@ -504,17 +502,17 @@ export function TransactionsPage() {
                 return (
                   <section key={date}>
                     <div className="mb-2 flex items-baseline justify-between gap-3 px-1">
-                      <h2 className="font-medium text-gray-700">
+                      <h2 className="font-medium text-ink-body">
                         {displayDate(date, locale)}
                       </h2>
                       {dayExpense ? (
-                        <p className="truncate text-[12px] font-medium text-gray-400">
+                        <p className="truncate font-numeric text-[12px] font-medium text-ink-muted">
                           {dayExpense}
                         </p>
                       ) : null}
                     </div>
 
-                    <div className="overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm divide-y divide-gray-100">
+                    <div className="overflow-hidden rounded-2xl border border-cream-border bg-cream-card shadow-sm divide-y divide-cream-border">
                       {items.map((item, index) => {
                         const expense = item.type === "EXPENSE";
                         const recurring = isRecurringNote(item.note);
@@ -525,34 +523,34 @@ export function TransactionsPage() {
 
                         return (
                           <button
-                            className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors active:bg-gray-50/80"
+                            className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition-all duration-150 active:scale-[0.98] active:bg-cream-bg/80"
                             key={item.id ?? `${date}-${index}`}
                             onClick={() => openEdit(item)}
                             type="button"
                           >
                             <div
-                              className="grid size-10 shrink-0 place-items-center rounded-2xl"
+                              className="grid size-10 shrink-0 place-items-center rounded-xl"
                               style={tone}
                             >
                               <CategoryIcon
                                 category={item.category}
-                                className="size-4.5"
+                                className="size-4"
                               />
                             </div>
 
                             <div className="min-w-0 flex-1">
-                              <p className="truncate font-medium text-gray-800">
+                              <p className="truncate font-medium text-ink">
                                 {categoryLabel(item.category, t)}
                               </p>
-                              <p className="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-gray-400">
+                              <p className="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-ink-muted">
                                 <span className="truncate">{note}</span>
                                 {recurring ? (
                                   <span
                                     aria-label={t("transactions.aria.recurringBill")}
-                                    className="inline-flex shrink-0 items-center rounded-full bg-sky-50 px-1 py-px text-sky-500"
+                                    className="inline-flex shrink-0 items-center rounded-full bg-brand-primary/10 px-1 py-px text-brand-primary"
                                     title={t("transactions.aria.recurringBill")}
                                   >
-                                    <RecurringBadgeIcon className="size-2.5" />
+                                    <RecurringBadgeIcon className="size-3.5" />
                                   </span>
                                 ) : null}
                               </p>
@@ -560,15 +558,13 @@ export function TransactionsPage() {
 
                             <div className="flex shrink-0 items-center gap-1.5">
                               {showCurrencyChip ? (
-                                <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-gray-500">
+                                <span className="rounded-full bg-cream-bg px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-ink-muted">
                                   {currency}
                                 </span>
                               ) : null}
                               <p
                                 className={`font-numeric text-sm font-semibold ${
-                                  expense
-                                    ? "text-[#6B5344]"
-                                    : "text-[#5B8F7B]"
+                                  expense ? "text-expense" : "text-income"
                                 }`}
                               >
                                 {expense ? "-" : "+"}
@@ -590,17 +586,17 @@ export function TransactionsPage() {
       <BottomSheet
         contentClassName="max-h-[80vh] overflow-y-auto overscroll-contain scrollbar-none px-6 py-5 space-y-6 touch-pan-y pb-[calc(env(safe-area-inset-bottom)+20px)]"
         header={
-          <div className="flex items-center justify-between border-b border-black/5 px-6 py-4">
+          <div className="flex items-center justify-between border-b border-cream-border px-6 py-4">
             <button
-              className="min-w-[3.25rem] text-left text-[15px] font-normal text-[#8C8273] transition-opacity active:opacity-60"
+              className="min-w-[3.25rem] text-left text-[15px] font-normal text-ink-muted transition-opacity active:opacity-60"
               onClick={resetFilters}
               type="button"
             >
               {t("transactions.filterReset")}
             </button>
-            <p className="text-base font-semibold text-[#4A3E31]">{t("transactions.filter")}</p>
+            <p className="text-base font-semibold text-ink-body">{t("transactions.filter")}</p>
             <button
-              className="rounded-full bg-[#4A3E31] px-4 py-1.5 text-xs font-medium text-white shadow-[0_1px_2px_rgba(74,62,49,0.18)] transition-opacity active:opacity-80"
+              className="rounded-full bg-ink-body px-4 py-1.5 text-xs font-medium text-white shadow-[0_1px_2px_rgba(74,62,49,0.18)] transition-opacity active:opacity-80"
               onClick={() => setFilterOpen(false)}
               type="button"
             >
@@ -613,7 +609,7 @@ export function TransactionsPage() {
         title={t("transactions.filter")}
       >
         <section>
-          <p className="mb-3 text-xs font-medium text-[#8C8273]">{t("transactions.selectCurrency")}</p>
+          <p className="mb-3 text-xs font-medium text-ink-muted">{t("transactions.selectCurrency")}</p>
           <div className="grid grid-cols-5 gap-2">
             {(["ALL", ...CURRENCY_CODES] as const).map((key) => {
               const active = currencyFilter === key;
@@ -639,7 +635,7 @@ export function TransactionsPage() {
               {categorySectionTitle}
             </p>
             {typeFilter === "ALL" ? (
-              <div className="flex rounded-lg bg-[#EFE8DC] p-0.5">
+              <div className="flex rounded-xl bg-[#EFE8DC] p-0.5">
                 {(
                   [
                     { key: "EXPENSE" as const, label: t("transactions.expenseCategories") },
@@ -649,10 +645,10 @@ export function TransactionsPage() {
                   const active = categoryScope === tab.key;
                   return (
                     <button
-                      className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition-all active:scale-[0.98] ${
+                      className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all duration-150 active:scale-[0.98] ${
                         active
-                          ? "bg-white text-[#4A3E31] shadow-sm"
-                          : "text-[#8C8273]"
+                          ? "bg-cream-card text-ink-body shadow-sm"
+                          : "text-ink-muted"
                       }`}
                       key={tab.key}
                       onClick={() => {
@@ -716,23 +712,23 @@ export function TransactionsPage() {
         </section>
 
         <section>
-          <div className="flex items-center justify-between rounded-2xl border border-black/5 bg-white/80 p-3.5">
-            <p className="flex items-center gap-1.5 text-sm font-medium text-[#4A3E31]">
-              <RecurringBadgeIcon className="size-3.5 text-[#8C6D53]" />
+          <div className="flex items-center justify-between rounded-2xl border border-cream-border bg-cream-card/80 p-3.5">
+            <p className="flex items-center gap-1.5 text-sm font-medium text-ink-body">
+              <RecurringBadgeIcon className="size-3.5 text-brand-primary" />
               {t("transactions.recurringOnly")}
             </p>
             <button
               aria-checked={recurringOnly}
               aria-label={t("transactions.recurringOnly")}
               className={`relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors duration-200 ${
-                recurringOnly ? "bg-[#EE7828]" : "bg-[#E5DDD0]"
+                recurringOnly ? "bg-brand-primary" : "bg-[#E5DDD0]"
               }`}
               onClick={() => setRecurringOnly((v) => !v)}
               role="switch"
               type="button"
             >
               <span
-                className={`absolute top-[2px] size-[27px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.18)] transition-transform duration-200 ${
+                className={`absolute top-[2px] size-[27px] rounded-full bg-cream-card shadow-[0_1px_3px_rgba(0,0,0,0.18)] transition-transform duration-200 ${
                   recurringOnly ? "translate-x-[22px]" : "translate-x-[2px]"
                 }`}
               />

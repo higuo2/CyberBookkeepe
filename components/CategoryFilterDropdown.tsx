@@ -119,7 +119,7 @@ export function CategoryFilterDropdown({
       <button
         aria-expanded={open}
         aria-haspopup="listbox"
-        className="flex h-9 max-w-[9.5rem] items-center gap-1 rounded-xl border border-[#EFE5D3] bg-white py-0 pl-2.5 pr-2 text-xs font-medium text-[#5C4A32] shadow-sm transition-all active:scale-95"
+        className="flex h-9 max-w-[9.5rem] items-center gap-1 rounded-xl border border-[#EFE5D3] bg-white py-0 pl-2.5 pr-2 text-xs font-medium text-[#5C4A32] shadow-sm transition-all duration-150 active:scale-[0.98]"
         onClick={() => setOpen((prev) => !prev)}
         type="button"
       >
@@ -128,6 +128,7 @@ export function CategoryFilterDropdown({
           className={`size-3.5 shrink-0 text-[#C2B5A5] transition-transform ${
             open ? "rotate-180" : ""
           }`}
+          strokeWidth={2}
         />
       </button>
 
@@ -166,9 +167,9 @@ export function CategoryFilterDropdown({
                     aria-selected={selected}
                     type="button"
                   >
-                    <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-[#FFF6D9] text-[#8A5A12]">
+                    <span className="grid size-7 shrink-0 place-items-center rounded-xl bg-[#FFF6D9] text-[#8A5A12]">
                       {item.value === "ALL" ? (
-                        <LayoutGrid className="size-3.5" />
+                        <LayoutGrid className="size-3.5" strokeWidth={2} />
                       ) : (
                         <CategoryIcon
                           category={item.value}
@@ -178,7 +179,7 @@ export function CategoryFilterDropdown({
                     </span>
                     <span className="min-w-0 flex-1 truncate">{item.label}</span>
                     {selected && (
-                      <Check className="size-3.5 shrink-0 text-[#8C6D53]" />
+                      <Check className="size-3.5 shrink-0 text-[#8C6D53]" strokeWidth={2} />
                     )}
                   </button>
                 </li>

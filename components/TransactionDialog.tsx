@@ -26,7 +26,7 @@ import type { TransactionDraft } from "@/lib/types";
 import { useT } from "@/components/LocaleProvider";
 
 const fieldClass =
-  "h-11 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15";
+  "h-11 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#EE7828] focus:ring-4 focus:ring-[#EE7828]/15";
 
 export function TransactionDialog({
   open,
@@ -78,29 +78,29 @@ export function TransactionDialog({
       className="fixed inset-0 z-[70] flex items-end justify-center overflow-x-hidden bg-[#5C4A32]/25 p-0 backdrop-blur-sm sm:items-center sm:p-5"
       role="dialog"
     >
-      <section className="max-h-[92dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-[2rem] border border-[#EFE5D3] bg-[#FAF6EC] p-5 pb-[calc(env(safe-area-inset-bottom)+20px)] shadow-sm touch-pan-y sm:rounded-[2rem] sm:pb-5">
+      <section className="max-h-[92dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-3xl border border-[#EFE5D3] bg-[#FAF6EC] p-5 pb-[calc(env(safe-area-inset-bottom)+20px)] shadow-sm touch-pan-y sm:rounded-3xl sm:pb-5">
         <header className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#F8A055]">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#EE7828]">
               {t("auth.brand")}
             </p>
             <h2 className="mt-1 text-xl font-semibold text-[#5C4A32]">{title}</h2>
           </div>
           <button
             aria-label={t("common.close")}
-            className="grid size-10 place-items-center rounded-full bg-white text-[#8A7A5C] shadow-sm transition-all active:scale-95"
+            className="grid size-10 place-items-center rounded-full bg-white text-[#8A7A5C] shadow-sm transition-all duration-150 active:scale-[0.98]"
             disabled={locked}
             onClick={onClose}
             type="button"
           >
-            <X className="size-5" />
+            <X className="size-5" strokeWidth={2} />
           </button>
         </header>
 
         {isRecurring && (
           <div className="mt-4 rounded-2xl bg-[#FFF6D9] px-3.5 py-3">
             <p className="flex items-start gap-1.5 text-sm leading-5 text-[#8C6D53]">
-              <Lightbulb className="mt-0.5 size-3.5 shrink-0" strokeWidth={2.25} />
+              <Lightbulb className="mt-0.5 size-3.5 shrink-0" strokeWidth={2} />
               {t("dialog.recurringGenerated")}
             </p>
           </div>
@@ -117,7 +117,7 @@ export function TransactionDialog({
                 const expense = type === "EXPENSE";
                 return (
                   <button
-                    className={`flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
+                    className={`flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all duration-150 active:scale-[0.98] ${
                       active
                         ? expense
                           ? "bg-white text-[#E07A3D] shadow-sm"
@@ -139,9 +139,9 @@ export function TransactionDialog({
                     type="button"
                   >
                     {expense ? (
-                      <ArrowDownLeft className="size-4" />
+                      <ArrowDownLeft className="size-4" strokeWidth={2} />
                     ) : (
-                      <ArrowUpRight className="size-4" />
+                      <ArrowUpRight className="size-4" strokeWidth={2} />
                     )}
                     {expense ? t("common.expense") : t("common.income")}
                   </button>
@@ -222,7 +222,7 @@ export function TransactionDialog({
           <label className="block text-xs font-medium text-[#9A7B55]">
             {t("dialog.noteOptional")}
             <textarea
-              className="mt-2 min-h-20 w-full resize-none rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] p-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
+              className="mt-2 min-h-20 w-full resize-none rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] p-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#EE7828] focus:ring-4 focus:ring-[#EE7828]/15"
               maxLength={200}
               onChange={(event) =>
                 onChange({ ...value, note: event.target.value })
@@ -234,14 +234,14 @@ export function TransactionDialog({
 
           <div className="flex flex-col gap-2 pt-1">
             <button
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#F8A055] font-semibold text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#EE7828] font-semibold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
               disabled={locked}
               type="submit"
             >
               {busy ? (
-                <LoaderCircle className="size-5 animate-spin" />
+                <LoaderCircle className="size-5 animate-spin" strokeWidth={2.25} />
               ) : (
-                <Save className="size-5" />
+                <Save className="size-5" strokeWidth={2.25} />
               )}
               {busy ? t("dialog.saving") : submitLabel}
             </button>
@@ -249,15 +249,15 @@ export function TransactionDialog({
             {onDelete && (
               <div className="flex flex-col gap-2">
                 <button
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#FFE8E0] text-sm font-semibold text-[#E07A3D] transition-all active:scale-95 disabled:opacity-50"
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#FFE8E0] text-sm font-semibold text-[#E07A3D] transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
                   disabled={locked}
                   onClick={() => void onDelete()}
                   type="button"
                 >
                   {deleting ? (
-                    <LoaderCircle className="size-4 animate-spin" />
+                    <LoaderCircle className="size-4 animate-spin" strokeWidth={2} />
                   ) : (
-                    <Trash2 className="size-4" />
+                    <Trash2 className="size-4" strokeWidth={2} />
                   )}
                   {deleting ? t("dialog.deleting") : t("dialog.deleteBill")}
                 </button>

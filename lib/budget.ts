@@ -30,7 +30,7 @@ export function computeBudgetStats(
 }
 
 export function budgetBarColor(ratio: number) {
-  if (ratio > 1) return "bg-[#EF4444]";
-  if (ratio >= 0.8) return "bg-[#F97316]";
-  return "bg-[#F8A055]";
+  if (ratio > 1) return "bg-danger";
+  if (ratio >= 0.8) return "bg-expense";
+  return "bg-brand-primary";
 }

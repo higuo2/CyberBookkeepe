@@ -208,11 +208,11 @@ export function CurrencyIcon({
 }
 
 export function RecurringBadgeIcon({
-  className = "size-3",
+  className = "size-3.5",
 }: {
   className?: string;
 }) {
-  return <RefreshCw aria-hidden className={className} strokeWidth={2.25} />;
+  return <RefreshCw aria-hidden className={className} strokeWidth={2} />;
 }
 
 export function defaultRecurringIconId(
