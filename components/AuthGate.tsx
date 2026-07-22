@@ -52,8 +52,8 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return (
       <main className="mx-auto grid h-dvh w-full max-w-md place-items-center overflow-x-hidden px-6 pt-[calc(env(safe-area-inset-top)+12px)] pb-[calc(env(safe-area-inset-bottom)+12px)] touch-pan-y">
         <section className="w-full max-w-sm rounded-2xl border border-[#EAE5D9] bg-white p-7 shadow-2xs">
-          <div className="mb-6 grid size-16 place-items-center rounded-full bg-[#F0ECE1]">
-            <CatAvatar size={52} />
+          <div className="mb-6">
+            <CatAvatar className="shadow-2xs" size={72} />
           </div>
           <p className="text-sm font-medium text-[#9C9285]">{t("auth.brand")}</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#2C2420]">

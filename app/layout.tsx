@@ -37,7 +37,24 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html className="min-h-screen overflow-x-hidden bg-[#F6F4EE] antialiased" lang="zh-CN">
+    <html
+      className="font-app-rounded min-h-screen overflow-x-hidden bg-[#F6F4EE] antialiased"
+      data-font-style="rounded"
+      lang="zh-CN"
+    >
+      <head>
+        {/* next/font 的 Noto Serif SC 无中文 subset；用 Google CSS 拉取 CJK unicode-range */}
+        <link href="https://fonts.googleapis.com" rel="preconnect" />
+        <link
+          crossOrigin="anonymous"
+          href="https://fonts.gstatic.com"
+          rel="preconnect"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="min-h-screen overflow-x-hidden bg-[#F6F4EE] text-[#3A322B] antialiased touch-pan-y overscroll-none">
         <AppShell>{children}</AppShell>
       </body>

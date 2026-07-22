@@ -27,10 +27,13 @@ export const FONT_SIZE_SCALE: Record<FontSize, number> = {
 };
 
 export const FONT_FAMILY_STACK: Record<FontStyle, string> = {
-  system: "'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif",
+  system:
+    '-apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif',
   rounded:
-    "'SF Pro Rounded', ui-rounded, 'PingFang SC', -apple-system, sans-serif",
-  serif: "'Songti SC', 'Noto Serif SC', 'Songti TC', Georgia, serif",
+    'ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "Hiragino Maru Gothic ProN", "Yuanti SC", "STYuanti", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif',
+  /** Noto Serif SC via Google Fonts link; Songti/STSong for iOS native */
+  serif:
+    '"Noto Serif SC", "Songti SC", "STSong", "宋体-简", "Source Han Serif SC", "Noto Serif CJK SC", SimSun, Georgia, "Times New Roman", serif',
 };
 
 const DEFAULT_SETTINGS: FontSettings = {
@@ -96,7 +99,15 @@ function applyFontToDocument(settings: FontSettings) {
   root.style.setProperty("--font-scale", String(scale));
   root.dataset.fontSize = settings.fontSize;
   root.dataset.fontStyle = settings.fontStyle;
-  document.body.style.fontFamily = FONT_FAMILY_STACK[settings.fontStyle];
+  root.classList.remove(
+    "font-app-system",
+    "font-app-rounded",
+    "font-app-serif",
+  );
+  root.classList.add(`font-app-${settings.fontStyle}`);
+  const stack = FONT_FAMILY_STACK[settings.fontStyle];
+  root.style.fontFamily = stack;
+  document.body.style.fontFamily = stack;
 }
 
 export function FontProvider({ children }: { children: ReactNode }) {

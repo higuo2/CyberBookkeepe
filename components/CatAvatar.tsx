@@ -1,3 +1,4 @@
+/** 聊天 / 登录头像：品牌插画 logo */
 export function CatAvatar({
   size = 44,
   className = "",
@@ -14,7 +15,7 @@ export function CatAvatar({
       alt=""
       aria-hidden="true"
       className={[
-        "shrink-0 rounded-full object-cover shadow-sm",
+        "shrink-0 rounded-[22%] object-cover shadow-sm",
         thinking ? "animate-pulse" : "",
         className,
       ]
