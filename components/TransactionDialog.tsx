@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import {
   ArrowDownLeft,
   ArrowUpRight,
+  Lightbulb,
   LoaderCircle,
   Save,
   Trash2,
@@ -12,6 +13,7 @@ import {
 import { toast } from "sonner";
 import {
   categoriesForType,
+  categoryLabel,
   defaultCategory,
   validateDraft,
 } from "@/lib/transaction-utils";
@@ -21,6 +23,7 @@ import {
   normalizeCurrency,
 } from "@/lib/currency";
 import type { TransactionDraft } from "@/lib/types";
+import { useT } from "@/components/LocaleProvider";
 
 const fieldClass =
   "h-11 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15";
@@ -53,6 +56,7 @@ export function TransactionDialog({
   isRecurring?: boolean;
   onManageRecurring?: () => void;
 }) {
+  const t = useT();
   if (!open) return null;
 
   const categories = categoriesForType(value.type);
@@ -62,7 +66,7 @@ export function TransactionDialog({
     event.preventDefault();
     const validationError = validateDraft(value);
     if (validationError) {
-      toast.error(validationError);
+      toast.error(t(validationError));
       return;
     }
     await onSubmit();
@@ -78,12 +82,12 @@ export function TransactionDialog({
         <header className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#F8A055]">
-              钱包小猫
+              {t("auth.brand")}
             </p>
             <h2 className="mt-1 text-xl font-semibold text-[#5C4A32]">{title}</h2>
           </div>
           <button
-            aria-label="关闭"
+            aria-label={t("common.close")}
             className="grid size-10 place-items-center rounded-full bg-white text-[#8A7A5C] shadow-sm transition-all active:scale-95"
             disabled={locked}
             onClick={onClose}
@@ -95,8 +99,9 @@ export function TransactionDialog({
 
         {isRecurring && (
           <div className="mt-4 rounded-2xl bg-[#FFF6D9] px-3.5 py-3">
-            <p className="text-sm leading-5 text-[#8C6D53]">
-              💡 此账单由周期规则自动生成
+            <p className="flex items-start gap-1.5 text-sm leading-5 text-[#8C6D53]">
+              <Lightbulb className="mt-0.5 size-3.5 shrink-0" strokeWidth={2.25} />
+              {t("dialog.recurringGenerated")}
             </p>
           </div>
         )}
@@ -104,7 +109,7 @@ export function TransactionDialog({
         <form className="mt-6 space-y-4" onSubmit={submit}>
           <div>
             <span className="mb-2 block text-xs font-medium text-[#9A7B55]">
-              收支类型
+              {t("dialog.type")}
             </span>
             <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[#FFF6D9] p-1.5">
               {(["EXPENSE", "INCOME"] as const).map((type) => {
@@ -138,7 +143,7 @@ export function TransactionDialog({
                     ) : (
                       <ArrowUpRight className="size-4" />
                     )}
-                    {expense ? "支出" : "收入"}
+                    {expense ? t("common.expense") : t("common.income")}
                   </button>
                 );
               })}
@@ -147,7 +152,7 @@ export function TransactionDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <label className="text-xs font-medium text-[#9A7B55]">
-              金额
+              {t("dialog.amount")}
               <input
                 className={`${fieldClass} mt-2 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                 inputMode="decimal"
@@ -163,7 +168,7 @@ export function TransactionDialog({
               />
             </label>
             <label className="text-xs font-medium text-[#9A7B55]">
-              币种
+              {t("dialog.currency")}
               <select
                 className={`${fieldClass} mt-2`}
                 onChange={(event) =>
@@ -176,8 +181,7 @@ export function TransactionDialog({
               >
                 {CURRENCY_CODES.map((code) => (
                   <option key={code} value={code}>
-                    {CURRENCY_META[code].flag} {code} (
-                    {CURRENCY_META[code].symbol})
+                    {code} ({CURRENCY_META[code].symbol})
                   </option>
                 ))}
               </select>
@@ -185,7 +189,7 @@ export function TransactionDialog({
           </div>
 
           <label className="block text-xs font-medium text-[#9A7B55]">
-            日期
+            {t("dialog.date")}
             <input
               className={`${fieldClass} mt-2`}
               onChange={(event) =>
@@ -198,7 +202,7 @@ export function TransactionDialog({
           </label>
 
           <label className="block text-xs font-medium text-[#9A7B55]">
-            分类
+            {t("dialog.category")}
             <select
               className={`${fieldClass} mt-2`}
               onChange={(event) =>
@@ -209,21 +213,21 @@ export function TransactionDialog({
             >
               {categories.map((category) => (
                 <option key={category} value={category}>
-                  {category}
+                  {categoryLabel(category, t)}
                 </option>
               ))}
             </select>
           </label>
 
           <label className="block text-xs font-medium text-[#9A7B55]">
-            备注（选填，空则用分类名）
+            {t("dialog.noteOptional")}
             <textarea
               className="mt-2 min-h-20 w-full resize-none rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] p-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
               maxLength={200}
               onChange={(event) =>
                 onChange({ ...value, note: event.target.value })
               }
-              placeholder="可选：补充这笔账的详情"
+              placeholder={t("dialog.notePlaceholder")}
               value={value.note}
             />
           </label>
@@ -239,7 +243,7 @@ export function TransactionDialog({
               ) : (
                 <Save className="size-5" />
               )}
-              {busy ? "正在保存…" : submitLabel}
+              {busy ? t("dialog.saving") : submitLabel}
             </button>
 
             {onDelete && (
@@ -255,7 +259,7 @@ export function TransactionDialog({
                   ) : (
                     <Trash2 className="size-4" />
                   )}
-                  {deleting ? "正在删除…" : "删除账单"}
+                  {deleting ? t("dialog.deleting") : t("dialog.deleteBill")}
                 </button>
                 {isRecurring && onManageRecurring && (
                   <button
@@ -264,7 +268,7 @@ export function TransactionDialog({
                     onClick={onManageRecurring}
                     type="button"
                   >
-                    ⚙️ 管理周期规则
+                    ⚙️ {t("dialog.manageRule")}
                   </button>
                 )}
               </div>

@@ -6,18 +6,16 @@ import { CategoryIcon } from "@/components/CategoryIcon";
 import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
+  categoryLabel,
 } from "@/lib/transaction-utils";
 import type { TransactionType } from "@/lib/types";
+import { useT } from "@/components/LocaleProvider";
 
 type TypeFilter = "ALL" | TransactionType;
 
 type MenuItem =
   | { kind: "option"; value: string; label: string }
   | { kind: "divider"; label: string };
-
-function displayCategory(category: string) {
-  return category === "居住" ? "住房" : category;
-}
 
 export function CategoryFilterDropdown({
   value,
@@ -28,11 +26,12 @@ export function CategoryFilterDropdown({
   typeFilter: TypeFilter;
   onChange: (value: string) => void;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const items = useMemo<MenuItem[]>(() => {
-    const all: MenuItem = { kind: "option", value: "ALL", label: "全部分类" };
+    const all: MenuItem = { kind: "option", value: "ALL", label: t("common.allCategories") };
 
     if (typeFilter === "EXPENSE") {
       return [
@@ -40,7 +39,7 @@ export function CategoryFilterDropdown({
         ...EXPENSE_CATEGORIES.map((category) => ({
           kind: "option" as const,
           value: category,
-          label: displayCategory(category),
+          label: categoryLabel(category, t),
         })),
       ];
     }
@@ -51,32 +50,32 @@ export function CategoryFilterDropdown({
         ...INCOME_CATEGORIES.map((category) => ({
           kind: "option" as const,
           value: category,
-          label: displayCategory(category),
+          label: categoryLabel(category, t),
         })),
       ];
     }
 
     return [
       all,
-      { kind: "divider", label: "支出" },
+      { kind: "divider", label: t("common.expense") },
       ...EXPENSE_CATEGORIES.map((category) => ({
         kind: "option" as const,
         value: category,
-        label: displayCategory(category),
+        label: categoryLabel(category, t),
       })),
-      { kind: "divider", label: "收入" },
+      { kind: "divider", label: t("common.income") },
       ...INCOME_CATEGORIES.map((category) => ({
         kind: "option" as const,
         value: category,
-        label: displayCategory(category),
+        label: categoryLabel(category, t),
       })),
     ];
-  }, [typeFilter]);
+  }, [typeFilter, t]);
 
   const label =
     value === "ALL"
-      ? "全部分类"
-      : displayCategory(value);
+      ? t("common.allCategories")
+      : categoryLabel(value, t);
 
   useEffect(() => {
     if (!open) return;

@@ -1,14 +1,15 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useT } from "@/components/LocaleProvider";
 
 /** 居中确认弹窗（奶油风） */
 export function ConfirmDialog({
   open,
   title,
   description,
-  cancelLabel = "取消",
-  confirmLabel = "确认",
+  cancelLabel,
+  confirmLabel,
   confirmDanger = false,
   busy = false,
   onCancel,
@@ -24,6 +25,7 @@ export function ConfirmDialog({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
+  const t = useT();
   if (!open) return null;
 
   return (
@@ -42,7 +44,7 @@ export function ConfirmDialog({
             onClick={onCancel}
             type="button"
           >
-            {cancelLabel}
+            {cancelLabel ?? t("common.cancel")}
           </button>
           <button
             className={`h-11 flex-1 rounded-2xl text-sm font-bold text-white shadow-sm transition-all active:scale-95 disabled:opacity-50 ${
@@ -52,7 +54,7 @@ export function ConfirmDialog({
             onClick={onConfirm}
             type="button"
           >
-            {confirmLabel}
+            {confirmLabel ?? t("common.confirm")}
           </button>
         </div>
       </div>

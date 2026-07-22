@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LoaderCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { CurrencyIcon } from "@/components/AppIcons";
 import {
   CURRENCY_CODES,
   CURRENCY_META,
@@ -23,6 +24,8 @@ import {
   sumByCategory,
 } from "@/lib/transaction-utils";
 import type { Transaction } from "@/lib/types";
+import { useT } from "@/components/LocaleProvider";
+import { translateCurrencyLabel } from "@/lib/i18n";
 
 const CategoryPieChart = dynamic(
   () =>
@@ -50,6 +53,7 @@ const TrendBarChart = dynamic(
 );
 
 export function ChartsPage() {
+  const t = useT();
   const [monthTransactions, setMonthTransactions] = useState<Transaction[]>([]);
   const [weekTransactions, setWeekTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +62,7 @@ export function ChartsPage() {
   const loadChart = useCallback(async (showToast = false) => {
     await Promise.resolve();
     if (!navigator.onLine) {
-      toast.error("当前无网络，无法读取统计");
+      toast.error(t("toast.chartOffline"));
       setLoading(false);
       return;
     }
@@ -67,7 +71,7 @@ export function ChartsPage() {
     const weekDays = lastNDays(7);
     const weekStart = weekDays[0];
 
-    if (showToast) toast.loading("正在刷新统计…", { id: "refresh-chart" });
+    if (showToast) toast.loading(t("toast.chartRefreshing"), { id: "refresh-chart" });
     setLoading(true);
 
     try {
@@ -87,7 +91,7 @@ export function ChartsPage() {
         return codes[0] ?? preferred;
       });
 
-      if (showToast) toast.success("统计已更新", { id: "refresh-chart" });
+      if (showToast) toast.success(t("toast.chartUpdated"), { id: "refresh-chart" });
     } catch (error) {
       toast.error(formatSupabaseError(error), {
         id: showToast ? "refresh-chart" : undefined,
@@ -95,7 +99,7 @@ export function ChartsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => void loadChart(), 0);
@@ -182,16 +186,16 @@ export function ChartsPage() {
     <main className="h-full overflow-y-auto overscroll-contain bg-[#FAF6EC] px-4 pb-5 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
       <header className="flex items-end justify-between">
         <div>
-          <p className="text-sm font-semibold text-[#F8A055]">消费分析</p>
+          <p className="text-sm font-semibold text-[#F8A055]">{t("charts.eyebrow")}</p>
           <h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-[#5C4A32]">
-            统计
+            {t("charts.title")}
           </h1>
           <p className="mt-1 text-sm text-[#A08B68]">
-            各币种独立结算，不做汇率换算
+            {t("charts.subtitle")}
           </p>
         </div>
         <button
-          aria-label="刷新统计"
+          aria-label={t("charts.aria.refresh")}
           className="grid size-9 place-items-center rounded-full border border-[#EFE5D3] bg-white text-[#8A7A5C] shadow-sm transition-all active:scale-95 disabled:opacity-50"
           disabled={loading}
           onClick={() => void loadChart(true)}
@@ -224,19 +228,23 @@ export function ChartsPage() {
               type="button"
             >
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-[#5C4A32]">
-                  {m.flag} {code} {m.label}
+                <p className="flex items-center gap-1.5 text-sm font-semibold text-[#5C4A32]">
+                  <CurrencyIcon
+                    className="size-4 text-[#8C6D53]"
+                    code={code}
+                  />
+                  {code} {translateCurrencyLabel(code, t)}
                 </p>
                 <span className="rounded-full bg-white/70 px-2 py-0.5 text-xs font-bold text-[#8C6D53]">
                   {m.symbol}
                 </span>
               </div>
-              <p className="mt-3 text-xs text-[#A08875]">本月支出</p>
+              <p className="mt-3 text-xs text-[#A08875]">{t("charts.monthExpense")}</p>
               <p className="mt-0.5 text-xl font-extrabold tracking-tight text-[#E07A3D]">
                 {formatMoney(totals.expense, code)}
               </p>
               <p className="mt-2 text-xs text-[#A08875]">
-                本月收入{" "}
+                {t("charts.monthIncome")}{" "}
                 <span className="font-semibold text-[#2A9D8F]">
                   {formatMoney(totals.income, code)}
                 </span>
@@ -249,7 +257,7 @@ export function ChartsPage() {
       <div className="mt-3 flex flex-col gap-3">
         <section className="rounded-3xl border border-[#EFE5D3] bg-white p-4 shadow-sm">
           <h2 className="text-sm font-semibold text-[#5C4A32]">
-            近 7 日支出趋势 · {activeCurrency}
+            {t("charts.trendTitle", { currency: activeCurrency })}
           </h2>
           <div className="mt-1">
             {loading && weekTransactions.length === 0 ? (
@@ -264,7 +272,7 @@ export function ChartsPage() {
 
         <section className="rounded-3xl border border-[#EFE5D3] bg-white p-4 shadow-sm">
           <h2 className="text-sm font-semibold text-[#5C4A32]">
-            支出分类占比 Top 4 · {activeCurrency}
+            {t("charts.categoryTitle", { currency: activeCurrency })}
           </h2>
           {loading && monthTransactions.length === 0 ? (
             <div className="grid h-40 place-items-center">

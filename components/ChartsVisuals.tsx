@@ -19,9 +19,8 @@ import {
   type CurrencyCode,
 } from "@/lib/currency";
 
-function displayCategory(name: string) {
-  return name === "居住" ? "住房" : name;
-}
+import { categoryLabel } from "@/lib/transaction-utils";
+import { useI18n } from "@/components/LocaleProvider";
 
 export function CategoryPieChart({
   data,
@@ -30,6 +29,7 @@ export function CategoryPieChart({
   data: { name: string; value: number }[];
   currency?: CurrencyCode;
 }) {
+  const { t } = useI18n();
   const total = useMemo(
     () => data.reduce((sum, item) => sum + item.value, 0),
     [data],
@@ -39,8 +39,8 @@ export function CategoryPieChart({
     return (
       <div className="grid h-36 place-items-center text-center">
         <div>
-          <p className="font-medium text-[#5C4A32]">暂无数据</p>
-          <p className="mt-1 text-sm text-[#A08B68]">记账后即可查看占比</p>
+          <p className="font-medium text-[#5C4A32]">{t("charts.emptyTitle")}</p>
+          <p className="mt-1 text-sm text-[#A08B68]">{t("charts.emptyHint")}</p>
         </div>
       </div>
     );
@@ -97,7 +97,7 @@ export function CategoryPieChart({
               <div className="min-w-0 flex-1">
                 <div className="mb-0.5 flex items-center justify-between gap-2">
                   <p className="truncate text-sm font-semibold text-[#5C4A32]">
-                    {displayCategory(item.name)}
+                    {categoryLabel(item.name, t)}
                   </p>
                   <p className="shrink-0 text-xs font-medium tabular-nums text-[#A08B68]">
                     {pct.toFixed(0)}%
@@ -124,8 +124,8 @@ export function CategoryPieChart({
   );
 }
 
-function formatTrendDate(date: string) {
-  return new Intl.DateTimeFormat("zh-HK", {
+function formatTrendDate(date: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
     month: "long",
     day: "numeric",
     weekday: "short",
@@ -136,10 +136,14 @@ function TrendTooltip({
   active,
   payload,
   currency,
+  locale,
+  expenseLabel,
 }: {
   active?: boolean;
   payload?: Array<{ payload?: { date?: string; amount?: number } }>;
   currency: CurrencyCode;
+  locale: string;
+  expenseLabel: (amount: string) => string;
 }) {
   if (!active || !payload?.length) return null;
   const point = payload[0]?.payload;
@@ -147,9 +151,9 @@ function TrendTooltip({
 
   return (
     <div className="rounded-xl border border-[#EFE5D3] bg-[#FFFDF0] p-2.5 text-xs text-[#8C6D53] shadow-md">
-      <p className="font-medium">{formatTrendDate(point.date)}</p>
+      <p className="font-medium">{formatTrendDate(point.date, locale)}</p>
       <p className="mt-1 font-semibold tabular-nums text-[#5C4A32]">
-        支出：{formatMoney(Number(point.amount) || 0, currency)}
+        {expenseLabel(formatMoney(Number(point.amount) || 0, currency))}
       </p>
     </div>
   );
@@ -162,6 +166,7 @@ export function TrendBarChart({
   data: { date: string; amount: number; label: string }[];
   currency?: CurrencyCode;
 }) {
+  const { locale, t } = useI18n();
   return (
     <div className="h-56 w-full">
       <ResponsiveContainer height="100%" width="100%">
@@ -179,7 +184,13 @@ export function TrendBarChart({
             tickLine={false}
           />
           <Tooltip
-            content={<TrendTooltip currency={currency} />}
+            content={
+              <TrendTooltip
+                currency={currency}
+                expenseLabel={(amount) => t("charts.tooltipExpense", { amount })}
+                locale={locale}
+              />
+            }
             cursor={{ fill: "rgba(248, 160, 85, 0.08)" }}
           />
           <Bar

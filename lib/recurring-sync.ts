@@ -18,6 +18,7 @@ import {
 import { queryTransactions } from "@/lib/transactions-query";
 import type { Transaction, TransactionDraft } from "@/lib/types";
 import { isActiveTransaction } from "@/lib/utils";
+import { createT, readStoredLocale } from "@/lib/i18n";
 
 const JS_DAY_TO_CODE: WeekdayCode[] = [
   "SUN",
@@ -493,10 +494,14 @@ export async function syncDueRecurringItems(
 
 /** 单笔 / 多笔合并 toast 文案 */
 export function formatAutoSyncToast(created: AutoSyncCreated[]) {
+  const t = createT(readStoredLocale());
   if (created.length === 0) return null;
   if (created.length === 1) {
     const row = created[0];
-    return `已为你自动记入本月${row.name} ${formatMoney(row.amount, row.currency)}~`;
+    return t("toast.autoLoggedOne", {
+      name: row.name,
+      amount: formatMoney(row.amount, row.currency),
+    });
   }
-  return `已为你自动记入 ${created.length} 笔到期固定收支~`;
+  return t("toast.autoLoggedMany", { count: created.length });
 }

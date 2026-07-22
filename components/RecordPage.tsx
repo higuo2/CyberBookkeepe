@@ -2,7 +2,19 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Mic, SendHorizontal, Star } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import {
+  Bus,
+  ChartColumn,
+  CheckCircle2,
+  Coffee,
+  Mic,
+  Pencil,
+  RefreshCw,
+  SendHorizontal,
+  Star,
+  Utensils,
+} from "lucide-react";
 import { toast } from "sonner";
 import { CatAvatar } from "@/components/CatAvatar";
 import { CategoryIcon } from "@/components/CategoryIcon";
@@ -41,6 +53,7 @@ import {
   type WeekdayCode,
 } from "@/lib/planner";
 import {
+  categoryLabel,
   formatMoney,
   localDateString,
   prepareDraft,
@@ -54,41 +67,51 @@ import type {
   TransactionDraft,
 } from "@/lib/types";
 import { chatMsgMarker, cleanNote } from "@/lib/utils";
+import { useI18n } from "@/components/LocaleProvider";
+import type { MessageKey, TranslateFn } from "@/lib/i18n";
 
 type ChatMessage = UiChatMessage;
 
 const QUICK_CHIPS: {
-  label: string;
+  labelKey: MessageKey;
   mode: "fill" | "nav";
-  value: string;
+  valueKey?: MessageKey;
+  value?: string;
+  Icon: LucideIcon;
 }[] = [
-  { label: "☕ 咖啡 HK$28", mode: "fill", value: "咖啡 28" },
-  { label: "🍱 快捷午餐 HK$45", mode: "fill", value: "快捷午餐 45" },
+  { labelKey: "record.chip.coffee", mode: "fill", valueKey: "record.chipValue.coffee", Icon: Coffee },
   {
-    label: "🚌 工作日交通",
+    labelKey: "record.chip.lunch",
     mode: "fill",
-    value: "工作日每天交通费 10.2 元",
+    valueKey: "record.chipValue.lunch",
+    Icon: Utensils,
   },
-  { label: "📊 查看本月支出", mode: "nav", value: "/charts" },
+  {
+    labelKey: "record.chip.commute",
+    mode: "fill",
+    valueKey: "record.chipValue.commute",
+    Icon: Bus,
+  },
+  { labelKey: "record.chip.viewMonth", mode: "nav", value: "/charts", Icon: ChartColumn },
 ];
 
-function greetingByHour(hour: number) {
-  if (hour < 11) return "早上好";
-  if (hour < 14) return "中午好";
-  if (hour < 18) return "下午好";
-  return "晚上好";
+function greetingByHour(hour: number, t: TranslateFn) {
+  if (hour < 11) return t("record.greeting.morning");
+  if (hour < 14) return t("record.greeting.noon");
+  if (hour < 18) return t("record.greeting.afternoon");
+  return t("record.greeting.evening");
 }
 
-function formatClock(date = new Date()) {
-  return date.toLocaleTimeString("zh-HK", {
+function formatClock(locale: string, date = new Date()) {
+  return date.toLocaleTimeString(locale, {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
   });
 }
 
-function formatHeaderDate(date = new Date()) {
-  return date.toLocaleDateString("zh-CN", {
+function formatHeaderDate(locale: string, date = new Date()) {
+  return date.toLocaleDateString(locale, {
     month: "long",
     day: "numeric",
     weekday: "short",
@@ -116,11 +139,11 @@ function toDbRow(
   return { ...prepared, note };
 }
 
-function createWelcomeMessage(): ChatMessage {
+function createWelcomeMessage(t: TranslateFn): ChatMessage {
   return {
     id: "welcome",
     kind: "bot-text",
-    text: `${greetingByHour(new Date().getHours())}，我是你的钱包小猫。今天想记什么账？解析后请点「确认存入」哦～`,
+    text: t("record.welcome", { greeting: greetingByHour(new Date().getHours(), t) }),
   };
 }
 
@@ -187,18 +210,19 @@ function recurringFormFromAi(data: ParsedRecurringData): RecurringFormState {
     endDate: data.end_date ?? "",
     remindDays: "3",
     autoWrite: data.auto_record !== false,
-    emoji: data.direction === "income" ? "💵" : "🚌",
+    emoji: data.direction === "income" ? "banknote" : "bus",
   };
 }
 
-function periodLabel(item: ParsedRecurringData) {
-  if (item.period_type === "daily") return "每天";
-  if (item.period_type === "weekly") return "按星期";
-  return `每月${item.day_of_month ?? ""}日`;
+function periodLabel(item: ParsedRecurringData, t: TranslateFn) {
+  if (item.period_type === "daily") return t("record.period.daily");
+  if (item.period_type === "weekly") return t("record.period.weekly");
+  return t("record.period.monthly", { day: item.day_of_month ?? "" });
 }
 
 export function RecordPage() {
   const router = useRouter();
+  const { locale, t } = useI18n();
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [historyReady, setHistoryReady] = useState(false);
@@ -256,16 +280,16 @@ export function RecordPage() {
     const timer = window.setTimeout(async () => {
       try {
         const history = await fetchChatHistory();
-        setMessages(history.length > 0 ? history : [createWelcomeMessage()]);
+        setMessages(history.length > 0 ? history : [createWelcomeMessage(t)]);
       } catch {
-        setMessages([createWelcomeMessage()]);
-        toast.message("对话记录暂未同步，可先继续记账");
+        setMessages([createWelcomeMessage(t)]);
+        toast.message(t("toast.chatNotSynced"));
       } finally {
         setHistoryReady(true);
       }
     }, 0);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     feedRef.current?.scrollTo({
@@ -274,13 +298,13 @@ export function RecordPage() {
     });
   }, [messages, busy]);
 
-  const headerDate = useMemo(() => formatHeaderDate(), []);
+  const headerDate = useMemo(() => formatHeaderDate(locale), [locale]);
 
   async function sendText(raw: string) {
     const text = raw.trim();
     if (!text || busy) return;
     if (!navigator.onLine) {
-      toast.error("当前无网络，请联网后再试");
+      toast.error(t("record.offlineParse"));
       return;
     }
 
@@ -304,6 +328,7 @@ export function RecordPage() {
           text,
           today: localDateString(),
           defaultCurrency: readDefaultCurrency(),
+          locale,
           history: toParseHistory([...prior, userSaved]),
         }),
       });
@@ -311,7 +336,7 @@ export function RecordPage() {
 
       if (!response.ok || !payload.ok) {
         throw new Error(
-          payload.ok ? "小猫没听懂，请再试一次" : payload.message,
+          payload.ok ? t("toast.parseFail") : payload.message,
         );
       }
 
@@ -326,7 +351,7 @@ export function RecordPage() {
         return;
       }
 
-      const recordedAt = formatClock();
+      const recordedAt = formatClock(locale);
       const records: PendingRecord[] = payload.data.map((item) => ({
         ...item,
         recordedAt,
@@ -374,7 +399,7 @@ export function RecordPage() {
 
   async function confirmTransaction(messageId: string, recordIndex: number) {
     if (!navigator.onLine) {
-      toast.error("当前无网络，无法存入");
+      toast.error(t("toast.saveOffline"));
       return;
     }
     const msg = messages.find((m) => m.id === messageId);
@@ -401,7 +426,7 @@ export function RecordPage() {
               ...row,
               id: txId,
               status: "confirmed" as const,
-              recordedAt: formatClock(),
+              recordedAt: formatClock(locale),
             }
           : r,
       );
@@ -418,10 +443,10 @@ export function RecordPage() {
       if (row.type === "EXPENSE" && !existing) {
         setTodaySpend((prev) => prev + Number(row.amount));
       }
-      toast.success("记录成功喵~");
+      toast.success(t("toast.saveSuccess"));
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "存入失败，请稍后重试",
+        error instanceof Error ? error.message : t("toast.saveFail"),
       );
     } finally {
       setActionBusy(false);
@@ -451,10 +476,10 @@ export function RecordPage() {
             : m,
         ),
       );
-      toast.success("记录成功喵~");
+      toast.success(t("toast.saveSuccess"));
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "存入规划失败，请稍后重试",
+        error instanceof Error ? error.message : t("toast.savePlannerFail"),
       );
     } finally {
       setActionBusy(false);
@@ -491,7 +516,7 @@ export function RecordPage() {
   async function saveCustomTransaction() {
     if (!txEditTarget) return;
     if (!navigator.onLine) {
-      toast.error("当前无网络，无法存入");
+      toast.error(t("toast.saveOffline"));
       return;
     }
     setActionBusy(true);
@@ -518,7 +543,7 @@ export function RecordPage() {
                     comment: r.comment,
                     id: txId,
                     status: "confirmed" as const,
-                    recordedAt: formatClock(),
+                    recordedAt: formatClock(locale),
                   }
                 : r,
             )
@@ -539,10 +564,10 @@ export function RecordPage() {
       }
       setTxDialogOpen(false);
       setTxEditTarget(null);
-      toast.success("记录成功喵~");
+      toast.success(t("toast.saveSuccess"));
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "存入失败，请稍后重试",
+        error instanceof Error ? error.message : t("toast.saveFail"),
       );
     } finally {
       setActionBusy(false);
@@ -554,18 +579,18 @@ export function RecordPage() {
     if (!recurringEditId) return;
     const amount = Number(recurringForm.amount);
     if (!recurringForm.name.trim()) {
-      toast.error("请填写名称");
+      toast.error(t("toast.needName"));
       return;
     }
     if (!Number.isFinite(amount) || amount <= 0) {
-      toast.error("请输入有效金额");
+      toast.error(t("toast.needAmount"));
       return;
     }
     if (
       recurringForm.kind === "by_days" &&
       recurringForm.byDays.length === 0
     ) {
-      toast.error("请至少选择一个星期");
+      toast.error(t("toast.needWeekday"));
       return;
     }
 
@@ -649,7 +674,7 @@ export function RecordPage() {
         title: saved.name,
         amount: saved.amount,
         direction: saved.direction,
-        category: saved.category ?? "其它",
+        category: saved.category ?? "其它支出",
         currency: normalizeCurrency(saved.currency ?? readDefaultCurrency()),
         period_type:
           saved.recurrence.kind === "monthly" ? "monthly" : "weekly",
@@ -680,7 +705,7 @@ export function RecordPage() {
         updatedItem,
         prevMsg && prevMsg.kind === "bot-recurring"
           ? prevMsg.replyText
-          : "已更新周期规则",
+          : t("record.updatedRule"),
         "confirmed",
       );
 
@@ -697,10 +722,10 @@ export function RecordPage() {
       );
       setRecurringOpen(false);
       setRecurringEditId(null);
-      toast.success("记录成功喵~");
+      toast.success(t("toast.saveSuccess"));
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "存入规划失败，请稍后重试",
+        error instanceof Error ? error.message : t("toast.savePlannerFail"),
       );
     } finally {
       setActionBusy(false);
@@ -709,10 +734,10 @@ export function RecordPage() {
 
   function handleChip(chip: (typeof QUICK_CHIPS)[number]) {
     if (chip.mode === "nav") {
-      router.push(chip.value);
+      router.push(chip.value ?? "/");
       return;
     }
-    setInput(chip.value);
+    setInput(chip.valueKey ? t(chip.valueKey) : (chip.value ?? ""));
     inputRef.current?.focus();
   }
 
@@ -723,7 +748,7 @@ export function RecordPage() {
           <div>
             <p className="text-sm font-medium text-[#8A7A5C]">{headerDate}</p>
             <p className="mt-0.5 text-base font-semibold text-[#5C4A32]">
-              今日支出{" "}
+              {t("record.todaySpend")}{" "}
               <span className="text-[#E07A3D]">
                 {formatMoney(todaySpend, readDefaultCurrency())}
               </span>
@@ -740,7 +765,7 @@ export function RecordPage() {
             <div className="flex items-end gap-2 pt-4">
               <CatAvatar size={36} thinking />
               <div className="rounded-[1.5rem] rounded-bl-md border border-[#F0E6D6] bg-[#FFFDF7] px-4 py-3 text-sm text-[#9A7B55] shadow-sm">
-                正在加载对话记录…
+                {t("record.loadingHistory")}
               </div>
             </div>
           ) : null}
@@ -775,7 +800,8 @@ export function RecordPage() {
 
             if (message.kind === "bot-recurring") {
               const { item, status } = message;
-              const dirLabel = item.direction === "income" ? "收入" : "支出";
+              const dirLabel =
+                item.direction === "income" ? t("common.income") : t("common.expense");
               return (
                 <div className="flex items-end gap-2" key={message.id}>
                   <CatAvatar size={36} />
@@ -785,8 +811,9 @@ export function RecordPage() {
                     </p>
                     <div className="mt-3 rounded-2xl bg-[#FFF6D9] p-3">
                       <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-[#F4E8D1] px-1.5 py-0.5 text-[10px] font-semibold text-[#B37233]">
-                          🔄 周期
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#F4E8D1] px-1.5 py-0.5 text-[10px] font-semibold text-[#B37233]">
+                          <RefreshCw className="size-2.5" strokeWidth={2.5} />
+                          {t("record.badge.period")}
                         </span>
                         <p className="truncate text-sm font-extrabold text-[#4A3E3D]">
                           {item.title}
@@ -807,8 +834,8 @@ export function RecordPage() {
                         · {dirLabel}
                       </p>
                       <p className="mt-1 text-xs text-[#A08875]">
-                        {periodLabel(item)}
-                        {item.end_date ? ` · 至 ${item.end_date}` : ""}
+                        {periodLabel(item, t)}
+                        {item.end_date ? t("record.untilDate", { date: item.end_date }) : ""}
                       </p>
                     </div>
 
@@ -820,7 +847,10 @@ export function RecordPage() {
                           onClick={() => openCustomRecurring(message.id)}
                           type="button"
                         >
-                          ✏️ 自定义
+                          <span className="inline-flex items-center justify-center gap-1">
+                            <Pencil className="size-3.5" strokeWidth={2.25} />
+                            {t("record.custom")}
+                          </span>
                         </button>
                         <button
                           className="h-10 flex-1 rounded-xl bg-[#EE7828] text-sm font-bold text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
@@ -828,12 +858,13 @@ export function RecordPage() {
                           onClick={() => void confirmRecurring(message.id)}
                           type="button"
                         >
-                          ✓ {actionBusy ? "处理中…" : "确认存入"}
+                          ✓ {actionBusy ? t("record.processing") : t("record.confirmSave")}
                         </button>
                       </div>
                     ) : status === "confirmed" ? (
-                      <p className="mt-3 text-xs font-semibold text-[#2A9D8F]">
-                        🟢 已存入规划
+                      <p className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#2A9D8F]">
+                        <CheckCircle2 className="size-3.5" strokeWidth={2.5} />
+                        {t("record.savedToPlanner")}
                       </p>
                     ) : null}
                   </div>
@@ -853,7 +884,7 @@ export function RecordPage() {
                 ) : null}
                 {message.records.map((record, index) => {
                   const typeLabel =
-                    record.type === "EXPENSE" ? "支出" : "收入";
+                    record.type === "EXPENSE" ? t("common.expense") : t("common.income");
                   return (
                     <div
                       className="flex items-end gap-2"
@@ -863,12 +894,23 @@ export function RecordPage() {
                       <div className="max-w-[88%] rounded-3xl border border-[#F0E6D6] bg-[#FFFDF7] p-3.5 shadow-sm">
                         <p className="text-[15px] leading-6 text-[#5C4A32]">
                           {record.status === "pending"
-                            ? `识别到一笔${record.category}${typeLabel}：${record.amount} 元`
-                            : `已记录一笔${record.category}${typeLabel}：${record.amount} 元${
-                                record.recordedAt
-                                  ? `，${record.recordedAt}`
-                                  : ""
-                              }`}
+                            ? t("record.detected", {
+                                category: categoryLabel(record.category, t),
+                                type: typeLabel,
+                                amount: formatMoney(
+                                  record.amount,
+                                  record.currency ?? readDefaultCurrency(),
+                                ),
+                              })
+                            : t("record.recorded", {
+                                category: categoryLabel(record.category, t),
+                                type: typeLabel,
+                                amount: formatMoney(
+                                  record.amount,
+                                  record.currency ?? readDefaultCurrency(),
+                                ),
+                                time: record.recordedAt ? `, ${record.recordedAt}` : "",
+                              })}
                         </p>
                         <p className="mt-2 text-sm leading-5 text-[#9A7B55]">
                           {record.comment}
@@ -877,7 +919,8 @@ export function RecordPage() {
                         <div className="mt-3 rounded-2xl bg-[#FFF6D9] p-3">
                           <div className="flex items-center gap-3">
                             <div className="grid size-11 shrink-0 place-items-center rounded-full bg-[#F8C96A] text-[#8A5A12] shadow-sm">
-                              {record.category === "其它" ? (
+                              {record.category === "其它支出" ||
+                              record.category === "其它" ? (
                                 <Star className="size-5 fill-current" />
                               ) : (
                                 <CategoryIcon
@@ -888,9 +931,7 @@ export function RecordPage() {
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="font-semibold text-[#5C4A32]">
-                                {record.category === "居住"
-                                  ? "住房"
-                                  : record.category}
+                                {categoryLabel(record.category, t)}
                               </p>
                               <p className="truncate text-sm text-[#A08B68]">
                                 {cleanNote(record.note) || record.category}
@@ -922,7 +963,10 @@ export function RecordPage() {
                               }
                               type="button"
                             >
-                              ✏️ 自定义
+                              <span className="inline-flex items-center justify-center gap-1">
+                                <Pencil className="size-3.5" strokeWidth={2.25} />
+                                {t("record.custom")}
+                              </span>
                             </button>
                             <button
                               className="h-10 flex-1 rounded-xl bg-[#EE7828] text-sm font-bold text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
@@ -932,12 +976,16 @@ export function RecordPage() {
                               }
                               type="button"
                             >
-                              ✓ {actionBusy ? "处理中…" : "确认存入"}
+                              ✓ {actionBusy ? t("record.processing") : t("record.confirmSave")}
                             </button>
                           </div>
                         ) : record.status === "confirmed" ? (
-                          <p className="mt-3 text-xs font-semibold text-[#2A9D8F]">
-                            🟢 已存入账单
+                          <p className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#2A9D8F]">
+                            <CheckCircle2
+                              className="size-3.5"
+                              strokeWidth={2.5}
+                            />
+                            {t("record.savedToLedger")}
                           </p>
                         ) : null}
                       </div>
@@ -952,7 +1000,7 @@ export function RecordPage() {
             <div className="flex items-end gap-2">
               <CatAvatar size={36} thinking />
               <div className="rounded-[1.5rem] rounded-bl-md border border-[#F0E6D6] bg-[#FFFDF7] px-4 py-3 text-sm text-[#9A7B55] shadow-sm">
-                小猫正在思考中…
+                {t("record.thinking")}
               </div>
             </div>
           )}
@@ -960,16 +1008,20 @@ export function RecordPage() {
 
         <div className="z-30 shrink-0 border-t border-[#EFE5D3]/80 bg-[#FAF6EC] px-0 pb-[max(8px,env(safe-area-inset-bottom))] pt-2">
           <div className="mb-2 flex gap-2 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {QUICK_CHIPS.map((chip) => (
-              <button
-                className="shrink-0 rounded-full border border-[#EFE5D3] bg-white px-3.5 py-1.5 text-sm font-medium text-[#6B5A40] shadow-sm transition-all active:scale-95"
-                key={chip.label}
-                onClick={() => handleChip(chip)}
-                type="button"
-              >
-                {chip.label}
-              </button>
-            ))}
+            {QUICK_CHIPS.map((chip) => {
+              const Icon = chip.Icon;
+              return (
+                <button
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#EFE5D3] bg-white px-3.5 py-1.5 text-sm font-medium text-[#6B5A40] shadow-sm transition-all active:scale-95"
+                  key={chip.labelKey}
+                  onClick={() => handleChip(chip)}
+                  type="button"
+                >
+                  <Icon className="size-3.5 text-[#B37233]" strokeWidth={2.25} />
+                  {t(chip.labelKey)}
+                </button>
+              );
+            })}
           </div>
 
           <form
@@ -977,10 +1029,10 @@ export function RecordPage() {
             onSubmit={onSubmit}
           >
             <button
-              aria-label="语音输入"
+              aria-label={t("record.aria.voice")}
               className="grid size-10 shrink-0 place-items-center rounded-full bg-[#FFF3E0] text-[#B37233] transition-all active:scale-95"
               onClick={() =>
-                toast.message("语音记账即将开放，先打字跟小猫说吧")
+                toast.message(t("toast.voiceSoon"))
               }
               type="button"
             >
@@ -990,12 +1042,12 @@ export function RecordPage() {
               className="h-10 min-w-0 flex-1 bg-transparent text-[15px] text-[#5C4A32] outline-none placeholder:text-[#C0B49A]"
               disabled={busy || !historyReady}
               onChange={(event) => setInput(event.target.value)}
-              placeholder="像聊天一样记一笔..."
+              placeholder={t("record.inputPlaceholder")}
               ref={inputRef}
               value={input}
             />
             <button
-              aria-label="发送"
+              aria-label={t("record.aria.send")}
               className="grid size-10 shrink-0 place-items-center rounded-full bg-[#EE7828] text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
               disabled={busy || !historyReady || !input.trim()}
               type="submit"
@@ -1016,8 +1068,8 @@ export function RecordPage() {
         }}
         onSubmit={saveCustomTransaction}
         open={txDialogOpen}
-        submitLabel="确认存入"
-        title="自定义账单"
+        submitLabel={t("record.confirmSave")}
+        title={t("record.customDialogTitle")}
         value={txDraft}
       />
 

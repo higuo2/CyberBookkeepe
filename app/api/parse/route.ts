@@ -17,6 +17,12 @@ import type {
   ParsedRecurringData,
   ParsedTransaction,
 } from "@/lib/types";
+import {
+  createT,
+  localePromptLabel,
+  normalizeLocale,
+  type Locale,
+} from "@/lib/i18n";
 
 export const runtime = "nodejs";
 
@@ -61,12 +67,13 @@ function normalizeAmount(value: unknown) {
 function normalizeCategory(type: "EXPENSE" | "INCOME", raw: unknown) {
   const list = type === "EXPENSE" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
   if (typeof raw === "string" && raw.trim()) {
+    const trimmed = raw.trim();
     const hit = list.find(
-      (item) => raw.includes(item) || item.includes(raw.trim()),
+      (item) => trimmed.includes(item) || item.includes(trimmed),
     );
     if (hit) return hit;
     if (raw.includes("住房") || raw.includes("居住")) {
-      return type === "EXPENSE" ? "居住" : list[0];
+      return type === "EXPENSE" ? "住房" : list[0];
     }
     if (raw.includes("饮食") || raw.includes("饭") || raw.includes("餐")) {
       return type === "EXPENSE" ? "餐饮" : list[0];
@@ -74,11 +81,23 @@ function normalizeCategory(type: "EXPENSE" | "INCOME", raw: unknown) {
     if (raw.includes("订阅")) {
       return type === "EXPENSE" ? "娱乐" : list[0];
     }
+    if (raw.includes("宠物") || raw.includes("猫") || raw.includes("狗")) {
+      return type === "EXPENSE" ? "宠物" : list[0];
+    }
+    if (raw.includes("学习") || raw.includes("课程") || raw.includes("学费")) {
+      return type === "EXPENSE" ? "学习" : list[0];
+    }
+    if (raw.includes("丽人") || raw.includes("美甲") || raw.includes("美容")) {
+      return type === "EXPENSE" ? "丽人" : list[0];
+    }
+    if (raw.includes("奖金") || raw.includes("红包")) {
+      return type === "INCOME" ? "奖金" : list[0];
+    }
     if (raw.includes("其他") || raw.includes("其它")) {
-      return type === "EXPENSE" ? "其它" : "其它收入";
+      return type === "EXPENSE" ? "其它支出" : "其它收入";
     }
   }
-  return type === "EXPENSE" ? "其它" : "其它收入";
+  return type === "EXPENSE" ? "其它支出" : "其它收入";
 }
 
 function parseCurrencyField(
@@ -93,16 +112,38 @@ function parseCurrencyField(
   return fallback;
 }
 
-function defaultComment(type: "EXPENSE" | "INCOME", category: string) {
+function defaultComment(
+  type: "EXPENSE" | "INCOME",
+  category: string,
+  locale: Locale,
+) {
+  if (locale === "en") {
+    return type === "INCOME"
+      ? "Wallet Cat: Income received—another small step toward your goals."
+      : `Wallet Cat: Your ${category} expense is safely recorded.`;
+  }
+  if (locale === "zh-TW") {
+    return type === "INCOME"
+      ? "錢包小貓點評：叮咚～收入到帳啦，今天也在慢慢變富有。"
+      : `錢包小貓點評：已悄悄收好這筆${category}小帳，今天也有在認真生活。`;
+  }
   if (type === "INCOME") {
     return "钱包小猫点评：叮咚～收入到账啦，今天也在慢慢变富有。";
   }
   return `钱包小猫点评：已悄悄收好这笔${category}小账，今天也有在认真生活。`;
 }
 
-function defaultRecurringReply(data: ParsedRecurringData) {
-  const dir = data.direction === "income" ? "收入" : "支出";
-  return `钱包小猫已帮你设好「${data.title}」这笔固定${dir}啦，可在规划页查看～`;
+function defaultRecurringReply(
+  data: ParsedRecurringData,
+  locale: Locale,
+) {
+  if (locale === "en") {
+    return `Your recurring item “${data.title}” is set. You can review it in Planner.`;
+  }
+  if (locale === "zh-TW") {
+    return `已幫你設定「${data.title}」這筆固定收支，可在規劃頁查看～`;
+  }
+  return `已帮你设置「${data.title}」这笔固定收支，可在规划页查看～`;
 }
 
 function normalizeTransaction(
@@ -110,6 +151,7 @@ function normalizeTransaction(
   fallbackNote: string,
   today: string,
   defaultCurrency: CurrencyCode,
+  locale: Locale,
 ): ParsedTransaction | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const data = value as Record<string, unknown>;
@@ -127,7 +169,7 @@ function normalizeTransaction(
   const comment =
     typeof data.comment === "string" && data.comment.trim()
       ? data.comment.trim()
-      : defaultComment(type, category);
+      : defaultComment(type, category, locale);
   const currency = parseCurrencyField(data.currency, defaultCurrency);
   if (ZERO_DECIMAL_CURRENCIES.has(currency)) {
     amount = Math.round(amount);
@@ -229,10 +271,14 @@ function buildSystemPrompt(
   expenseCats: string,
   incomeCats: string,
   defaultCurrency: CurrencyCode,
+  locale: Locale,
 ) {
   return `Today is ${today}.
 
 你是「钱包小猫」——一只温柔、治愈、爱陪用户记账的小猫助手。
+
+【输出语言】reply_text、comment 以及所有面向用户的自然语言必须使用${localePromptLabel(locale)}。
+category 字段是数据库规范值，无论输出语言为何，都必须严格保留为下列简体中文分类名，禁止翻译。
 
 【人设】语气可爱但不油腻；会给用户暖心点评。解析要准确，点评要有情绪价值。
 
@@ -338,9 +384,13 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return fail("EMPTY_INPUT", "请求内容不能为空", 400);
+    return fail("EMPTY_INPUT", createT("zh-CN")("api.parse.emptyBody"), 400);
   }
 
+  const payload =
+    body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+  const locale = normalizeLocale(payload.locale);
+  const t = createT(locale);
   const text =
     body && typeof body === "object" && "text" in body
       ? (body as { text?: unknown }).text
@@ -381,15 +431,15 @@ export async function POST(request: Request) {
   }
 
   if (typeof text !== "string" || !text.trim()) {
-    return fail("EMPTY_INPUT", "请先跟小猫说一笔账吧", 400);
+    return fail("EMPTY_INPUT", t("api.parse.emptyText"), 400);
   }
   if (text.length > 800) {
-    return fail("VALIDATION_FAILED", "这段话太长啦，小猫记不住哦", 400);
+    return fail("VALIDATION_FAILED", t("api.parse.tooLong"), 400);
   }
 
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
-    return fail("SERVER_MISCONFIGURED", "AI 服务尚未配置", 500);
+    return fail("SERVER_MISCONFIGURED", t("api.parse.noAi"), 500);
   }
 
   const today =
@@ -419,6 +469,7 @@ export async function POST(request: Request) {
             expenseCats,
             incomeCats,
             defaultCurrency,
+            locale,
           ),
         },
         ...history.map((h) => ({
@@ -430,22 +481,22 @@ export async function POST(request: Request) {
     });
     content = completion.choices[0]?.message.content ?? null;
   } catch {
-    return fail("UPSTREAM_ERROR", "小猫打了个盹，请稍后再试", 502);
+    return fail("UPSTREAM_ERROR", t("api.parse.upstream"), 502);
   }
 
   if (!content) {
-    return fail("INVALID_JSON", "小猫没有听清，请再说一次", 502);
+    return fail("INVALID_JSON", t("api.parse.invalidJson"), 502);
   }
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(stripMarkdownFences(content));
   } catch {
-    return fail("INVALID_JSON", "小猫解析失败，请换种说法", 502);
+    return fail("INVALID_JSON", t("api.parse.parseFail"), 502);
   }
 
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    return fail("INVALID_JSON", "小猫解析失败，请换种说法", 502);
+    return fail("INVALID_JSON", t("api.parse.parseFail"), 502);
   }
 
   const root = parsed as Record<string, unknown>;
@@ -466,7 +517,7 @@ export async function POST(request: Request) {
     if (!recurring) {
       return fail(
         "UNPARSEABLE",
-        "没有识别出完整的周期规则哦，可以说「每月10号房租8000」",
+        t("api.parse.incompleteRecurring"),
         422,
       );
     }
@@ -474,7 +525,7 @@ export async function POST(request: Request) {
       ok: true,
       is_recurring: true,
       data: recurring,
-      reply_text: reply_text || defaultRecurringReply(recurring),
+      reply_text: reply_text || defaultRecurringReply(recurring, locale),
     });
   }
 
@@ -486,12 +537,12 @@ export async function POST(request: Request) {
 
   const transactions = rawItems
     .map((item) =>
-      normalizeTransaction(item, text.trim(), today, defaultCurrency),
+      normalizeTransaction(item, text.trim(), today, defaultCurrency, locale),
     )
     .filter((item): item is ParsedTransaction => item !== null);
 
   if (transactions.length === 0) {
-    return fail("UNPARSEABLE", "没有发现金额哦，例如可以说「午饭 68」", 422);
+    return fail("UNPARSEABLE", t("api.parse.noAmount"), 422);
   }
 
   return NextResponse.json<ParseApiResponse>({
@@ -501,7 +552,7 @@ export async function POST(request: Request) {
     reply_text:
       reply_text ||
       (transactions.length === 1
-        ? "好的，已经帮你记下啦～"
-        : `好的，一共 ${transactions.length} 笔都记好啦～`),
+        ? t("api.parse.replyOk")
+        : t("api.parse.replyOkMulti", { count: transactions.length })),
   });
 }

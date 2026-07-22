@@ -1,7 +1,15 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { CalendarDays, ChevronDown, Zap } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  CalendarDays,
+  ChevronDown,
+  Lightbulb,
+  Zap,
+} from "lucide-react";
+import { AppIcon, defaultRecurringIconId } from "@/components/AppIcons";
 import { BottomSheet } from "@/components/BottomSheet";
 import {
   RECURRING_EMOJIS,
@@ -14,6 +22,7 @@ import {
   type RecurringDirection,
   type WeekdayCode,
 } from "@/lib/planner";
+import { useT } from "@/components/LocaleProvider";
 
 export type RecurringFormState = {
   name: string;
@@ -42,7 +51,7 @@ export function emptyRecurringForm(): RecurringFormState {
     endDate: "",
     remindDays: "3",
     autoWrite: true,
-    emoji: "☁️",
+    emoji: "cloud",
   };
 }
 
@@ -93,6 +102,7 @@ export function RecurringEditorSheet({
   onEarlyWrite?: () => void | Promise<void>;
   earlyWriting?: boolean;
 }) {
+  const t = useT();
   const [emojiOpen, setEmojiOpen] = useState(false);
   const nextDateHint = useMemo(() => computeFormNextDate(form), [form]);
 
@@ -115,21 +125,29 @@ export function RecurringEditorSheet({
         onOpenChange(next);
       }}
       open={open}
-      title={isNew ? "新增周期收支" : "管理周期收支"}
+      title={isNew ? t("recurring.newTitle") : t("recurring.editTitle")}
     >
       <form className="space-y-4 pt-1" onSubmit={onSubmit}>
         {/* 收 / 支 Segmented Control */}
         <div className="grid grid-cols-2 gap-1.5 rounded-2xl bg-[#FFF6D9] p-1.5">
           {(
             [
-              { key: "expense" as const, label: "🔴 支出" },
-              { key: "income" as const, label: "🟢 收入" },
+              {
+                key: "expense" as const,
+                label: t("recurring.expense"),
+                Icon: ArrowUpRight,
+              },
+              {
+                key: "income" as const,
+                label: t("recurring.income"),
+                Icon: ArrowDownLeft,
+              },
             ] as const
-          ).map(({ key, label }) => {
+          ).map(({ key, label, Icon }) => {
             const active = form.direction === key;
             return (
               <button
-                className={`h-11 rounded-xl text-sm font-bold transition-all active:scale-95 ${
+                className={`flex h-11 items-center justify-center gap-1.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${
                   active
                     ? key === "expense"
                       ? "bg-white text-[#E07A3D] shadow-sm"
@@ -141,60 +159,68 @@ export function RecurringEditorSheet({
                   patch({
                     direction: key,
                     emoji:
-                      form.emoji === "☁️" || form.emoji === "💵"
-                        ? key === "income"
-                          ? "💵"
-                          : "☁️"
+                      form.emoji === "cloud" ||
+                      form.emoji === "banknote" ||
+                      form.emoji === "☁️" ||
+                      form.emoji === "💵"
+                        ? defaultRecurringIconId(key)
                         : form.emoji,
                   })
                 }
                 type="button"
               >
+                <Icon className="size-4" strokeWidth={2.25} />
                 {label}
               </button>
             );
           })}
         </div>
 
-        {/* 名称 + Emoji */}
+        {/* 名称 + Lucide 图标 */}
         <div>
-          <p className="text-xs font-medium text-[#A08875]">名称</p>
+          <p className="text-xs font-medium text-[#A08875]">{t("recurring.name")}</p>
           <div className="mt-2 flex items-center gap-2">
             <button
-              aria-label="选择图标"
-              className="grid size-12 shrink-0 place-items-center rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] text-xl shadow-sm transition-all active:scale-95"
+              aria-label={t("recurring.aria.pickIcon")}
+              className="grid size-12 shrink-0 place-items-center rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] text-[#6E6559] shadow-sm transition-all active:scale-95"
               onClick={() => setEmojiOpen((v) => !v)}
               type="button"
             >
-              {form.emoji || "☁️"}
+              <AppIcon
+                className="size-5"
+                id={form.emoji || defaultRecurringIconId(form.direction)}
+              />
             </button>
             <input
               className={textFieldClass}
               onChange={(event) => patch({ name: event.target.value })}
-              placeholder="例如 工作日交通费 / 每月工资"
+              placeholder={t("recurring.namePlaceholder")}
               value={form.name}
             />
           </div>
           {emojiOpen && (
             <div className="mt-2 rounded-2xl border border-[#EFE5D3] bg-white p-2.5 shadow-sm">
-              <div className="flex flex-wrap gap-1.5">
-                {RECURRING_EMOJIS.map((emoji) => (
-                  <button
-                    className={`grid size-10 place-items-center rounded-xl text-lg transition-all active:scale-95 ${
-                      form.emoji === emoji
-                        ? "bg-[#F8A055]/20 ring-2 ring-[#F8A055]"
-                        : "bg-[#FAF6EC]"
-                    }`}
-                    key={emoji}
-                    onClick={() => {
-                      patch({ emoji });
-                      setEmojiOpen(false);
-                    }}
-                    type="button"
-                  >
-                    {emoji}
-                  </button>
-                ))}
+              <div className="grid grid-cols-7 gap-1.5">
+                {RECURRING_EMOJIS.map((iconId) => {
+                  const active = form.emoji === iconId;
+                  return (
+                    <button
+                      className={`grid size-10 place-items-center rounded-xl transition-all active:scale-95 ${
+                        active
+                          ? "bg-[#F8A055]/20 text-[#8C6D53] ring-2 ring-[#F8A055]"
+                          : "bg-[#FAF6EC] text-[#9C9181]"
+                      }`}
+                      key={iconId}
+                      onClick={() => {
+                        patch({ emoji: iconId });
+                        setEmojiOpen(false);
+                      }}
+                      type="button"
+                    >
+                      <AppIcon className="size-4" id={iconId} />
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -202,7 +228,7 @@ export function RecurringEditorSheet({
 
         {/* 金额 */}
         <label className="block text-xs font-medium text-[#A08875]">
-          金额（HK$）
+          {t("recurring.amountHkd")}
           <input
             className={numberFieldClass}
             inputMode="decimal"
@@ -217,7 +243,7 @@ export function RecurringEditorSheet({
 
         {/* 周期类型 */}
         <label className="relative block text-xs font-medium text-[#A08875]">
-          周期类型
+          {t("recurring.periodType")}
           <select
             className={selectFieldClass}
             onChange={(event) =>
@@ -225,9 +251,9 @@ export function RecurringEditorSheet({
             }
             value={form.kind}
           >
-            <option value="monthly">每月</option>
-            <option value="yearly">每年</option>
-            <option value="by_days">按星期（如工作日）</option>
+            <option value="monthly">{t("recurring.kind.monthly")}</option>
+            <option value="yearly">{t("recurring.kind.yearly")}</option>
+            <option value="by_days">{t("recurring.kind.byDays")}</option>
           </select>
           <ChevronDown
             aria-hidden
@@ -237,9 +263,9 @@ export function RecurringEditorSheet({
 
         {form.kind === "by_days" ? (
           <div>
-            <p className="text-xs font-medium text-[#A08875]">重复星期</p>
+            <p className="text-xs font-medium text-[#A08875]">{t("recurring.weekdays")}</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {WEEKDAY_OPTIONS.map(({ code, label }) => {
+              {WEEKDAY_OPTIONS.map(({ code }) => {
                 const active = form.byDays.includes(code);
                 return (
                   <button
@@ -252,7 +278,7 @@ export function RecurringEditorSheet({
                     onClick={() => toggleWeekday(code)}
                     type="button"
                   >
-                    {label}
+                    {t(`recurring.weekday.${code.toLowerCase()}` as Parameters<typeof t>[0])}
                   </button>
                 );
               })}
@@ -262,16 +288,17 @@ export function RecurringEditorSheet({
               onClick={() => patch({ byDays: [...WORKDAYS] })}
               type="button"
             >
-              一键工作日
+              {t("recurring.oneClickWorkdays")}
             </button>
-            <p className="mt-2 text-xs leading-5 text-[#A08875]">
-              💡 下次扣款日期：{nextDateHint}
+            <p className="mt-2 flex items-start gap-1 text-xs leading-5 text-[#A08875]">
+              <Lightbulb className="mt-0.5 size-3 shrink-0" strokeWidth={2.25} />
+              {t("recurring.nextChargeDate", { date: nextDateHint })}
             </p>
           </div>
         ) : form.kind === "monthly" ? (
           <div>
             <label className="block text-xs font-medium text-[#A08875]">
-              每月扣款日（1–31 日）
+              {t("recurring.dayOfMonth")}
               <input
                 className={numberFieldClass}
                 max="31"
@@ -281,15 +308,16 @@ export function RecurringEditorSheet({
                 value={form.dayOfMonth}
               />
             </label>
-            <p className="mt-2 text-xs leading-5 text-[#A08875]">
-              💡 下次扣款日期：{nextDateHint}
+            <p className="mt-2 flex items-start gap-1 text-xs leading-5 text-[#A08875]">
+              <Lightbulb className="mt-0.5 size-3 shrink-0" strokeWidth={2.25} />
+              {t("recurring.nextChargeDate", { date: nextDateHint })}
             </p>
           </div>
         ) : (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <label className="block text-xs font-medium text-[#A08875]">
-                月份
+                {t("recurring.month")}
                 <select
                   className={selectFieldClass}
                   onChange={(event) =>
@@ -299,13 +327,13 @@ export function RecurringEditorSheet({
                 >
                   {Array.from({ length: 12 }, (_, i) => (
                     <option key={i + 1} value={String(i + 1)}>
-                      {i + 1} 月
+                      {t("recurring.monthN", { n: i + 1 })}
                     </option>
                   ))}
                 </select>
               </label>
               <label className="block text-xs font-medium text-[#A08875]">
-                几号（1–31）
+                {t("recurring.dayOfMonthYearly")}
                 <input
                   className={numberFieldClass}
                   max="31"
@@ -318,15 +346,16 @@ export function RecurringEditorSheet({
                 />
               </label>
             </div>
-            <p className="text-xs leading-5 text-[#A08875]">
-              💡 下次扣款日期：{nextDateHint}
+            <p className="flex items-start gap-1 text-xs leading-5 text-[#A08875]">
+              <Lightbulb className="mt-0.5 size-3 shrink-0" strokeWidth={2.25} />
+              {t("recurring.nextChargeDate", { date: nextDateHint })}
             </p>
           </div>
         )}
 
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-xs font-medium text-[#A08875]">
-            截止日期（可选）
+            {t("recurring.endDateOptional")}
             <div className="relative mt-2">
               <input
                 className={dateFieldClass}
@@ -354,7 +383,7 @@ export function RecurringEditorSheet({
             </div>
           </label>
           <label className="block text-xs font-medium text-[#A08875]">
-            提前提醒（天）
+            {t("recurring.remindDays")}
             <input
               className={numberFieldClass}
               min="0"
@@ -367,7 +396,7 @@ export function RecurringEditorSheet({
 
         <label className="flex items-center justify-between gap-3 rounded-2xl bg-[#FFF6D9] px-3.5 py-3.5">
           <span className="text-sm font-semibold text-[#4A3E3D]">
-            到期自动写入账单
+            {t("recurring.autoWrite")}
           </span>
           <input
             checked={form.autoWrite}
@@ -385,7 +414,7 @@ export function RecurringEditorSheet({
             type="button"
           >
             <Zap className="size-4 text-[#F8A055]" />
-            {earlyWriting ? "正在记账…" : "提前记一笔"}
+            {earlyWriting ? t("recurring.earlyWriting") : t("recurring.earlyWrite")}
           </button>
         )}
 
@@ -393,7 +422,7 @@ export function RecurringEditorSheet({
           className="w-full rounded-xl bg-[#EE7828] py-3.5 text-base font-bold text-white shadow-sm transition-all active:scale-[0.99] disabled:opacity-50"
           type="submit"
         >
-          保存设置
+          {t("recurring.saveSettings")}
         </button>
 
         {!isNew && onDelete && (
@@ -402,7 +431,7 @@ export function RecurringEditorSheet({
             onClick={onDelete}
             type="button"
           >
-            删除此周期项目
+            {t("recurring.deleteItem")}
           </button>
         )}
       </form>

@@ -1,6 +1,7 @@
 import { formatHKD, getMonthRange, localDateString } from "@/lib/transaction-utils";
 import type { CurrencyCode } from "@/lib/currency";
 import { DEFAULT_CURRENCY, normalizeCurrency } from "@/lib/currency";
+import type { Locale, TranslateFn } from "@/lib/i18n";
 
 export type PlannerAccount = {
   id: string;
@@ -118,45 +119,45 @@ const SUBS_KEY = "cyberbookkeeper_planner_subs";
 export const BUDGET_SPEND_MODE_KEY = "cyberbookkeeper_budget_spend_mode";
 
 export const ACCOUNT_EMOJIS = [
-  "💳",
-  "📱",
-  "🏦",
-  "💵",
-  "💰",
-  "🏧",
-  "🪙",
-  "💎",
+  "credit-card",
+  "smartphone",
+  "landmark",
+  "banknote",
+  "coins",
+  "package",
+  "gift",
+  "sparkles",
 ] as const;
 
 export const GOAL_EMOJIS = [
-  "📱",
-  "✈️",
-  "🎮",
-  "🏠",
-  "💍",
-  "🚗",
-  "💻",
-  "🎁",
-  "🐱",
-  "☕",
+  "smartphone",
+  "plane",
+  "gamepad",
+  "home",
+  "gem",
+  "bus",
+  "laptop",
+  "gift",
+  "cat",
+  "coffee",
 ] as const;
 
-/** 周期项分类图标 */
+/** 周期项分类图标（Lucide id；兼容旧 emoji） */
 export const RECURRING_EMOJIS = [
-  "☁️",
-  "🎬",
-  "🏠",
-  "🚌",
-  "💵",
-  "📱",
-  "☕",
-  "🎮",
-  "🛒",
-  "💊",
-  "🎵",
-  "📦",
-  "💳",
-  "🛠️",
+  "cloud",
+  "film",
+  "home",
+  "bus",
+  "banknote",
+  "smartphone",
+  "coffee",
+  "gamepad",
+  "cart",
+  "pill",
+  "music",
+  "package",
+  "credit-card",
+  "wrench",
 ] as const;
 
 export const WEEKDAY_OPTIONS: { code: WeekdayCode; label: string }[] = [
@@ -192,10 +193,10 @@ function addDays(date: Date, days: number) {
 }
 
 export const DEFAULT_ACCOUNTS: PlannerAccount[] = [
-  { id: "octopus", name: "八达通", emoji: "💳", balance: 286.5, note: "通勤卡" },
-  { id: "alipay", name: "支付宝/微信", emoji: "📱", balance: 1280, note: "日常支付" },
-  { id: "bank", name: "银行卡", emoji: "🏦", balance: 24800, note: "主账户" },
-  { id: "cash", name: "现金", emoji: "💵", balance: 420, note: "随身现金" },
+  { id: "octopus", name: "八达通", emoji: "credit-card", balance: 286.5, note: "通勤卡" },
+  { id: "alipay", name: "支付宝/微信", emoji: "smartphone", balance: 1280, note: "日常支付" },
+  { id: "bank", name: "银行卡", emoji: "landmark", balance: 24800, note: "主账户" },
+  { id: "cash", name: "现金", emoji: "banknote", balance: 420, note: "随身现金" },
 ];
 
 export const DEFAULT_GOALS: WishlistGoal[] = [];
@@ -495,8 +496,8 @@ export function daysUntil(date: string) {
   return Math.ceil((target.getTime() - today.getTime()) / 86_400_000);
 }
 
-export function formatChargeDate(date: string) {
-  return new Intl.DateTimeFormat("zh-HK", {
+export function formatChargeDate(date: string, locale: string = "zh-HK") {
+  return new Intl.DateTimeFormat(locale, {
     month: "long",
     day: "numeric",
     weekday: "short",
@@ -508,35 +509,47 @@ export function formatEndMonth(date: string) {
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function weekdayLabel(codes: WeekdayCode[]) {
+function weekdayLabel(codes: WeekdayCode[], t?: TranslateFn) {
   if (
     codes.length === 5 &&
     WORKDAYS.every((d) => codes.includes(d)) &&
     !codes.includes("SAT") &&
     !codes.includes("SUN")
   ) {
-    return "工作日";
+    return t?.("planner.line.workdays") ?? "工作日";
   }
   return codes
-    .map((c) => WEEKDAY_OPTIONS.find((w) => w.code === c)?.label ?? c)
+    .map((c) =>
+      t
+        ? t(`recurring.weekday.${c.toLowerCase()}` as Parameters<TranslateFn>[0])
+        : (WEEKDAY_OPTIONS.find((w) => w.code === c)?.label ?? c),
+    )
     .join("");
 }
 
-export function formatRecurringLine(item: RecurringItem): {
+export function formatRecurringLine(
+  item: RecurringItem,
+  t?: TranslateFn,
+  locale: Locale | string = "zh-HK",
+): {
   amountLine: string;
   detailLine: string;
 } {
   const end = item.recurrence.end_date
-    ? `持续至 ${formatEndMonth(item.recurrence.end_date)}`
+    ? t
+      ? t("planner.line.until", { month: formatEndMonth(item.recurrence.end_date) })
+      : `持续至 ${formatEndMonth(item.recurrence.end_date)}`
     : null;
 
   if (item.recurrence.kind === "by_days") {
     const days = item.recurrence.by_days ?? [];
     const amountDisplay =
       item.direction === "income"
-        ? `+${formatHKD(item.amount)}/天`
-        : `${formatHKD(item.amount)}/天`;
-    const detail = [weekdayLabel(days), end].filter(Boolean).join(" · ");
+        ? t?.("planner.line.perDayIncome", { amount: formatHKD(item.amount) }) ??
+          `+${formatHKD(item.amount)}/天`
+        : t?.("planner.line.perDay", { amount: formatHKD(item.amount) }) ??
+          `${formatHKD(item.amount)}/天`;
+    const detail = [weekdayLabel(days, t), end].filter(Boolean).join(" · ");
     return { amountLine: amountDisplay, detailLine: detail };
   }
 
@@ -553,15 +566,28 @@ export function formatRecurringLine(item: RecurringItem): {
     if (item.direction === "income") {
       return {
         amountLine: amountDisplay,
-        detailLine: [day ? `每月${day}日` : "每月", end]
+        detailLine: [
+          day
+            ? (t?.("planner.line.monthlyDay", { day }) ?? `每月${day}日`)
+            : (t?.("planner.line.monthly") ?? "每月"),
+          end,
+        ]
           .filter(Boolean)
           .join(" · "),
       };
     }
     return {
-      amountLine: `${amountDisplay} / 月`,
+      amountLine:
+        t?.("planner.line.perMonth", { amount: amountDisplay }) ??
+        `${amountDisplay} / 月`,
       detailLine: [
-        day ? `每月${day}日` : item.nextDate ? `下次 ${formatChargeDate(item.nextDate)}` : "",
+        day
+          ? (t?.("planner.line.monthlyDay", { day }) ?? `每月${day}日`)
+          : item.nextDate
+            ? (t?.("planner.line.next", {
+                date: formatChargeDate(item.nextDate, locale),
+              }) ?? `下次 ${formatChargeDate(item.nextDate, locale)}`)
+            : "",
         end,
       ]
         .filter(Boolean)
@@ -570,9 +596,15 @@ export function formatRecurringLine(item: RecurringItem): {
   }
 
   return {
-    amountLine: `${amountDisplay} / 年`,
+    amountLine:
+      t?.("planner.line.perYear", { amount: amountDisplay }) ??
+      `${amountDisplay} / 年`,
     detailLine: [
-      item.nextDate ? `下次 ${formatChargeDate(item.nextDate)}` : "",
+      item.nextDate
+        ? (t?.("planner.line.next", {
+            date: formatChargeDate(item.nextDate, locale),
+          }) ?? `下次 ${formatChargeDate(item.nextDate, locale)}`)
+        : "",
       end,
     ]
       .filter(Boolean)
@@ -681,12 +713,15 @@ export function inferRecurringCategory(item: RecurringItem): string {
   if (item.category) return item.category;
   if (item.direction === "income") return "工资";
   const n = item.name;
-  if (/房租|租金|居住|住房/.test(n)) return "居住";
+  if (/房租|租金|居住|住房/.test(n)) return "住房";
   if (/交通|地铁|巴士|八达通|通勤/.test(n)) return "交通";
   if (/餐|吃|外卖/.test(n)) return "餐饮";
   if (/Netflix|Spotify|YouTube|订阅|iCloud|Disney/.test(n)) return "娱乐";
   if (/数码|手机|电脑/.test(n)) return "数码";
-  return "其它";
+  if (/宠物|猫|狗/.test(n)) return "宠物";
+  if (/学习|课程|学费/.test(n)) return "学习";
+  if (/丽人|美容|美甲/.test(n)) return "丽人";
+  return "其它支出";
 }
 
 export function createAccount(
@@ -695,7 +730,7 @@ export function createAccount(
   return {
     id: uid(),
     name: partial?.name?.trim() || "新账户",
-    emoji: partial?.emoji || "💳",
+    emoji: partial?.emoji || "credit-card",
     balance: Number(partial?.balance) || 0,
     note: partial?.note?.trim() || "",
   };
@@ -707,7 +742,7 @@ export function createGoal(
   return {
     id: uid(),
     title: partial?.title?.trim() || "新愿望",
-    emoji: partial?.emoji || "🎁",
+    emoji: partial?.emoji || "gift",
     target: Number(partial?.target) || 0,
     saved: Number(partial?.saved) || 0,
   };

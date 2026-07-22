@@ -1,13 +1,22 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  CheckCircle2,
+  Clock,
   PiggyBank,
   Plus,
   Save,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { AppIcon, defaultRecurringIconId } from "@/components/AppIcons";
 import { BottomSheet } from "@/components/BottomSheet";
 import { BudgetProgressCard } from "@/components/BudgetProgressCard";
 import {
@@ -48,6 +57,7 @@ import {
 } from "@/lib/recurring-sync";
 import { readBudgetFromStorage } from "@/lib/transaction-utils";
 import { filterActiveTransactions } from "@/lib/utils";
+import { useI18n } from "@/components/LocaleProvider";
 
 type SheetKind =
   | { type: "goal"; goalId: string | "new"; focusDeposit?: boolean }
@@ -57,36 +67,40 @@ type SheetKind =
 const fieldClass =
   "mt-2 h-12 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
-function EmojiPicker({
+function IconPicker({
   options,
   value,
   onChange,
 }: {
   options: readonly string[];
   value: string;
-  onChange: (emoji: string) => void;
+  onChange: (iconId: string) => void;
 }) {
   return (
-    <div className="mt-2 flex flex-wrap gap-2">
-      {options.map((emoji) => (
-        <button
-          className={`grid size-10 place-items-center rounded-xl text-lg transition-all active:scale-95 ${
-            value === emoji
-              ? "bg-[#F8A055]/20 ring-2 ring-[#F8A055]"
-              : "bg-[#FAF6EC]"
-          }`}
-          key={emoji}
-          onClick={() => onChange(emoji)}
-          type="button"
-        >
-          {emoji}
-        </button>
-      ))}
+    <div className="mt-2 grid grid-cols-5 gap-2">
+      {options.map((iconId) => {
+        const active = value === iconId;
+        return (
+          <button
+            className={`grid size-10 place-items-center rounded-xl transition-all active:scale-95 ${
+              active
+                ? "bg-[#F8A055]/20 text-[#8C6D53] ring-2 ring-[#F8A055]"
+                : "bg-[#FAF6EC] text-[#9C9181]"
+            }`}
+            key={iconId}
+            onClick={() => onChange(iconId)}
+            type="button"
+          >
+            <AppIcon className="size-4" id={iconId} />
+          </button>
+        );
+      })}
     </div>
   );
 }
 
 export function PlannerPage() {
+  const { locale, t } = useI18n();
   const [ready, setReady] = useState(false);
   const [goals, setGoals] = useState<WishlistGoal[]>([]);
   const [items, setItems] = useState<RecurringItem[]>([]);
@@ -99,7 +113,7 @@ export function PlannerPage() {
 
   const [goalForm, setGoalForm] = useState({
     title: "",
-    emoji: "🎁",
+    emoji: "gift",
     target: "",
     saved: "",
     deposit: "",
@@ -174,7 +188,7 @@ export function PlannerPage() {
     }
     setGoalForm({
       title: "",
-      emoji: "🎁",
+      emoji: "gift",
       target: "",
       saved: "0",
       deposit: "",
@@ -201,7 +215,7 @@ export function PlannerPage() {
         endDate: item.recurrence.end_date ?? "",
         remindDays: String(item.remindDays),
         autoWrite: item.autoWrite !== false,
-        emoji: item.emoji || (item.direction === "income" ? "💵" : "☁️"),
+        emoji: item.emoji || defaultRecurringIconId(item.direction),
       });
       setSheet({ type: "recurring", itemId: item.id });
       return;
@@ -217,15 +231,15 @@ export function PlannerPage() {
     const deposit = Number(goalForm.deposit);
 
     if (!goalForm.title.trim()) {
-      toast.error("请填写愿望名称");
+      toast.error(t("toast.needWishName"));
       return;
     }
     if (!Number.isFinite(target) || target <= 0) {
-      toast.error("请输入有效目标金额");
+      toast.error(t("toast.needTargetAmount"));
       return;
     }
     if (!Number.isFinite(saved) || saved < 0) {
-      toast.error("请输入有效已存金额");
+      toast.error(t("toast.needSavedAmount"));
       return;
     }
 
@@ -240,7 +254,7 @@ export function PlannerPage() {
       setGoals(nextGoals);
       writeGoals(nextGoals);
       setSheet(null);
-      toast.success("愿望已添加");
+      toast.success(t("toast.wishAdded"));
       return;
     }
 
@@ -266,41 +280,41 @@ export function PlannerPage() {
     setSheet(null);
     toast.success(
       Number.isFinite(deposit) && deposit > 0
-        ? "又离愿望更近一步了喵！"
-        : "愿望已更新",
+        ? t("toast.wishCloser")
+        : t("toast.wishUpdated"),
     );
   }
 
   function deleteGoal() {
     if (!activeGoal) return;
-    if (!window.confirm(`确定删除愿望「${activeGoal.title}」吗？`)) return;
+    if (!window.confirm(t("planner.confirmDeleteWish", { title: activeGoal.title }))) return;
     const nextGoals = goals.filter((g) => g.id !== activeGoal.id);
     setGoals(nextGoals);
     writeGoals(nextGoals);
     setSheet(null);
-    toast.success("愿望已删除");
+    toast.success(t("toast.wishDeleted"));
   }
 
   async function saveRecurring(event: FormEvent) {
     event.preventDefault();
     const amount = Number(recurringForm.amount);
     if (!recurringForm.name.trim()) {
-      toast.error("请填写名称");
+      toast.error(t("toast.needName"));
       return;
     }
     if (!Number.isFinite(amount) || amount <= 0) {
-      toast.error("请输入有效金额");
+      toast.error(t("toast.needAmount"));
       return;
     }
     if (recurringForm.kind === "by_days" && recurringForm.byDays.length === 0) {
-      toast.error("请至少选择一个星期");
+      toast.error(t("toast.needWeekday"));
       return;
     }
     if (
       recurringForm.endDate &&
       !/^\d{4}-\d{2}-\d{2}$/.test(recurringForm.endDate)
     ) {
-      toast.error("截止日期格式无效");
+      toast.error(t("toast.invalidEndDate"));
       return;
     }
 
@@ -351,14 +365,14 @@ export function PlannerPage() {
     if (!navigator.onLine) {
       toast.success(
         isNewRecurring
-          ? "周期项已添加（离线，账单稍后再同步）"
-          : "周期项已更新（离线，账单稍后再同步）",
+          ? t("toast.recurringAddedOffline")
+          : t("toast.recurringUpdatedOffline"),
       );
       return;
     }
 
     const toastId = toast.loading(
-      isNewRecurring ? "正在同步账单…" : "正在同步关联账单…",
+      isNewRecurring ? t("toast.syncingBills") : t("toast.syncingLinkedBills"),
     );
     try {
       if (isNewRecurring) {
@@ -366,8 +380,8 @@ export function PlannerPage() {
         await refreshMonthLedger();
         toast.success(
           created.length > 0
-            ? `周期项已添加，并记入 ${created.length} 笔到期账单`
-            : "周期项已添加",
+            ? t("toast.recurringAddedWithBills", { count: created.length })
+            : t("toast.recurringAdded"),
           { id: toastId },
         );
       } else {
@@ -375,14 +389,14 @@ export function PlannerPage() {
         await refreshMonthLedger();
         toast.success(
           created > 0
-            ? `周期项已更新，并补记 ${created} 笔到期账单`
-            : "周期项已更新",
+            ? t("toast.recurringUpdatedWithBills", { count: created })
+            : t("toast.recurringUpdated"),
           { id: toastId },
         );
       }
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "账单同步失败，周期项已保存",
+        error instanceof Error ? error.message : t("toast.syncFailSaved"),
         { id: toastId },
       );
     }
@@ -390,23 +404,23 @@ export function PlannerPage() {
 
   function deleteRecurring() {
     if (!activeRecurring) return;
-    if (!window.confirm(`确定删除「${activeRecurring.name}」吗？`)) return;
+    if (!window.confirm(t("planner.confirmDeleteRecurring", { name: activeRecurring.name }))) return;
     const nextItems = items.filter((item) => item.id !== activeRecurring.id);
     setItems(nextItems);
     writeRecurringItems(nextItems);
     setSheet(null);
-    toast.success("已删除");
+    toast.success(t("toast.deleted"));
   }
 
   async function writeEarlyTransaction() {
     if (!activeRecurring) return;
     if (!navigator.onLine) {
-      toast.error("当前无网络，无法写入账单");
+      toast.error(t("toast.writeOffline"));
       return;
     }
     if (isItemLoggedThisMonth(activeRecurring, loggedKeys)) {
       if (activeRecurring.recurrence.kind !== "by_days") {
-        toast.message("本月已经记过这笔啦");
+        toast.message(t("toast.alreadyLoggedMonth"));
         return;
       }
     }
@@ -417,8 +431,8 @@ export function PlannerPage() {
     if (loggedKeys.has(key)) {
       toast.message(
         activeRecurring.recurrence.kind === "by_days"
-          ? "今天已经记过这笔啦"
-          : "本月已经记过这笔啦",
+          ? t("toast.alreadyLoggedToday")
+          : t("toast.alreadyLoggedMonth"),
       );
       return;
     }
@@ -428,12 +442,15 @@ export function PlannerPage() {
       setLoggedKeys((prev) => new Set(prev).add(key));
       await refreshMonthLedger();
       toast.success(
-        `已提前记入${activeRecurring.name} ${formatHKD(activeRecurring.amount)}~`,
+        t("toast.earlyLogged", {
+          name: activeRecurring.name,
+          amount: formatHKD(activeRecurring.amount),
+        }),
       );
       setSheet(null);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "写入账单失败，请稍后重试",
+        error instanceof Error ? error.message : t("toast.writeFail"),
       );
     } finally {
       setEarlyWriting(false);
@@ -448,12 +465,12 @@ export function PlannerPage() {
     <>
       <main className="h-full overflow-y-auto overscroll-contain bg-[#FAF6EC] px-4 pb-5 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
         <header className="mb-4">
-          <p className="text-sm font-semibold text-[#F8A055]">规划与资产</p>
+          <p className="text-sm font-semibold text-[#F8A055]">{t("planner.eyebrow")}</p>
           <h1 className="mt-0.5 text-2xl font-extrabold tracking-tight text-[#4A3E3D]">
-            规划
+            {t("planner.title")}
           </h1>
           <p className="mt-1 text-sm text-[#A08875]">
-            预算、周期收支与愿望存钱罐。
+            {t("planner.subtitle")}
           </p>
         </header>
 
@@ -467,10 +484,10 @@ export function PlannerPage() {
           <section className="rounded-2xl border border-[#EFE5D3] bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between gap-2">
               <h2 className="text-sm font-extrabold text-[#4A3E3D]">
-                周期收支 & 订阅
+                {t("planner.recurringSection")}
               </h2>
               <button
-                aria-label="新增周期项"
+                aria-label={t("planner.aria.addRecurring")}
                 className="grid size-8 place-items-center rounded-full bg-[#FFF6D9] text-[#8C6D53] transition-all active:scale-95"
                 onClick={() => openRecurring()}
                 type="button"
@@ -480,7 +497,7 @@ export function PlannerPage() {
             </div>
             <div className="space-y-2">
               {items.map((item) => {
-                const { amountLine, detailLine } = formatRecurringLine(item);
+                const { amountLine, detailLine } = formatRecurringLine(item, t, locale);
                 const status = getRecurringCardStatus(item, loggedKeys);
                 const isIncome = item.direction === "income";
                 return (
@@ -491,31 +508,42 @@ export function PlannerPage() {
                     type="button"
                   >
                     {status.kind === "logged" && (
-                      <span className="absolute right-3 top-3 rounded-full bg-[#E7F6F2] px-2 py-0.5 text-[10px] font-bold text-[#2A9D8F]">
-                        🟢 本月已记入账单
+                      <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#E7F6F2] px-2 py-0.5 text-[10px] font-bold text-[#2A9D8F]">
+                        <CheckCircle2 className="size-3" strokeWidth={2.5} />
+                        {t("planner.loggedThisMonth")}
                       </span>
                     )}
                     {status.kind === "upcoming" && (
-                      <span className="absolute right-3 top-3 rounded-full bg-[#FFE8D6] px-2 py-0.5 text-[10px] font-bold text-[#E07A3D]">
-                        ⏰ {status.days === 0 ? "今天" : `${status.days}天后`}
-                        {isIncome ? "发工资" : "扣款"}
+                      <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#FFE8D6] px-2 py-0.5 text-[10px] font-bold text-[#E07A3D]">
+                        <Clock className="size-3" strokeWidth={2.5} />
+                        {status.days === 0
+                          ? t("planner.today")
+                          : t("planner.inDays", { days: status.days })}
+                        {isIncome ? t("planner.payIncome") : t("planner.payExpense")}
                       </span>
                     )}
                     {status.kind === "due_pending" && (
                       <span className="absolute right-3 top-3 rounded-full bg-[#FFF6D9] px-2 py-0.5 text-[10px] font-bold text-[#8C6D53]">
-                        待记入账单
+                        {t("planner.pendingLog")}
                       </span>
                     )}
                     <div className="flex items-start gap-2 pr-28">
                       <span
-                        className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-full text-base ${
+                        className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-full ${
                           isIncome
-                            ? "bg-[#E7F6F2]"
-                            : "bg-[#FFE8D6]"
+                            ? "bg-[#E7F6F2] text-[#2A9D8F]"
+                            : "bg-[#FFE8D6] text-[#E07A3D]"
                         }`}
                       >
-                        {item.emoji ||
-                          (isIncome ? "💵" : "☁️")}
+                        <AppIcon
+                          className="size-4"
+                          id={
+                            item.emoji ||
+                            defaultRecurringIconId(
+                              isIncome ? "income" : "expense",
+                            )
+                          }
+                        />
                       </span>
                       <div className="min-w-0">
                         <p className="font-extrabold text-[#4A3E3D]">
@@ -546,11 +574,11 @@ export function PlannerPage() {
               <div className="flex items-center gap-2 text-[#F8A055]">
                 <PiggyBank className="size-4.5" />
                 <h2 className="text-sm font-extrabold text-[#4A3E3D]">
-                  愿望存钱罐
+                  {t("planner.wishlistSection")}
                 </h2>
               </div>
               <button
-                aria-label="新增愿望"
+                aria-label={t("planner.aria.addWish")}
                 className="grid size-8 place-items-center rounded-full bg-[#FFF6D9] text-[#8C6D53] transition-all active:scale-95"
                 onClick={() => openGoal()}
                 type="button"
@@ -564,7 +592,7 @@ export function PlannerPage() {
                 onClick={() => openGoal()}
                 type="button"
               >
-                点击添加第一个愿望
+                {t("planner.emptyWish")}
               </button>
             ) : (
               <div className="space-y-3">
@@ -581,16 +609,24 @@ export function PlannerPage() {
                         type="button"
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <p className="font-extrabold text-[#4A3E3D]">
-                            {goal.emoji} {goal.title}
+                          <p className="flex min-w-0 items-center gap-2 font-extrabold text-[#4A3E3D]">
+                            <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#FFE8D6] text-[#E07A3D]">
+                              <AppIcon
+                                className="size-3.5"
+                                id={goal.emoji || "gift"}
+                              />
+                            </span>
+                            <span className="truncate">{goal.title}</span>
                           </p>
                           <p className="shrink-0 text-xs font-semibold text-[#A08875]">
                             {pct.toFixed(0)}%
                           </p>
                         </div>
                         <p className="mt-1 text-xs text-[#A08875]">
-                          已存 {formatHKD(goal.saved)} / 目标{" "}
-                          {formatHKD(goal.target)}
+                          {t("planner.wishProgress", {
+                            saved: formatHKD(goal.saved),
+                            target: formatHKD(goal.target),
+                          })}
                         </p>
                         <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[#FFF6D9]">
                           <div
@@ -604,7 +640,7 @@ export function PlannerPage() {
                         onClick={() => openGoal(goal, true)}
                         type="button"
                       >
-                        存一笔
+                        {t("planner.saveOnce")}
                       </button>
                     </div>
                   );
@@ -618,31 +654,31 @@ export function PlannerPage() {
       <BottomSheet
         onOpenChange={(open) => !open && setSheet(null)}
         open={sheet?.type === "goal"}
-        title={isNewGoal ? "新增愿望" : "管理愿望"}
+        title={isNewGoal ? t("planner.wishNewTitle") : t("planner.wishEditTitle")}
       >
         <form className="space-y-4 pt-1" onSubmit={saveGoal}>
           <div>
-            <p className="text-xs font-medium text-[#A08875]">图标</p>
-            <EmojiPicker
+            <p className="text-xs font-medium text-[#A08875]">{t("planner.wishIcon")}</p>
+            <IconPicker
               onChange={(emoji) => setGoalForm((prev) => ({ ...prev, emoji }))}
               options={GOAL_EMOJIS}
               value={goalForm.emoji}
             />
           </div>
           <label className="block text-xs font-medium text-[#A08875]">
-            愿望名称
+            {t("planner.wishName")}
             <input
               className={fieldClass}
               onChange={(event) =>
                 setGoalForm((prev) => ({ ...prev, title: event.target.value }))
               }
-              placeholder="例如 换新手机"
+              placeholder={t("planner.wishNamePlaceholder")}
               value={goalForm.title}
             />
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="block text-xs font-medium text-[#A08875]">
-              目标金额（HK$）
+              {t("planner.wishTarget")}
               <input
                 className={fieldClass}
                 inputMode="decimal"
@@ -659,7 +695,7 @@ export function PlannerPage() {
               />
             </label>
             <label className="block text-xs font-medium text-[#A08875]">
-              已存金额（HK$）
+              {t("planner.wishSaved")}
               <input
                 className={fieldClass}
                 inputMode="decimal"
@@ -680,11 +716,11 @@ export function PlannerPage() {
             <>
               <div className="rounded-2xl bg-[#FFF6D9] p-4">
                 <p className="text-sm leading-6 text-[#8C6D53]">
-                  又离{goalForm.title || activeGoal.title}近了一步喵！
+                  {t("planner.wishCloser", { title: goalForm.title || activeGoal.title })}
                 </p>
               </div>
               <label className="block text-xs font-medium text-[#A08875]">
-                本次存入（可选）
+                {t("planner.depositOptional")}
                 <input
                   autoFocus={sheet?.type === "goal" && sheet.focusDeposit}
                   className={fieldClass}
@@ -696,7 +732,7 @@ export function PlannerPage() {
                       deposit: event.target.value,
                     }))
                   }
-                  placeholder="例如 200"
+                  placeholder={t("planner.depositPlaceholder")}
                   step="0.01"
                   type="number"
                   value={goalForm.deposit}
@@ -709,7 +745,7 @@ export function PlannerPage() {
             type="submit"
           >
             <Save className="size-4.5" />
-            {isNewGoal ? "添加愿望" : "保存"}
+            {isNewGoal ? t("planner.addWish") : t("planner.save")}
           </button>
           {activeGoal && (
             <button
@@ -718,7 +754,7 @@ export function PlannerPage() {
               type="button"
             >
               <Trash2 className="size-4" />
-              删除愿望
+              {t("planner.deleteWish")}
             </button>
           )}
         </form>

@@ -10,22 +10,25 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
+import { useT } from "@/components/LocaleProvider";
+import type { MessageKey } from "@/lib/i18n";
 
-const tabs: { href: string; label: string; icon: LucideIcon }[] = [
-  { href: "/", label: "记账", icon: MessageCircle },
-  { href: "/transactions", label: "账单", icon: ClipboardList },
-  { href: "/charts", label: "统计", icon: Donut },
-  { href: "/summary", label: "规划", icon: Wallet },
-  { href: "/profile", label: "设置", icon: Settings },
+const tabs: { href: string; labelKey: MessageKey; icon: LucideIcon }[] = [
+  { href: "/", labelKey: "nav.record", icon: MessageCircle },
+  { href: "/transactions", labelKey: "nav.transactions", icon: ClipboardList },
+  { href: "/charts", labelKey: "nav.charts", icon: Donut },
+  { href: "/summary", labelKey: "nav.planner", icon: Wallet },
+  { href: "/profile", labelKey: "nav.settings", icon: Settings },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
+  const t = useT();
 
   return (
     <nav className="z-50 shrink-0 bg-[#FAF6EC]/90 pt-1.5 pb-[calc(env(safe-area-inset-bottom)+4px)] backdrop-blur-md shadow-[0_-4px_16px_rgba(92,74,50,0.03)]">
       <div className="grid grid-cols-5 px-1">
-        {tabs.map(({ href, label, icon: Icon }) => {
+        {tabs.map(({ href, labelKey, icon: Icon }) => {
           const active =
             href === "/" ? pathname === href : pathname.startsWith(href);
 
@@ -44,7 +47,7 @@ export function BottomNav() {
                 aria-hidden="true"
                 className={`size-6 ${active ? "stroke-[2.25]" : "stroke-[1.75]"}`}
               />
-              {label}
+              {t(labelKey)}
             </Link>
           );
         })}

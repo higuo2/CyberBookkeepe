@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { CatAvatar } from "@/components/CatAvatar";
+import { useI18n } from "@/components/LocaleProvider";
 
 const STORAGE_KEY = "cyberbookkeeper_auth";
 const AUTH_MARKER = "unlocked";
@@ -11,6 +12,7 @@ function expectedPassword() {
 }
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
+  const { t } = useI18n();
   const [ready, setReady] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
@@ -28,11 +30,11 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     event.preventDefault();
     const expected = expectedPassword();
     if (!expected) {
-      setError("未配置访问密码，请在 .env.local 设置 NEXT_PUBLIC_APP_PASSWORD");
+      setError(t("auth.error.notConfigured"));
       return;
     }
     if (password !== expected) {
-      setError("密码不正确哦");
+      setError(t("auth.error.wrongPassword"));
       return;
     }
 
@@ -53,17 +55,17 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
           <div className="mb-6 grid size-16 place-items-center rounded-full bg-[#FFE8B8] shadow-sm">
             <CatAvatar size={52} />
           </div>
-          <p className="text-sm font-medium text-[#F8A055]">钱包小猫</p>
+          <p className="text-sm font-medium text-[#F8A055]">{t("auth.brand")}</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#5C4A32]">
-            欢迎回来
+            {t("auth.welcome")}
           </h1>
           <p className="mt-2 text-sm leading-6 text-[#9A7B55]">
-            输入密码，小猫就帮你打开账本。
+            {t("auth.subtitle")}
           </p>
 
           <form className="mt-7 space-y-3" onSubmit={unlock}>
             <label className="sr-only" htmlFor="app-password">
-              访问密码
+              {t("auth.passwordLabel")}
             </label>
             <input
               autoComplete="current-password"
@@ -74,7 +76,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
                 setPassword(event.target.value);
                 setError("");
               }}
-              placeholder="请输入密码"
+              placeholder={t("auth.passwordPlaceholder")}
               type="password"
               value={password}
             />
@@ -83,7 +85,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
               className="h-13 w-full rounded-2xl bg-[#F8A055] font-medium text-white shadow-sm transition-all active:scale-95"
               type="submit"
             >
-              开始记账
+              {t("auth.submit")}
             </button>
           </form>
         </section>

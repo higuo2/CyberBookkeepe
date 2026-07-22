@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronDown,
+  LayoutGrid,
   LoaderCircle,
   Plus,
   Search,
@@ -11,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { RecurringBadgeIcon } from "@/components/AppIcons";
 import { BottomSheet } from "@/components/BottomSheet";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { TransactionDialog } from "@/components/TransactionDialog";
@@ -29,16 +31,21 @@ import {
   EXPENSE_CATEGORIES,
   formatMoney,
   INCOME_CATEGORIES,
+  categoryLabel,
+  categoryMatchesFilter,
+  isExpenseCategory,
+  isIncomeCategory,
   prepareDraft,
 } from "@/lib/transaction-utils";
 import {
   CURRENCY_CODES,
-  CURRENCY_META,
   normalizeCurrency,
   readDefaultCurrency,
   type CurrencyCode,
 } from "@/lib/currency";
 import type { Transaction, TransactionDraft, TransactionType } from "@/lib/types";
+import { useI18n } from "@/components/LocaleProvider";
+import type { MessageKey, TranslateFn } from "@/lib/i18n";
 import {
   cleanNote,
   isRecurringNote,
@@ -46,18 +53,24 @@ import {
   withPreservedRecTags,
 } from "@/lib/utils";
 
-const TYPE_SEGMENTS: { key: "ALL" | TransactionType; label: string }[] = [
-  { key: "ALL", label: "全部" },
-  { key: "EXPENSE", label: "支出" },
-  { key: "INCOME", label: "收入" },
+const TYPE_SEGMENTS: { key: "ALL" | TransactionType; labelKey: MessageKey }[] = [
+  { key: "ALL", labelKey: "transactions.filterAll" },
+  { key: "EXPENSE", labelKey: "transactions.filterExpense" },
+  { key: "INCOME", labelKey: "transactions.filterIncome" },
 ];
 
-function displayCategory(category: string) {
-  return category === "居住" ? "住房" : category;
-}
+const FILTER_PILL_BASE =
+  "flex h-10 items-center justify-center gap-2 rounded-xl px-3 text-xs font-medium transition-all active:scale-[0.97]";
+const FILTER_PILL_IDLE =
+  "border border-[#E8E2D8] bg-white/90 text-[#6E6559] shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:bg-[#F7F2EA]";
+const FILTER_PILL_ACTIVE =
+  "border border-[#3A322B] bg-[#3A322B] text-white shadow-[0_1px_2px_rgba(58,50,43,0.2)]";
+const FILTER_ICON_IDLE = "size-3.5 shrink-0 text-[#9C9181]";
+const FILTER_ICON_ACTIVE = "size-3.5 shrink-0 text-white";
 
-function displayDate(date: string) {
-  return new Intl.DateTimeFormat("zh-HK", {
+
+function displayDate(date: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
     month: "long",
     day: "numeric",
     weekday: "short",
@@ -80,6 +93,7 @@ function dayTotalsByCurrency(items: Transaction[]) {
 function formatDayExpenseSummary(
   items: Transaction[],
   preferred: CurrencyCode,
+  t: TranslateFn,
 ): string {
   const totals = dayTotalsByCurrency(items).filter(([, s]) => s.expense > 0);
   if (totals.length === 0) return "";
@@ -89,7 +103,9 @@ function formatDayExpenseSummary(
     return a.localeCompare(b);
   });
   return totals
-    .map(([code, sums]) => `支 ${formatMoney(sums.expense, code)}`)
+    .map(([code, sums]) =>
+      t("transactions.dayExpense", { amount: formatMoney(sums.expense, code) }),
+    )
     .join(" · ");
 }
 
@@ -111,6 +127,7 @@ function headerBtnClass(active = false) {
 
 export function TransactionsPage() {
   const router = useRouter();
+  const { locale, t } = useI18n();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -118,6 +135,10 @@ export function TransactionsPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [typeFilter, setTypeFilter] = useState<"ALL" | TransactionType>("ALL");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
+  /** typeFilter=全部 时，分类面板展示支出还是收入 */
+  const [categoryScope, setCategoryScope] = useState<"EXPENSE" | "INCOME">(
+    "EXPENSE",
+  );
   const [recurringOnly, setRecurringOnly] = useState(false);
   const [currencyFilter, setCurrencyFilter] = useState<"ALL" | CurrencyCode>(
     "ALL",
@@ -134,7 +155,7 @@ export function TransactionsPage() {
   const loadTransactions = useCallback(async () => {
     await Promise.resolve();
     if (!navigator.onLine) {
-      toast.error("当前无网络，无法读取账单");
+      toast.error(t("toast.txOfflineRead"));
       setLoading(false);
       return;
     }
@@ -147,7 +168,7 @@ export function TransactionsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     setDefaultCurrency(readDefaultCurrency());
@@ -162,20 +183,20 @@ export function TransactionsPage() {
         ? EXPENSE_CATEGORIES
         : typeFilter === "INCOME"
           ? INCOME_CATEGORIES
-          : [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES];
-    if (!allowed.includes(categoryFilter as never)) {
+          : categoryScope === "EXPENSE"
+            ? EXPENSE_CATEGORIES
+            : INCOME_CATEGORIES;
+    if (!(allowed as readonly string[]).includes(categoryFilter)) {
       setCategoryFilter("ALL");
     }
-  }, [typeFilter, categoryFilter]);
+  }, [typeFilter, categoryScope, categoryFilter]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return transactions.filter((item) => {
       if (recurringOnly && !isRecurringNote(item.note)) return false;
       if (typeFilter !== "ALL" && item.type !== typeFilter) return false;
-      if (categoryFilter !== "ALL" && item.category !== categoryFilter) {
-        return false;
-      }
+      if (!categoryMatchesFilter(item.category, categoryFilter)) return false;
       if (
         currencyFilter !== "ALL" &&
         normalizeCurrency(item.currency) !== currencyFilter
@@ -186,6 +207,7 @@ export function TransactionsPage() {
       return (
         cleanNote(item.note).toLowerCase().includes(q) ||
         item.category.toLowerCase().includes(q) ||
+        categoryLabel(item.category, t).toLowerCase().includes(q) ||
         String(item.amount).includes(q) ||
         normalizeCurrency(item.currency).toLowerCase().includes(q)
       );
@@ -197,6 +219,7 @@ export function TransactionsPage() {
     categoryFilter,
     recurringOnly,
     currencyFilter,
+    t,
   ]);
 
   const grouped = useMemo(() => {
@@ -217,8 +240,16 @@ export function TransactionsPage() {
   const categoryOptions = useMemo(() => {
     if (typeFilter === "EXPENSE") return [...EXPENSE_CATEGORIES];
     if (typeFilter === "INCOME") return [...INCOME_CATEGORIES];
-    return [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES];
-  }, [typeFilter]);
+    return categoryScope === "EXPENSE"
+      ? [...EXPENSE_CATEGORIES]
+      : [...INCOME_CATEGORIES];
+  }, [typeFilter, categoryScope]);
+
+  const categorySectionTitle =
+    typeFilter === "INCOME" ||
+    (typeFilter === "ALL" && categoryScope === "INCOME")
+      ? t("transactions.incomeCategories")
+      : t("transactions.expenseCategories");
 
   function openCreate() {
     setDraft(createEmptyTransaction("EXPENSE", readDefaultCurrency()));
@@ -243,12 +274,14 @@ export function TransactionsPage() {
 
   async function saveDraft() {
     if (!navigator.onLine) {
-      toast.error("当前无网络，无法保存账单");
+      toast.error(t("toast.txOfflineSave"));
       return;
     }
     setMutating(true);
     const isEditing = dialogMode === "edit";
-    const toastId = toast.loading(isEditing ? "正在更新账单…" : "正在新增账单…");
+    const toastId = toast.loading(
+      isEditing ? t("toast.txUpdating") : t("toast.txCreating"),
+    );
     const prepared = prepareDraft(draft);
     const originalNote = isEditing
       ? transactions.find((item) => item.id === editingId)?.note
@@ -259,13 +292,13 @@ export function TransactionsPage() {
     };
     try {
       if (isEditing) {
-        if (!editingId) throw new Error("该账单缺少 ID，无法更新");
+        if (!editingId) throw new Error(t("transactions.error.missingIdUpdate"));
         await updateTransactionDraft(editingId, cleanDraft);
       } else {
         await insertTransactionDraft(cleanDraft);
       }
       setDialogMode(null);
-      toast.success(isEditing ? "账单已更新" : "账单已新增", { id: toastId });
+      toast.success(isEditing ? t("toast.txUpdated") : t("toast.txCreated"), { id: toastId });
       await loadTransactions();
     } catch (error) {
       toast.error(formatSupabaseError(error), { id: toastId });
@@ -276,11 +309,11 @@ export function TransactionsPage() {
 
   async function deleteFromDialog() {
     if (!editingId) {
-      toast.error("该账单缺少 ID，无法删除");
+      toast.error(t("transactions.error.missingIdDelete"));
       return;
     }
     if (!navigator.onLine) {
-      toast.error("当前无网络，无法删除账单");
+      toast.error(t("toast.txOfflineDelete"));
       return;
     }
 
@@ -290,15 +323,15 @@ export function TransactionsPage() {
     if (
       !window.confirm(
         isRecurring
-          ? `确定跳过本期「${cleanNote(draft.note) || draft.category}」吗？跳过后不会再自动生成这一期。`
-          : `确定彻底删除「${cleanNote(draft.note) || draft.category}」吗？`,
+          ? t("transactions.confirm.skip", { name: cleanNote(draft.note) || draft.category })
+          : t("transactions.confirm.delete", { name: cleanNote(draft.note) || draft.category }),
       )
     ) {
       return;
     }
     setDeleting(true);
     const toastId = toast.loading(
-      isRecurring ? "正在跳过本期…" : "正在删除账单…",
+      isRecurring ? t("toast.txSkipping") : t("toast.txDeleting"),
     );
     try {
       if (isRecurring && original) {
@@ -310,7 +343,7 @@ export function TransactionsPage() {
         setTransactions((current) =>
           current.filter((item) => item.id !== editingId),
         );
-        toast.success("已跳过本期，不会再自动生成", { id: toastId });
+        toast.success(t("toast.txSkipped"), { id: toastId });
       } else {
         const { error } = await getSupabase()
           .from("transactions")
@@ -320,14 +353,14 @@ export function TransactionsPage() {
         setTransactions((current) =>
           current.filter((item) => item.id !== editingId),
         );
-        toast.success("账单已删除", { id: toastId });
+        toast.success(t("toast.txDeleted"), { id: toastId });
       }
       setDialogMode(null);
       setEditingId(null);
       setEditingIsRecurring(false);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "操作失败，请稍后重试",
+        error instanceof Error ? error.message : t("toast.txOpFail"),
         { id: toastId },
       );
     } finally {
@@ -339,6 +372,7 @@ export function TransactionsPage() {
     setCurrencyFilter("ALL");
     setCategoryFilter("ALL");
     setRecurringOnly(false);
+    setCategoryScope("EXPENSE");
   }
 
   function goManageRecurring() {
@@ -353,15 +387,15 @@ export function TransactionsPage() {
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-medium tracking-wide text-[#C4A484]">
-                账单历史
+                {t("transactions.eyebrow")}
               </p>
               <h1 className="mt-0.5 text-[28px] font-semibold tracking-tight text-[#3D3429]">
-                账单
+                {t("transactions.title")}
               </h1>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <button
-                aria-label={searchOpen ? "收起搜索" : "展开搜索"}
+                aria-label={searchOpen ? t("transactions.aria.collapseSearch") : t("transactions.aria.expandSearch")}
                 className={headerBtnClass(searchOpen || Boolean(query.trim()))}
                 onClick={() =>
                   setSearchOpen((open) => {
@@ -378,7 +412,7 @@ export function TransactionsPage() {
                 )}
               </button>
               <button
-                aria-label="手动记账"
+                aria-label={t("transactions.aria.manualAdd")}
                 className="grid size-9 place-items-center rounded-full bg-[#3D3429] text-white shadow-sm transition-all active:scale-95"
                 onClick={openCreate}
                 type="button"
@@ -395,7 +429,7 @@ export function TransactionsPage() {
                 autoFocus
                 className="h-10 w-full rounded-2xl border border-black/5 bg-white pl-10 pr-3 text-sm text-[#3D3429] outline-none shadow-sm transition-all placeholder:text-[#C0B49A] focus:border-[#D4C4A8] focus:ring-2 focus:ring-[#E8DCC8]/60"
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="搜索备注、分类或金额"
+                placeholder={t("transactions.searchPlaceholder")}
                 value={query}
               />
             </label>
@@ -403,7 +437,7 @@ export function TransactionsPage() {
 
           <div className="mt-3 flex items-center gap-2.5">
             <div className="flex min-w-0 flex-1 rounded-xl bg-[#EBE6DC] p-[3px]">
-              {TYPE_SEGMENTS.map(({ key, label }) => {
+              {TYPE_SEGMENTS.map(({ key, labelKey }) => {
                 const active = typeFilter === key;
                 return (
                   <button
@@ -416,14 +450,14 @@ export function TransactionsPage() {
                     onClick={() => setTypeFilter(key)}
                     type="button"
                   >
-                    {label}
+                    {t(labelKey)}
                   </button>
                 );
               })}
             </div>
 
             <button
-              aria-label="更多筛选"
+              aria-label={t("transactions.aria.moreFilters")}
               className={`flex h-9 shrink-0 items-center gap-1 rounded-xl border px-2.5 text-[13px] font-semibold transition-all active:scale-95 ${
                 filterActiveCount > 0
                   ? "border-[#E8D5B5] bg-[#FFF6E8] text-[#9A6B3A]"
@@ -433,7 +467,7 @@ export function TransactionsPage() {
               type="button"
             >
               <Settings2 className="size-3.5" strokeWidth={2.25} />
-              <span>筛选</span>
+              <span>{t("transactions.filter")}</span>
               {filterActiveCount > 0 ? (
                 <span className="grid size-4 place-items-center rounded-full bg-[#E07A3D] text-[10px] font-bold text-white">
                   {filterActiveCount}
@@ -452,11 +486,11 @@ export function TransactionsPage() {
             </div>
           ) : filtered.length === 0 ? (
             <div className="mt-4 rounded-2xl border border-dashed border-black/8 bg-white/70 px-5 py-14 text-center">
-              <p className="font-medium text-[#3D3429]">没有匹配的账单</p>
+              <p className="font-medium text-[#3D3429]">{t("transactions.emptyTitle")}</p>
               <p className="mt-1 text-sm text-[#9A8B78]">
                 {recurringOnly
-                  ? "暂无周期账单，试试关闭「仅看周期」"
-                  : "试试调整筛选，或点右上角 + 新增"}
+                  ? t("transactions.empty.recurringHint")
+                  : t("transactions.empty.genericHint")}
               </p>
             </div>
           ) : (
@@ -465,12 +499,13 @@ export function TransactionsPage() {
                 const dayExpense = formatDayExpenseSummary(
                   items,
                   defaultCurrency,
+                  t,
                 );
                 return (
                   <section key={date}>
                     <div className="mb-2 flex items-baseline justify-between gap-3 px-1">
                       <h2 className="font-medium text-gray-700">
-                        {displayDate(date)}
+                        {displayDate(date, locale)}
                       </h2>
                       {dayExpense ? (
                         <p className="truncate text-[12px] font-medium text-gray-400">
@@ -507,17 +542,17 @@ export function TransactionsPage() {
 
                             <div className="min-w-0 flex-1">
                               <p className="truncate font-medium text-gray-800">
-                                {displayCategory(item.category)}
+                                {categoryLabel(item.category, t)}
                               </p>
                               <p className="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-gray-400">
                                 <span className="truncate">{note}</span>
                                 {recurring ? (
                                   <span
-                                    aria-label="周期账单"
-                                    className="inline-flex shrink-0 items-center rounded-full bg-sky-50 px-1 py-px text-[10px] text-sky-500"
-                                    title="周期账单"
+                                    aria-label={t("transactions.aria.recurringBill")}
+                                    className="inline-flex shrink-0 items-center rounded-full bg-sky-50 px-1 py-px text-sky-500"
+                                    title={t("transactions.aria.recurringBill")}
                                   >
-                                    🔄
+                                    <RecurringBadgeIcon className="size-2.5" />
                                   </span>
                                 ) : null}
                               </p>
@@ -553,135 +588,157 @@ export function TransactionsPage() {
       </main>
 
       <BottomSheet
-        contentClassName="max-h-[75vh] overflow-y-auto overscroll-contain scrollbar-none px-5 pb-[calc(env(safe-area-inset-bottom)+20px)] touch-pan-y"
-        onOpenChange={setFilterOpen}
-        open={filterOpen}
-        title="筛选"
-      >
-        <div className="space-y-5 pt-1">
-          <section>
-            <p className="mb-2 text-xs font-semibold tracking-wide text-[#A08875]">
-              选择币种
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                className={`rounded-full px-3.5 py-2 text-sm font-semibold transition-all active:scale-95 ${
-                  currencyFilter === "ALL"
-                    ? "bg-[#3D3429] text-white"
-                    : "bg-[#F3ECE0] text-[#6B5B4A]"
-                }`}
-                onClick={() => setCurrencyFilter("ALL")}
-                type="button"
-              >
-                全部
-              </button>
-              {CURRENCY_CODES.map((code) => {
-                const meta = CURRENCY_META[code];
-                const active = currencyFilter === code;
-                return (
-                  <button
-                    className={`rounded-full px-3.5 py-2 text-sm font-semibold transition-all active:scale-95 ${
-                      active
-                        ? "bg-[#3D3429] text-white"
-                        : "bg-[#F3ECE0] text-[#6B5B4A]"
-                    }`}
-                    key={code}
-                    onClick={() => setCurrencyFilter(code)}
-                    type="button"
-                  >
-                    {meta.flag} {code}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
-          <section>
-            <p className="mb-2 text-xs font-semibold tracking-wide text-[#A08875]">
-              分类筛选
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                className={`rounded-full px-3.5 py-2 text-sm font-semibold transition-all active:scale-95 ${
-                  categoryFilter === "ALL"
-                    ? "bg-[#3D3429] text-white"
-                    : "bg-[#F3ECE0] text-[#6B5B4A]"
-                }`}
-                onClick={() => setCategoryFilter("ALL")}
-                type="button"
-              >
-                全部
-              </button>
-              {categoryOptions.map((category) => {
-                const active = categoryFilter === category;
-                return (
-                  <button
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition-all active:scale-95 ${
-                      active
-                        ? "bg-[#3D3429] text-white"
-                        : "bg-[#F3ECE0] text-[#6B5B4A]"
-                    }`}
-                    key={category}
-                    onClick={() => setCategoryFilter(category)}
-                    type="button"
-                  >
-                    <CategoryIcon category={category} className="size-3.5" />
-                    {displayCategory(category)}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
-          <section>
-            <p className="mb-2 text-xs font-semibold tracking-wide text-[#A08875]">
-              仅看周期
-            </p>
+        contentClassName="max-h-[80vh] overflow-y-auto overscroll-contain scrollbar-none px-6 py-5 space-y-6 touch-pan-y pb-[calc(env(safe-area-inset-bottom)+20px)]"
+        header={
+          <div className="flex items-center justify-between border-b border-black/5 px-6 py-4">
             <button
-              className={`flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold transition-all active:scale-[0.99] ${
-                recurringOnly
-                  ? "bg-sky-50 text-sky-700 ring-1 ring-sky-200"
-                  : "bg-[#F3ECE0] text-[#6B5B4A]"
-              }`}
-              onClick={() => setRecurringOnly((v) => !v)}
-              type="button"
-            >
-              <span className="inline-flex items-center gap-2">
-                <span>🔄</span>
-                只显示周期自动账单
-              </span>
-              <span
-                className={`relative h-6 w-11 rounded-full transition-colors ${
-                  recurringOnly ? "bg-sky-500" : "bg-[#D8CFC0]"
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-transform ${
-                    recurringOnly ? "translate-x-[22px]" : "translate-x-0.5"
-                  }`}
-                />
-              </span>
-            </button>
-          </section>
-
-          {filterActiveCount > 0 ? (
-            <button
-              className="flex h-11 w-full items-center justify-center rounded-2xl bg-[#F3ECE0] text-sm font-semibold text-[#A08875] transition-all active:scale-[0.99]"
+              className="min-w-[3.25rem] text-left text-[15px] font-normal text-[#8C8273] transition-opacity active:opacity-60"
               onClick={resetFilters}
               type="button"
             >
-              清除筛选
+              {t("transactions.filterReset")}
             </button>
-          ) : null}
+            <p className="text-base font-semibold text-[#4A3E31]">{t("transactions.filter")}</p>
+            <button
+              className="rounded-full bg-[#4A3E31] px-4 py-1.5 text-xs font-medium text-white shadow-[0_1px_2px_rgba(74,62,49,0.18)] transition-opacity active:opacity-80"
+              onClick={() => setFilterOpen(false)}
+              type="button"
+            >
+              {t("transactions.filterDone")}
+            </button>
+          </div>
+        }
+        onOpenChange={setFilterOpen}
+        open={filterOpen}
+        title={t("transactions.filter")}
+      >
+        <section>
+          <p className="mb-3 text-xs font-medium text-[#8C8273]">{t("transactions.selectCurrency")}</p>
+          <div className="grid grid-cols-5 gap-2">
+            {(["ALL", ...CURRENCY_CODES] as const).map((key) => {
+              const active = currencyFilter === key;
+              return (
+                <button
+                  className={`${FILTER_PILL_BASE} ${
+                    active ? FILTER_PILL_ACTIVE : FILTER_PILL_IDLE
+                  }`}
+                  key={key}
+                  onClick={() => setCurrencyFilter(key)}
+                  type="button"
+                >
+                  {key === "ALL" ? t("common.all") : key}
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
-          <button
-            className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#3D3429] text-sm font-semibold text-white transition-all active:scale-[0.99]"
-            onClick={() => setFilterOpen(false)}
-            type="button"
-          >
-            完成
-          </button>
-        </div>
+        <section>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <p className="text-xs font-medium text-[#8C8273]">
+              {categorySectionTitle}
+            </p>
+            {typeFilter === "ALL" ? (
+              <div className="flex rounded-lg bg-[#EFE8DC] p-0.5">
+                {(
+                  [
+                    { key: "EXPENSE" as const, label: t("transactions.expenseCategories") },
+                    { key: "INCOME" as const, label: t("transactions.incomeCategories") },
+                  ] as const
+                ).map((tab) => {
+                  const active = categoryScope === tab.key;
+                  return (
+                    <button
+                      className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition-all active:scale-[0.98] ${
+                        active
+                          ? "bg-white text-[#4A3E31] shadow-sm"
+                          : "text-[#8C8273]"
+                      }`}
+                      key={tab.key}
+                      onClick={() => {
+                        setCategoryScope(tab.key);
+                        if (
+                          categoryFilter !== "ALL" &&
+                          (tab.key === "EXPENSE"
+                            ? !isExpenseCategory(categoryFilter)
+                            : !isIncomeCategory(categoryFilter))
+                        ) {
+                          setCategoryFilter("ALL");
+                        }
+                      }}
+                      type="button"
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+          <div className="grid grid-cols-3 gap-2.5">
+            <button
+              className={`${FILTER_PILL_BASE} ${
+                categoryFilter === "ALL" ? FILTER_PILL_ACTIVE : FILTER_PILL_IDLE
+              }`}
+              onClick={() => setCategoryFilter("ALL")}
+              type="button"
+            >
+              <LayoutGrid
+                className={
+                  categoryFilter === "ALL"
+                    ? FILTER_ICON_ACTIVE
+                    : FILTER_ICON_IDLE
+                }
+                strokeWidth={2}
+              />
+              <span>{t("common.all")}</span>
+            </button>
+            {categoryOptions.map((category) => {
+              const active = categoryFilter === category;
+              return (
+                <button
+                  className={`${FILTER_PILL_BASE} ${
+                    active ? FILTER_PILL_ACTIVE : FILTER_PILL_IDLE
+                  }`}
+                  key={category}
+                  onClick={() => setCategoryFilter(category)}
+                  type="button"
+                >
+                  <CategoryIcon
+                    category={category}
+                    className={active ? FILTER_ICON_ACTIVE : FILTER_ICON_IDLE}
+                  />
+                  <span>{categoryLabel(category, t)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section>
+          <div className="flex items-center justify-between rounded-2xl border border-black/5 bg-white/80 p-3.5">
+            <p className="flex items-center gap-1.5 text-sm font-medium text-[#4A3E31]">
+              <RecurringBadgeIcon className="size-3.5 text-[#8C6D53]" />
+              {t("transactions.recurringOnly")}
+            </p>
+            <button
+              aria-checked={recurringOnly}
+              aria-label={t("transactions.recurringOnly")}
+              className={`relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors duration-200 ${
+                recurringOnly ? "bg-[#EE7828]" : "bg-[#E5DDD0]"
+              }`}
+              onClick={() => setRecurringOnly((v) => !v)}
+              role="switch"
+              type="button"
+            >
+              <span
+                className={`absolute top-[2px] size-[27px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.18)] transition-transform duration-200 ${
+                  recurringOnly ? "translate-x-[22px]" : "translate-x-[2px]"
+                }`}
+              />
+            </button>
+          </div>
+        </section>
       </BottomSheet>
 
       <TransactionDialog
@@ -698,8 +755,8 @@ export function TransactionsPage() {
         }
         onSubmit={saveDraft}
         open={dialogMode !== null}
-        submitLabel={dialogMode === "edit" ? "保存" : "新增账单"}
-        title={dialogMode === "edit" ? "账单详情" : "手动记账"}
+        submitLabel={dialogMode === "edit" ? t("transactions.dialog.save") : t("transactions.dialog.add")}
+        title={dialogMode === "edit" ? t("transactions.dialog.editTitle") : t("transactions.dialog.addTitle")}
         value={draft}
       />
     </>

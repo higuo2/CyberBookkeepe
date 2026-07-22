@@ -15,9 +15,9 @@ import {
 import { toast } from "sonner";
 import { BottomSheet } from "@/components/BottomSheet";
 import { ConfirmDialog, SettingsRow } from "@/components/ConfirmDialog";
+import { CurrencyIcon } from "@/components/AppIcons";
 import {
   CURRENCY_CODES,
-  CURRENCY_META,
   readDefaultCurrency,
   writeDefaultCurrency,
   type CurrencyCode,
@@ -28,9 +28,15 @@ import {
   formatSupabaseError,
   queryTransactions,
 } from "@/lib/transactions-query";
-
-const LANGUAGE_KEY = "cyberbookkeeper_language";
-const FONT_KEY = "cyberbookkeeper_font";
+import { useI18n } from "@/components/LocaleProvider";
+import {
+  LOCALE_OPTIONS,
+  createT,
+  localeDisplayName,
+  translateCurrencyLabel,
+  writeStoredLocale,
+  type Locale,
+} from "@/lib/i18n";
 
 const PLANNER_STORAGE_KEYS = [
   "cyberbookkeeper_planner_accounts",
@@ -46,9 +52,9 @@ const PLANNER_STORAGE_KEYS = [
 ];
 
 export function ProfilePage() {
-  const [language, setLanguage] = useState("简体中文");
+  const { locale, setLocale, t } = useI18n();
   const [currency, setCurrency] = useState<CurrencyCode>("HKD");
-  const [fontSetting, setFontSetting] = useState("系统默认");
+  const [isLanguageSheetOpen, setIsLanguageSheetOpen] = useState(false);
   const [isCurrencySheetOpen, setIsCurrencySheetOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -57,16 +63,14 @@ export function ProfilePage() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setCurrency(readDefaultCurrency());
-      const savedLanguage = localStorage.getItem(LANGUAGE_KEY);
-      if (savedLanguage) setLanguage(savedLanguage);
-      const savedFont = localStorage.getItem(FONT_KEY);
-      if (savedFont) setFontSetting(savedFont);
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
 
-  function handleLanguageClick() {
-    toast.message("目前仅支持简体中文，多语言即将开放");
+  function handleLanguageChange(next: Locale, label: string) {
+    setLocale(next);
+    setIsLanguageSheetOpen(false);
+    toast.success(createT(next)("toast.languageSet", { label }));
   }
 
   /** 仅切换默认记账币种；不做任何历史汇率换算 */
@@ -74,32 +78,32 @@ export function ProfilePage() {
     setCurrency(next);
     writeDefaultCurrency(next);
     setIsCurrencySheetOpen(false);
-    toast.success(`默认记账币种已设为 ${next}`);
+    toast.success(t("toast.currencySet", { code: next }));
   }
 
   function handleFontClick() {
-    toast.message("字体设置即将开放，当前跟随系统默认");
+    toast.message(t("toast.fontSoon"));
   }
 
   function handleTipClick() {
-    toast.message("谢谢你～罐头正在筹备中 🐟");
+    toast.message(t("toast.tipThanks"));
   }
 
   async function exportAll() {
     if (!navigator.onLine) {
-      toast.error("当前无网络，无法导出");
+      toast.error(t("toast.exportOffline"));
       return;
     }
     setExporting(true);
-    const toastId = toast.loading("正在导出全部账单…");
+    const toastId = toast.loading(t("toast.exportLoading"));
     try {
       const rows = await queryTransactions();
       if (rows.length === 0) {
-        toast.error("暂无账单可导出", { id: toastId });
+        toast.error(t("toast.exportEmpty"), { id: toastId });
         return;
       }
-      exportTransactionsToXlsx(rows);
-      toast.success(`已导出 ${rows.length} 笔账单`, { id: toastId });
+      exportTransactionsToXlsx(rows, { t });
+      toast.success(t("toast.exportDone", { count: rows.length }), { id: toastId });
     } catch (error) {
       toast.error(formatSupabaseError(error), { id: toastId });
     } finally {
@@ -109,11 +113,11 @@ export function ProfilePage() {
 
   async function handleResetAllData() {
     if (!navigator.onLine) {
-      toast.error("当前无网络，无法清空云端数据");
+      toast.error(t("toast.resetOffline"));
       return;
     }
     setResetting(true);
-    const toastId = toast.loading("正在清空数据…");
+    const toastId = toast.loading(t("toast.resetLoading"));
     try {
       const { error: txError } = await getSupabase()
         .from("transactions")
@@ -131,15 +135,14 @@ export function ProfilePage() {
         localStorage.removeItem(key);
       }
       writeDefaultCurrency(currency);
-      localStorage.setItem(LANGUAGE_KEY, language);
-      localStorage.setItem(FONT_KEY, fontSetting);
+      writeStoredLocale(locale);
 
       setIsResetModalOpen(false);
-      toast.success("已清空所有数据，页面即将刷新", { id: toastId });
+      toast.success(t("toast.resetDone"), { id: toastId });
       window.setTimeout(() => window.location.reload(), 600);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "清空失败，请稍后重试",
+        error instanceof Error ? error.message : t("toast.resetFail"),
         { id: toastId },
       );
     } finally {
@@ -150,36 +153,36 @@ export function ProfilePage() {
   return (
     <main className="h-full overflow-y-auto overscroll-contain bg-[#FFFDF0] px-4 pb-8 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
       <header className="px-1">
-        <p className="text-sm font-semibold text-[#F8A055]">Settings</p>
+        <p className="text-sm font-semibold text-[#F8A055]">{t("settings.eyebrow")}</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight text-[#5C4A32]">
-          设置
+          {t("settings.title")}
         </h1>
-        <p className="mt-2 text-sm text-[#9A7B55]">偏好、数据与关于小猫。</p>
+        <p className="mt-2 text-sm text-[#9A7B55]">{t("settings.subtitle")}</p>
       </header>
 
       {/* 卡片 A：偏好设置 */}
       <section className="mt-6">
         <p className="mb-2 px-1 text-xs font-semibold tracking-wide text-[#A08875]">
-          偏好设置
+          {t("settings.section.preferences")}
         </p>
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm divide-y divide-[#F5F0E8]">
           <SettingsRow
             icon={<Globe className="size-4" strokeWidth={2} />}
-            label="界面语言"
-            onClick={handleLanguageClick}
-            value={language}
+            label={t("settings.language")}
+            onClick={() => setIsLanguageSheetOpen(true)}
+            value={localeDisplayName(locale)}
           />
           <SettingsRow
             icon={<Coins className="size-4" strokeWidth={2} />}
-            label="默认记账币种"
+            label={t("settings.defaultCurrency")}
             onClick={() => setIsCurrencySheetOpen(true)}
             value={currency}
           />
           <SettingsRow
             icon={<Type className="size-4" strokeWidth={2} />}
-            label="字体设置"
+            label={t("settings.font")}
             onClick={handleFontClick}
-            value={fontSetting}
+            value={t("settings.fontValue")}
           />
         </div>
       </section>
@@ -187,7 +190,7 @@ export function ProfilePage() {
       {/* 卡片 B：数据管理 */}
       <section className="mt-5">
         <p className="mb-2 px-1 text-xs font-semibold tracking-wide text-[#A08875]">
-          数据管理
+          {t("settings.section.data")}
         </p>
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm divide-y divide-[#F5F0E8]">
           <button
@@ -204,14 +207,14 @@ export function ProfilePage() {
               )}
             </span>
             <span className="min-w-0 flex-1 text-[15px] font-semibold text-[#5C4A32]">
-              导出账单数据
+              {t("settings.exportData")}
             </span>
             <ChevronRight className="size-4 shrink-0 text-[#D4C4B0]" />
           </button>
           <SettingsRow
             danger
             icon={<Trash2 className="size-4" strokeWidth={2} />}
-            label="重置所有数据"
+            label={t("settings.resetAll")}
             onClick={() => setIsResetModalOpen(true)}
           />
         </div>
@@ -220,32 +223,58 @@ export function ProfilePage() {
       {/* 卡片 C：关于 */}
       <section className="mt-5">
         <p className="mb-2 px-1 text-xs font-semibold tracking-wide text-[#A08875]">
-          关于
+          {t("settings.section.about")}
         </p>
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm divide-y divide-[#F5F0E8]">
           <SettingsRow
             icon={<Heart className="size-4" strokeWidth={2} />}
-            label="赏个猫罐头 🐟"
+            label={t("settings.tipCat")}
             onClick={handleTipClick}
           />
           <SettingsRow
             chevron={false}
             icon={<Info className="size-4" strokeWidth={2} />}
-            label="当前版本"
+            label={t("settings.version")}
             value="v2.0"
           />
         </div>
       </section>
 
       <BottomSheet
+        onOpenChange={setIsLanguageSheetOpen}
+        open={isLanguageSheetOpen}
+        title={t("settings.languageSheetTitle")}
+      >
+        <div className="space-y-2 pt-1">
+          {LOCALE_OPTIONS.map((option) => {
+            const active = locale === option.code;
+            return (
+              <button
+                className={`flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold transition-all active:scale-[0.99] ${
+                  active
+                    ? "bg-[#F8A055]/15 text-[#8C6D53] ring-2 ring-[#F8A055]"
+                    : "bg-[#FAF6EC] text-[#5C4A32]"
+                }`}
+                key={option.code}
+                onClick={() => handleLanguageChange(option.code, option.label)}
+                type="button"
+              >
+                <span>{option.label}</span>
+                {active ? <span className="text-xs">{t("settings.current")}</span> : null}
+              </button>
+            );
+          })}
+        </div>
+      </BottomSheet>
+
+      <BottomSheet
         onOpenChange={setIsCurrencySheetOpen}
         open={isCurrencySheetOpen}
-        title="选择默认记账币种"
+        title={t("settings.currencySheetTitle")}
       >
         <div className="space-y-2 pt-1">
           {CURRENCY_CODES.map((code) => {
             const active = currency === code;
-            const meta = CURRENCY_META[code];
             return (
               <button
                 className={`flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold transition-all active:scale-[0.99] ${
@@ -257,16 +286,19 @@ export function ProfilePage() {
                 onClick={() => handleCurrencyChange(code)}
                 type="button"
               >
-                <span>
-                  {meta.flag} {code} ({meta.label})
+                <span className="flex items-center gap-2">
+                  <CurrencyIcon
+                    className={`size-4 ${active ? "text-[#8C6D53]" : "text-[#A08875]"}`}
+                    code={code}
+                  />
+                  {code} ({translateCurrencyLabel(code, t)})
                 </span>
-                {active ? <span className="text-xs">当前</span> : null}
+                {active ? <span className="text-xs">{t("settings.current")}</span> : null}
               </button>
             );
           })}
           <p className="px-1 pt-2 text-xs leading-5 text-[#A08875]">
-            原生多币种独立结算：切换默认币种只影响新记账与 AI
-            识别兜底，不会换算历史账单。
+            {t("settings.currencyHint")}
           </p>
         </div>
       </BottomSheet>
@@ -274,12 +306,12 @@ export function ProfilePage() {
       <ConfirmDialog
         busy={resetting}
         confirmDanger
-        confirmLabel="确认清空"
-        description="此操作不可逆，所有账单、规划和对话记录将被永久删除！小猫会很伤心的😿"
+        confirmLabel={t("settings.resetConfirm")}
+        description={t("settings.resetDescription")}
         onCancel={() => !resetting && setIsResetModalOpen(false)}
         onConfirm={() => void handleResetAllData()}
         open={isResetModalOpen}
-        title="确定要清空所有数据吗？"
+        title={t("settings.resetTitle")}
       />
     </main>
   );

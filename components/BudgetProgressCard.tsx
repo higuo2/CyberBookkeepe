@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { LoaderCircle, Pencil, Save } from "lucide-react";
+import { Lightbulb, LoaderCircle, Lock, Pencil, Save } from "lucide-react";
 import { toast } from "sonner";
 import { BottomSheet } from "@/components/BottomSheet";
 import { budgetBarColor } from "@/lib/budget";
@@ -11,10 +11,11 @@ import {
 } from "@/lib/planner";
 import { formatHKD, writeBudgetToStorage } from "@/lib/transaction-utils";
 import type { MonthBudgetStats } from "@/lib/types";
+import { useT } from "@/components/LocaleProvider";
 
-function formatDailyAvailable(amount: number) {
+function formatDailyAvailable(amount: number, t: ReturnType<typeof useT>) {
   const daily = Math.max(0, Math.round(amount));
-  return `HK$${daily.toLocaleString("en-US")} / 天`;
+  return t("budget.perDay", { amount: `HK$${daily.toLocaleString("en-US")}` });
 }
 
 export function BudgetProgressCard({
@@ -26,6 +27,7 @@ export function BudgetProgressCard({
   onBudgetSaved?: (budget: number) => void;
   onSpendModeChange?: (mode: BudgetSpendMode) => void;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -46,7 +48,7 @@ export function BudgetProgressCard({
     event.preventDefault();
     const amount = Number(input);
     if (!Number.isFinite(amount) || amount < 0) {
-      toast.error("请输入有效的预算金额");
+      toast.error(t("toast.budgetInvalid"));
       return;
     }
     setSaving(true);
@@ -54,7 +56,7 @@ export function BudgetProgressCard({
       writeBudgetToStorage(amount);
       onBudgetSaved?.(amount);
       setOpen(false);
-      toast.success("本月预算已更新");
+      toast.success(t("toast.budgetUpdated"));
     } finally {
       setSaving(false);
     }
@@ -69,9 +71,9 @@ export function BudgetProgressCard({
     <>
       <section className="rounded-2xl border border-[#EFE5D3] bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm font-extrabold text-[#4A3E3D]">预算进度</h2>
+          <h2 className="text-sm font-extrabold text-[#4A3E3D]">{t("budget.title")}</h2>
           <button
-            aria-label="修改预算"
+            aria-label={t("budget.aria.edit")}
             className="grid size-8 place-items-center rounded-full text-[#A08875] transition-all hover:bg-[#FFF6D9] active:scale-95"
             onClick={openEditor}
             type="button"
@@ -82,7 +84,7 @@ export function BudgetProgressCard({
 
         {stats.budget <= 0 ? (
           <p className="mt-3 text-sm text-[#A08875]">
-            尚未设置预算。点击右上角铅笔图标即可设定本月总预算。
+            {t("budget.empty")}
           </p>
         ) : (
           <>
@@ -96,7 +98,7 @@ export function BudgetProgressCard({
                 onClick={() => setMode("actual")}
                 type="button"
               >
-                只看已花
+                {t("budget.mode.spentOnly")}
               </button>
               <button
                 className={`h-8 rounded-xl text-[11px] font-bold transition-all active:scale-95 ${
@@ -107,32 +109,43 @@ export function BudgetProgressCard({
                 onClick={() => setMode("reserve_fixed")}
                 type="button"
               >
-                预扣固定支出
+                {t("budget.mode.withFixed")}
               </button>
             </div>
-            <p className="mt-2 text-[11px] leading-4 text-[#A08875]">
-              {stats.spendMode === "actual"
-                ? "💡 仅根据你目前手动记下的真实账单计算"
-                : "🔒 已帮你提前扣除本月房租、订阅等固定开销"}
+            <p className="mt-2 flex items-start gap-1 text-[11px] leading-4 text-[#A08875]">
+              {stats.spendMode === "actual" ? (
+                <>
+                  <Lightbulb
+                    className="mt-px size-3 shrink-0"
+                    strokeWidth={2.25}
+                  />
+                  {t("budget.hint.spentOnly")}
+                </>
+              ) : (
+                <>
+                  <Lock className="mt-px size-3 shrink-0" strokeWidth={2.25} />
+                  {t("budget.hint.withFixed")}
+                </>
+              )}
             </p>
 
             <div className="mt-3 grid grid-cols-3 gap-2 text-center">
               <div className="rounded-2xl bg-[#FFF6D9] p-2.5">
-                <p className="text-[10px] font-medium text-[#A08875]">已用</p>
+                <p className="text-[10px] font-medium text-[#A08875]">{t("budget.used")}</p>
                 <p className="mt-1 text-sm font-semibold text-[#4A3E3D]">
                   {formatHKD(stats.spent)}
                 </p>
               </div>
               <div className="rounded-2xl bg-[#FFF6D9] p-2.5">
-                <p className="text-[10px] font-medium text-[#A08875]">剩余</p>
+                <p className="text-[10px] font-medium text-[#A08875]">{t("budget.remaining")}</p>
                 <p className={`mt-1 text-sm font-semibold ${remainingClass}`}>
                   {formatHKD(stats.remaining)}
                 </p>
               </div>
               <div className="rounded-2xl bg-[#FFF6D9] p-2.5">
-                <p className="text-[10px] font-medium text-[#A08875]">日均可用</p>
+                <p className="text-[10px] font-medium text-[#A08875]">{t("budget.dailyAvailable")}</p>
                 <p className="mt-1 text-sm font-semibold text-[#4A3E3D]">
-                  {formatDailyAvailable(stats.dailyAvailable)}
+                  {formatDailyAvailable(stats.dailyAvailable, t)}
                 </p>
               </div>
             </div>
@@ -143,32 +156,34 @@ export function BudgetProgressCard({
               />
             </div>
             <p className="mt-1.5 text-xs text-[#A08875]">
-              预算 {formatHKD(stats.budget)} · 已用{" "}
-              {(stats.ratio * 100).toFixed(0)}%
+              {t("budget.summary", {
+                budget: formatHKD(stats.budget),
+                used: `${(stats.ratio * 100).toFixed(0)}%`,
+              })}
               {stats.spendMode === "reserve_fixed" && stats.estimatedFixed > 0
-                ? ` · 预留固定 ${formatHKD(stats.estimatedFixed)}`
+                ? t("budget.reservedFixed", { amount: formatHKD(stats.estimatedFixed) })
                 : ""}
             </p>
             {overspent && (
               <p className="mt-1.5 text-xs font-medium text-[#EF4444]">
-                ⚠️ 本月预算已超支
+                ⚠️ {t("budget.overspent")}
               </p>
             )}
           </>
         )}
       </section>
 
-      <BottomSheet onOpenChange={setOpen} open={open} title="修改本月预算">
+      <BottomSheet onOpenChange={setOpen} open={open} title={t("budget.editTitle")}>
         <form className="space-y-4 pt-1" onSubmit={saveBudget}>
           <label className="block text-xs font-medium text-[#A08875]">
-            本月总预算（HK$）
+            {t("budget.totalLabel")}
             <input
               autoFocus
               className="mt-2 h-12 w-full rounded-2xl border border-[#EFE5D3] bg-[#FAF6EC] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#F8A055] focus:ring-4 focus:ring-[#F8A055]/15"
               inputMode="decimal"
               min="0"
               onChange={(event) => setInput(event.target.value)}
-              placeholder="例如 15000"
+              placeholder={t("budget.placeholder")}
               step="1"
               type="number"
               value={input}
@@ -184,7 +199,7 @@ export function BudgetProgressCard({
             ) : (
               <Save className="size-5" />
             )}
-            保存预算
+            {t("budget.save")}
           </button>
         </form>
       </BottomSheet>

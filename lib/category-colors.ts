@@ -1,20 +1,24 @@
 /** Morandi soft palette — fixed per-category colors for charts & rankings */
 
 export const CATEGORY_COLORS: Record<string, string> = {
-  餐饮: "#FB923C", // 暖橙
-  购物: "#FACC15", // 鹅黄
-  交通: "#4ADE80", // 薄荷绿
-  宠物: "#F472B6", // 樱花粉
-  娱乐: "#38BDF8", // 海盐蓝
-  居住: "#A855F7", // 薰衣草紫
+  餐饮: "#FB923C",
+  购物: "#FACC15",
+  交通: "#4ADE80",
+  宠物: "#F472B6",
+  娱乐: "#38BDF8",
   住房: "#A855F7",
-  数码: "#818CF8", // 靛蓝
-  医疗: "#F87171", // 珊瑚红
-  其它: "#CBD5E1", // 暖灰
-  工资: "#34D399", // 翠绿
-  理财: "#FBBF24", // 琥珀
-  兼职: "#60A5FA", // 晴空蓝
-  其它收入: "#94A3B8", // 烟灰
+  居住: "#A855F7",
+  数码: "#818CF8",
+  医疗: "#F87171",
+  学习: "#F59E0B",
+  丽人: "#EC4899",
+  其它支出: "#CBD5E1",
+  其它: "#CBD5E1",
+  工资: "#34D399",
+  理财: "#FBBF24",
+  兼职: "#60A5FA",
+  奖金: "#A78BFA",
+  其它收入: "#94A3B8",
 };
 
 const FALLBACK_COLORS = [

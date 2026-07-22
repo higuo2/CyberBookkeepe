@@ -63,7 +63,7 @@ export function recurringItemFromAiParse(
         end_date: endDate,
       },
       nextDate: nextMonthlyDate(dayOfMonth),
-      emoji: direction === "income" ? "💵" : "☁️",
+      emoji: direction === "income" ? "banknote" : "cloud",
       startDate,
       sourceMessageId: options?.sourceMessageId,
     });
@@ -87,7 +87,7 @@ export function recurringItemFromAiParse(
       end_date: endDate,
     },
     nextDate: nextByDaysDate(byDays),
-    emoji: direction === "income" ? "💵" : "🚌",
+    emoji: direction === "income" ? "banknote" : "bus",
     startDate,
     sourceMessageId: options?.sourceMessageId,
   });
