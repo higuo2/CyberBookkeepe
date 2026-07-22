@@ -1,5 +1,8 @@
 export type TransactionType = "EXPENSE" | "INCOME";
 
+/** 原生多币种代码；禁止跨币种合计 */
+export type CurrencyCode = "HKD" | "CNY" | "JPY" | "KRW";
+
 export interface Transaction {
   id?: string;
   amount: number;
@@ -7,6 +10,8 @@ export interface Transaction {
   category: string;
   date: string;
   note: string;
+  /** ISO 币种；旧数据缺省按 HKD */
+  currency: CurrencyCode;
   /** 客户端语义标记；主库无此列，自动记账写入 note 标记 */
   auto_generated?: boolean;
 }
@@ -24,6 +29,7 @@ export interface ParsedRecurringData {
   amount: number;
   direction: "expense" | "income";
   category: string;
+  currency: CurrencyCode;
   period_type: "daily" | "weekly" | "monthly";
   /** 按周：1–7 = 周一至周日 */
   by_days?: number[];

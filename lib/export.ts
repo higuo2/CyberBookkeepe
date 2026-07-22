@@ -10,6 +10,7 @@ export function exportTransactionsToXlsx(
     日期: item.date,
     类型: item.type === "EXPENSE" ? "支出" : "收入",
     分类: item.category,
+    币种: item.currency || "HKD",
     金额: Number(item.amount),
     备注: cleanNote(item.note),
   }));

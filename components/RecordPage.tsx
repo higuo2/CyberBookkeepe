@@ -30,6 +30,7 @@ import {
 } from "@/lib/ai-recurring";
 import {
   findTransactionByMsgMarker,
+  insertTransactionDraft,
   syncDueRecurringItems,
 } from "@/lib/recurring-sync";
 import {
@@ -39,12 +40,12 @@ import {
   writeRecurringItems,
   type WeekdayCode,
 } from "@/lib/planner";
-import { getSupabase } from "@/lib/supabase";
 import {
-  formatHKD,
+  formatMoney,
   localDateString,
   prepareDraft,
 } from "@/lib/transaction-utils";
+import { normalizeCurrency, readDefaultCurrency } from "@/lib/currency";
 import type {
   ParseApiResponse,
   ParsedRecurringData,
@@ -52,7 +53,7 @@ import type {
   Transaction,
   TransactionDraft,
 } from "@/lib/types";
-import { chatMsgMarker, cleanNote, filterActiveTransactions } from "@/lib/utils";
+import { chatMsgMarker, cleanNote } from "@/lib/utils";
 
 type ChatMessage = UiChatMessage;
 
@@ -104,6 +105,9 @@ function toDbRow(
     category: item.category,
     date: item.date,
     note: item.note,
+    currency: normalizeCurrency(
+      "currency" in item ? item.currency : readDefaultCurrency(),
+    ),
   });
   if (!msgMarker) return prepared;
   const note = prepared.note?.includes(msgMarker)
@@ -210,6 +214,7 @@ export function RecordPage() {
       category: "餐饮",
       date: localDateString(),
       note: "",
+      currency: readDefaultCurrency(),
     }),
   );
   const [txEditTarget, setTxEditTarget] = useState<{
@@ -230,15 +235,15 @@ export function RecordPage() {
     const timer = window.setTimeout(async () => {
       try {
         const today = localDateString();
-        const { data } = await getSupabase()
-          .from("transactions")
-          .select("amount, type, date, note")
-          .eq("date", today)
-          .eq("type", "EXPENSE");
-        const sum = filterActiveTransactions(data ?? []).reduce(
-          (acc, row) => acc + Number((row as Transaction).amount),
-          0,
-        );
+        const defaultCurrency = readDefaultCurrency();
+        const { queryTransactions } = await import("@/lib/transactions-query");
+        const rows = await queryTransactions({
+          eqDate: today,
+          type: "EXPENSE",
+        });
+        const sum = rows
+          .filter((row) => normalizeCurrency(row.currency) === defaultCurrency)
+          .reduce((acc, row) => acc + Number(row.amount), 0);
         setTodaySpend(sum);
       } catch {
         // ignore
@@ -298,6 +303,7 @@ export function RecordPage() {
         body: JSON.stringify({
           text,
           today: localDateString(),
+          defaultCurrency: readDefaultCurrency(),
           history: toParseHistory([...prior, userSaved]),
         }),
       });
@@ -384,13 +390,8 @@ export function RecordPage() {
       let txId = existing?.id ?? record.id;
 
       if (!existing) {
-        const { data, error } = await getSupabase()
-          .from("transactions")
-          .insert(row)
-          .select("id")
-          .single();
-        if (error) throw error;
-        txId = data?.id;
+        const created = await insertTransactionDraft(row);
+        txId = created.id;
       }
 
       const nextRecords = msg.records.map((r, i) =>
@@ -471,6 +472,9 @@ export function RecordPage() {
       category: record.category,
       date: record.date,
       note: cleanNote(record.note),
+      currency: normalizeCurrency(
+        record.currency ?? readDefaultCurrency(),
+      ),
     });
     setTxEditTarget({ messageId, recordIndex });
     setTxDialogOpen(true);
@@ -499,13 +503,8 @@ export function RecordPage() {
       let txId = existing?.id;
 
       if (!existing) {
-        const { data, error } = await getSupabase()
-          .from("transactions")
-          .insert(row)
-          .select("id")
-          .single();
-        if (error) throw error;
-        txId = data?.id;
+        const created = await insertTransactionDraft(row);
+        txId = created.id;
       }
 
       const msg = messages.find((m) => m.id === messageId);
@@ -651,6 +650,7 @@ export function RecordPage() {
         amount: saved.amount,
         direction: saved.direction,
         category: saved.category ?? "其它",
+        currency: normalizeCurrency(saved.currency ?? readDefaultCurrency()),
         period_type:
           saved.recurrence.kind === "monthly" ? "monthly" : "weekly",
         by_days:
@@ -724,7 +724,9 @@ export function RecordPage() {
             <p className="text-sm font-medium text-[#8A7A5C]">{headerDate}</p>
             <p className="mt-0.5 text-base font-semibold text-[#5C4A32]">
               今日支出{" "}
-              <span className="text-[#E07A3D]">{formatHKD(todaySpend)}</span>
+              <span className="text-[#E07A3D]">
+                {formatMoney(todaySpend, readDefaultCurrency())}
+              </span>
             </p>
           </div>
           <CatAvatar className="shadow-md" size={44} />
@@ -798,7 +800,11 @@ export function RecordPage() {
                         }`}
                       >
                         {item.direction === "income" ? "+" : ""}
-                        {formatHKD(item.amount)} · {dirLabel}
+                        {formatMoney(
+                          item.amount,
+                          item.currency ?? readDefaultCurrency(),
+                        )}{" "}
+                        · {dirLabel}
                       </p>
                       <p className="mt-1 text-xs text-[#A08875]">
                         {periodLabel(item)}
@@ -898,7 +904,10 @@ export function RecordPage() {
                               }`}
                             >
                               {record.type === "EXPENSE" ? "-" : "+"}
-                              {formatHKD(record.amount)}
+                              {formatMoney(
+                                record.amount,
+                                record.currency ?? readDefaultCurrency(),
+                              )}
                             </p>
                           </div>
                         </div>

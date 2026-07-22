@@ -15,17 +15,22 @@ import {
 import { toast } from "sonner";
 import { BottomSheet } from "@/components/BottomSheet";
 import { ConfirmDialog, SettingsRow } from "@/components/ConfirmDialog";
+import {
+  CURRENCY_CODES,
+  CURRENCY_META,
+  readDefaultCurrency,
+  writeDefaultCurrency,
+  type CurrencyCode,
+} from "@/lib/currency";
 import { exportTransactionsToXlsx } from "@/lib/export";
 import { getSupabase } from "@/lib/supabase";
-import type { Transaction } from "@/lib/types";
-import { filterActiveTransactions } from "@/lib/utils";
+import {
+  formatSupabaseError,
+  queryTransactions,
+} from "@/lib/transactions-query";
 
-const CURRENCY_KEY = "cyberbookkeeper_currency";
 const LANGUAGE_KEY = "cyberbookkeeper_language";
 const FONT_KEY = "cyberbookkeeper_font";
-
-const CURRENCY_OPTIONS = ["HKD", "CNY", "USD", "EUR", "JPY"] as const;
-type CurrencyCode = (typeof CURRENCY_OPTIONS)[number];
 
 const PLANNER_STORAGE_KEYS = [
   "cyberbookkeeper_planner_accounts",
@@ -51,13 +56,7 @@ export function ProfilePage() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      const savedCurrency = localStorage.getItem(CURRENCY_KEY);
-      if (
-        savedCurrency &&
-        CURRENCY_OPTIONS.includes(savedCurrency as CurrencyCode)
-      ) {
-        setCurrency(savedCurrency as CurrencyCode);
-      }
+      setCurrency(readDefaultCurrency());
       const savedLanguage = localStorage.getItem(LANGUAGE_KEY);
       if (savedLanguage) setLanguage(savedLanguage);
       const savedFont = localStorage.getItem(FONT_KEY);
@@ -70,19 +69,12 @@ export function ProfilePage() {
     toast.message("目前仅支持简体中文，多语言即将开放");
   }
 
-  /**
-   * 切换默认币种。
-   * TODO: 调用汇率 API，将历史 transactions 金额按汇率换算到新币种后再写回。
-   */
+  /** 仅切换默认记账币种；不做任何历史汇率换算 */
   function handleCurrencyChange(next: CurrencyCode) {
-    const prev = currency;
     setCurrency(next);
-    localStorage.setItem(CURRENCY_KEY, next);
+    writeDefaultCurrency(next);
     setIsCurrencySheetOpen(false);
-    toast.success(`默认币种已切换为 ${next}`);
-    // 预留：汇率换算历史数据
-    // await convertHistoricalAmounts(prev, next);
-    void prev;
+    toast.success(`默认记账币种已设为 ${next}`);
   }
 
   function handleFontClick() {
@@ -90,7 +82,6 @@ export function ProfilePage() {
   }
 
   function handleTipClick() {
-    // 预留：打赏码弹窗
     toast.message("谢谢你～罐头正在筹备中 🐟");
   }
 
@@ -102,12 +93,7 @@ export function ProfilePage() {
     setExporting(true);
     const toastId = toast.loading("正在导出全部账单…");
     try {
-      const { data, error } = await getSupabase()
-        .from("transactions")
-        .select("id, amount, type, category, date, note")
-        .order("date", { ascending: false });
-      if (error) throw error;
-      const rows = filterActiveTransactions((data ?? []) as Transaction[]);
+      const rows = await queryTransactions();
       if (rows.length === 0) {
         toast.error("暂无账单可导出", { id: toastId });
         return;
@@ -115,10 +101,7 @@ export function ProfilePage() {
       exportTransactionsToXlsx(rows);
       toast.success(`已导出 ${rows.length} 笔账单`, { id: toastId });
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "导出失败，请稍后重试",
-        { id: toastId },
-      );
+      toast.error(formatSupabaseError(error), { id: toastId });
     } finally {
       setExporting(false);
     }
@@ -147,7 +130,7 @@ export function ProfilePage() {
       for (const key of PLANNER_STORAGE_KEYS) {
         localStorage.removeItem(key);
       }
-      localStorage.setItem(CURRENCY_KEY, currency);
+      writeDefaultCurrency(currency);
       localStorage.setItem(LANGUAGE_KEY, language);
       localStorage.setItem(FONT_KEY, fontSetting);
 
@@ -188,7 +171,7 @@ export function ProfilePage() {
           />
           <SettingsRow
             icon={<Coins className="size-4" strokeWidth={2} />}
-            label="默认币种"
+            label="默认记账币种"
             onClick={() => setIsCurrencySheetOpen(true)}
             value={currency}
           />
@@ -257,11 +240,12 @@ export function ProfilePage() {
       <BottomSheet
         onOpenChange={setIsCurrencySheetOpen}
         open={isCurrencySheetOpen}
-        title="选择默认币种"
+        title="选择默认记账币种"
       >
         <div className="space-y-2 pt-1">
-          {CURRENCY_OPTIONS.map((code) => {
+          {CURRENCY_CODES.map((code) => {
             const active = currency === code;
+            const meta = CURRENCY_META[code];
             return (
               <button
                 className={`flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold transition-all active:scale-[0.99] ${
@@ -273,14 +257,16 @@ export function ProfilePage() {
                 onClick={() => handleCurrencyChange(code)}
                 type="button"
               >
-                <span>{code}</span>
+                <span>
+                  {meta.flag} {code} ({meta.label})
+                </span>
                 {active ? <span className="text-xs">当前</span> : null}
               </button>
             );
           })}
           <p className="px-1 pt-2 text-xs leading-5 text-[#A08875]">
-            切换币种后，历史账单换算需接入汇率 API（已在
-            handleCurrencyChange 中预留）。
+            原生多币种独立结算：切换默认币种只影响新记账与 AI
+            识别兜底，不会换算历史账单。
           </p>
         </div>
       </BottomSheet>

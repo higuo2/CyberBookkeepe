@@ -13,7 +13,11 @@ import {
 } from "recharts";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { categoryColor } from "@/lib/category-colors";
-import { formatHKD } from "@/lib/transaction-utils";
+import {
+  DEFAULT_CURRENCY,
+  formatMoney,
+  type CurrencyCode,
+} from "@/lib/currency";
 
 function displayCategory(name: string) {
   return name === "居住" ? "住房" : name;
@@ -21,8 +25,10 @@ function displayCategory(name: string) {
 
 export function CategoryPieChart({
   data,
+  currency = DEFAULT_CURRENCY,
 }: {
   data: { name: string; value: number }[];
+  currency?: CurrencyCode;
 }) {
   const total = useMemo(
     () => data.reduce((sum, item) => sum + item.value, 0),
@@ -70,7 +76,7 @@ export function CategoryPieChart({
                 background: "#FAF6EC",
                 boxShadow: "0 8px 24px rgba(92,74,50,.08)",
               }}
-              formatter={(value) => formatHKD(Number(value))}
+              formatter={(value) => formatMoney(Number(value), currency)}
             />
           </PieChart>
         </ResponsiveContainer>
@@ -108,7 +114,7 @@ export function CategoryPieChart({
                 </div>
               </div>
               <p className="w-[5.5rem] shrink-0 text-right text-sm font-semibold tabular-nums text-[#5C4A32]">
-                {formatHKD(item.value)}
+                {formatMoney(item.value, currency)}
               </p>
             </li>
           );
@@ -129,9 +135,11 @@ function formatTrendDate(date: string) {
 function TrendTooltip({
   active,
   payload,
+  currency,
 }: {
   active?: boolean;
   payload?: Array<{ payload?: { date?: string; amount?: number } }>;
+  currency: CurrencyCode;
 }) {
   if (!active || !payload?.length) return null;
   const point = payload[0]?.payload;
@@ -141,7 +149,7 @@ function TrendTooltip({
     <div className="rounded-xl border border-[#EFE5D3] bg-[#FFFDF0] p-2.5 text-xs text-[#8C6D53] shadow-md">
       <p className="font-medium">{formatTrendDate(point.date)}</p>
       <p className="mt-1 font-semibold tabular-nums text-[#5C4A32]">
-        支出：{formatHKD(Number(point.amount) || 0)}
+        支出：{formatMoney(Number(point.amount) || 0, currency)}
       </p>
     </div>
   );
@@ -149,8 +157,10 @@ function TrendTooltip({
 
 export function TrendBarChart({
   data,
+  currency = DEFAULT_CURRENCY,
 }: {
   data: { date: string; amount: number; label: string }[];
+  currency?: CurrencyCode;
 }) {
   return (
     <div className="h-56 w-full">
@@ -169,7 +179,7 @@ export function TrendBarChart({
             tickLine={false}
           />
           <Tooltip
-            content={<TrendTooltip />}
+            content={<TrendTooltip currency={currency} />}
             cursor={{ fill: "rgba(248, 160, 85, 0.08)" }}
           />
           <Bar

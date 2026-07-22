@@ -1,4 +1,6 @@
 import { formatHKD, getMonthRange, localDateString } from "@/lib/transaction-utils";
+import type { CurrencyCode } from "@/lib/currency";
+import { DEFAULT_CURRENCY, normalizeCurrency } from "@/lib/currency";
 
 export type PlannerAccount = {
   id: string;
@@ -67,6 +69,8 @@ export type RecurringItem = {
   category?: string;
   /** 列表 / 表单展示用图标 */
   emoji?: string;
+  /** 原生币种；缺省 HKD */
+  currency?: CurrencyCode;
   /** 规则生效起始日 YYYY-MM-DD（追溯同步起点） */
   startDate?: string;
   /** 创建时间 ISO；与 startDate 一起决定追溯起点 */
@@ -366,6 +370,7 @@ export function normalizeRecurringItem(raw: unknown): RecurringItem | null {
       typeof item.emoji === "string" && item.emoji.trim()
         ? item.emoji.trim()
         : undefined,
+    currency: normalizeCurrency(item.currency),
     startDate:
       typeof item.startDate === "string" &&
       /^\d{4}-\d{2}-\d{2}$/.test(item.startDate)
@@ -753,6 +758,7 @@ export function createRecurringItem(
     autoWrite: partial?.autoWrite !== false,
     category: partial?.category?.trim() || undefined,
     emoji: partial?.emoji?.trim() || undefined,
+    currency: normalizeCurrency(partial?.currency ?? DEFAULT_CURRENCY),
     startDate:
       partial?.startDate && /^\d{4}-\d{2}-\d{2}$/.test(partial.startDate)
         ? partial.startDate

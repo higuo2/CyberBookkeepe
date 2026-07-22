@@ -1,6 +1,6 @@
 # CyberBookkeeper
 
-移动端优先的 AI 智能记账 PWA（钱包小猫）。奶油色 UI，适配 iPhone 安全区；支持自然语言记账、账单管理、统计图表、规划资产与 Excel 导出。币种默认 **HKD**。
+移动端优先的 AI 智能记账 PWA（钱包小猫）。奶油色 UI，适配 iPhone 安全区；支持自然语言记账、账单管理、统计图表、规划资产与 Excel 导出。币种默认 **HKD**（港币），另支持 CNY / JPY / KRW；各币种独立结算，不做汇率换算。
 
 ## 功能一览
 
@@ -8,14 +8,14 @@
 |-----|------|------|
 | 记账 | `/` | 聊天式自然语言记账，多笔解析并自动入库 |
 | 账单 | `/transactions` | 搜索 / 筛选 / 点按编辑 / Excel 导出 |
-| 统计 | `/charts` | 近 7 日支出趋势、分类占比 Top 4 |
+| 统计 | `/charts` | 按币种独立展示本月收支与分类占比（不做汇率换算） |
 | 规划 | `/summary` | 预算进度（含预估固定开销）、周期收支/订阅、愿望存钱罐 |
-| 设置 | `/profile` | 偏好、导出、重置与关于 |
+| 设置 | `/profile` | 默认记账币种、导出、重置与关于 |
 
 ## 本地启动
 
 1. 复制 `.env.local.example` 为 `.env.local`，填入密钥与访问密码。
-2. 在 Supabase SQL Editor 执行 `supabase/schema.sql`（含 `transactions` 与 `chat_messages`）。
+2. 在 Supabase SQL Editor 执行 `supabase/schema.sql`（含 `transactions` 与 `chat_messages`）。若表已存在、只缺多币种，可只跑 `supabase/migrate-currency.sql`。
 3. 安装并启动：
 
 ```bash

@@ -55,6 +55,7 @@ export function recurringItemFromAiParse(
       amount: data.amount,
       direction,
       category: data.category,
+      currency: data.currency,
       autoWrite: data.auto_record !== false,
       recurrence: {
         kind: "monthly",
@@ -78,6 +79,7 @@ export function recurringItemFromAiParse(
     amount: data.amount,
     direction,
     category: data.category,
+    currency: data.currency,
     autoWrite: data.auto_record !== false,
     recurrence: {
       kind: "by_days",

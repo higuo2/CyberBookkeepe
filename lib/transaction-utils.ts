@@ -1,4 +1,11 @@
 import type { Transaction, TransactionDraft, TransactionType } from "@/lib/types";
+import {
+  DEFAULT_CURRENCY,
+  formatMoney,
+  normalizeCurrency,
+  ZERO_DECIMAL_CURRENCIES,
+  type CurrencyCode,
+} from "@/lib/currency";
 
 export const EXPENSE_CATEGORIES = [
   "餐饮",
@@ -23,14 +30,13 @@ export const CATEGORIES = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES] as const
 
 export const BUDGET_STORAGE_KEY = "cyberbookkeeper_monthly_budget";
 
+/** @deprecated 请用 formatMoney(amount, currency)；保留作港币预算等场景 */
 export function formatHKD(amount: number) {
-  const n = Number(amount) || 0;
-  const abs = new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Math.abs(n));
-  return `${n < 0 ? "-" : ""}HK$${abs}`;
+  return formatMoney(amount, "HKD");
 }
+
+export { formatMoney, normalizeCurrency };
+export type { CurrencyCode };
 
 export function localDateString(date = new Date()) {
   const year = date.getFullYear();
@@ -49,6 +55,7 @@ export function defaultCategory(type: TransactionType) {
 
 export function createEmptyTransaction(
   type: TransactionType = "EXPENSE",
+  currency: CurrencyCode = DEFAULT_CURRENCY,
 ): TransactionDraft {
   return {
     amount: 0,
@@ -56,17 +63,24 @@ export function createEmptyTransaction(
     category: defaultCategory(type),
     date: localDateString(),
     note: "",
+    currency,
   };
 }
 
 /** Note is optional — empty note becomes category name before save. */
 export function prepareDraft(draft: TransactionDraft): TransactionDraft {
   const category = draft.category.trim() || defaultCategory(draft.type);
+  const currency = normalizeCurrency(draft.currency);
+  let amount = Number(draft.amount);
+  if (ZERO_DECIMAL_CURRENCIES.has(currency)) {
+    amount = Math.round(amount);
+  }
   return {
     ...draft,
-    amount: Number(draft.amount),
+    amount,
     category,
     note: draft.note.trim() || category,
+    currency,
   };
 }
 
@@ -109,6 +123,21 @@ export function sumByCategory(items: Transaction[]) {
   return Object.entries(map)
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
+}
+
+/** 将查询行规范为带 currency 的 Transaction */
+export function hydrateTransaction(
+  row: Record<string, unknown>,
+): Transaction {
+  return {
+    id: typeof row.id === "string" ? row.id : undefined,
+    amount: Number(row.amount),
+    type: row.type === "INCOME" ? "INCOME" : "EXPENSE",
+    category: String(row.category ?? ""),
+    date: String(row.date ?? ""),
+    note: String(row.note ?? ""),
+    currency: normalizeCurrency(row.currency),
+  };
 }
 
 export function readBudgetFromStorage() {

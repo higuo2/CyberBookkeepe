@@ -7,12 +7,15 @@ import {
   type RecurringItem,
   type WeekdayCode,
 } from "@/lib/planner";
+import { DEFAULT_CURRENCY, normalizeCurrency } from "@/lib/currency";
 import { getSupabase } from "@/lib/supabase";
 import {
-  formatHKD,
+  formatMoney,
   getMonthRange,
+  hydrateTransaction,
   localDateString,
 } from "@/lib/transaction-utils";
+import { queryTransactions } from "@/lib/transactions-query";
 import type { Transaction, TransactionDraft } from "@/lib/types";
 import { isActiveTransaction } from "@/lib/utils";
 
@@ -182,6 +185,7 @@ export function buildRecurringDraft(
     category: inferRecurringCategory(item),
     date,
     note: buildAutoNote(item, periodKey),
+    currency: normalizeCurrency(item.currency ?? DEFAULT_CURRENCY),
     auto_generated: true,
   };
 }
@@ -261,25 +265,21 @@ export function buildEarlyWriteDraft(
 
 export async function fetchMonthTransactions(now = new Date()) {
   const { firstDay, lastDay } = getMonthRange(now);
-  const { data, error } = await getSupabase()
-    .from("transactions")
-    .select("id, amount, type, category, date, note")
-    .gte("date", firstDay)
-    .lte("date", lastDay);
-  if (error) throw error;
   // 含「已跳过」：#rec 去重仍生效；展示/统计请再用 filterActiveTransactions
-  return (data ?? []) as Transaction[];
+  return queryTransactions({
+    gteDate: firstDay,
+    lteDate: lastDay,
+    includeSkipped: true,
+  });
 }
 
 async function fetchTransactionsInRange(fromDate: string, toDate: string) {
-  const { data, error } = await getSupabase()
-    .from("transactions")
-    .select("id, amount, type, category, date, note")
-    .gte("date", fromDate)
-    .lte("date", toDate);
-  if (error) throw error;
   // 含已跳过：用于 #rec 去重；返回全部
-  return (data ?? []) as Transaction[];
+  return queryTransactions({
+    gteDate: fromDate,
+    lteDate: toDate,
+    includeSkipped: true,
+  });
 }
 
 export async function insertTransactionDraft(draft: TransactionDraft) {
@@ -287,26 +287,33 @@ export async function insertTransactionDraft(draft: TransactionDraft) {
     auto_generated?: boolean;
   };
   void _auto;
-  const { data, error } = await getSupabase()
-    .from("transactions")
-    .insert(row)
-    .select("id, amount, type, category, date, note")
-    .single();
+
+  const tryInsert = async (payload: Record<string, unknown>, columns: string) =>
+    getSupabase().from("transactions").insert(payload).select(columns).single();
+
+  let { data, error } = await tryInsert(
+    row as unknown as Record<string, unknown>,
+    SELECT_WITH_CURRENCY,
+  );
+  if (error && isMissingCurrencyColumn(error)) {
+    const { currency: _c, ...legacy } = row as TransactionDraft & {
+      currency?: string;
+    };
+    void _c;
+    ({ data, error } = await tryInsert(
+      legacy as unknown as Record<string, unknown>,
+      SELECT_LEGACY,
+    ));
+  }
   if (error) throw error;
-  return data as Transaction;
+  return hydrateTransaction(data as unknown as Record<string, unknown>);
 }
 
 /** 按 AI 消息幂等标记查找已写入账单 */
 export async function findTransactionByMsgMarker(
   marker: string,
 ): Promise<Transaction | null> {
-  const { data, error } = await getSupabase()
-    .from("transactions")
-    .select("id, amount, type, category, date, note")
-    .ilike("note", `%${marker}%`)
-    .limit(5);
-  if (error) throw error;
-  const rows = (data ?? []) as Transaction[];
+  const rows = await queryNoteIlike(marker);
   return (
     rows.find((row) => row.note?.includes(marker) && isActiveTransaction(row)) ??
     rows.find((row) => row.note?.includes(marker)) ??
@@ -322,14 +329,58 @@ export async function updateTransactionDraft(
     auto_generated?: boolean;
   };
   void _auto;
-  const { data, error } = await getSupabase()
-    .from("transactions")
-    .update(row)
-    .eq("id", id)
-    .select("id, amount, type, category, date, note")
-    .single();
+
+  const tryUpdate = async (payload: Record<string, unknown>, columns: string) =>
+    getSupabase()
+      .from("transactions")
+      .update(payload)
+      .eq("id", id)
+      .select(columns)
+      .single();
+
+  let { data, error } = await tryUpdate(
+    row as unknown as Record<string, unknown>,
+    SELECT_WITH_CURRENCY,
+  );
+  if (error && isMissingCurrencyColumn(error)) {
+    const { currency: _c, ...legacy } = row as TransactionDraft & {
+      currency?: string;
+    };
+    void _c;
+    ({ data, error } = await tryUpdate(
+      legacy as unknown as Record<string, unknown>,
+      SELECT_LEGACY,
+    ));
+  }
   if (error) throw error;
-  return data as Transaction;
+  return hydrateTransaction(data as unknown as Record<string, unknown>);
+}
+
+const SELECT_WITH_CURRENCY =
+  "id, amount, type, category, date, note, currency";
+const SELECT_LEGACY = "id, amount, type, category, date, note";
+
+function isMissingCurrencyColumn(error: { message?: string } | null) {
+  const msg = error?.message ?? "";
+  return /currency/i.test(msg) && /column|does not exist|schema cache/i.test(msg);
+}
+
+async function queryNoteIlike(marker: string): Promise<Transaction[]> {
+  const run = async (columns: string) =>
+    getSupabase()
+      .from("transactions")
+      .select(columns)
+      .ilike("note", `%${marker}%`)
+      .limit(5);
+
+  let { data, error } = await run(SELECT_WITH_CURRENCY);
+  if (error && isMissingCurrencyColumn(error)) {
+    ({ data, error } = await run(SELECT_LEGACY));
+  }
+  if (error) throw error;
+  return (data ?? []).map((row) =>
+    hydrateTransaction(row as unknown as Record<string, unknown>),
+  );
 }
 
 export function transactionsForRecurringItem(
@@ -355,6 +406,7 @@ export type AutoSyncCreated = {
   name: string;
   amount: number;
   direction: RecurringItem["direction"];
+  currency?: string;
 };
 
 /**
@@ -416,6 +468,7 @@ export async function syncDueRecurringItems(
               name: item.name,
               amount: item.amount,
               direction: item.direction,
+              currency: normalizeCurrency(item.currency),
             });
           }
         }
@@ -443,7 +496,7 @@ export function formatAutoSyncToast(created: AutoSyncCreated[]) {
   if (created.length === 0) return null;
   if (created.length === 1) {
     const row = created[0];
-    return `已为你自动记入本月${row.name} ${formatHKD(row.amount)}~`;
+    return `已为你自动记入本月${row.name} ${formatMoney(row.amount, row.currency)}~`;
   }
   return `已为你自动记入 ${created.length} 笔到期固定收支~`;
 }

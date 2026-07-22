@@ -8,11 +8,13 @@ export function BottomSheet({
   onOpenChange,
   title,
   children,
+  contentClassName,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title?: string;
   children: ReactNode;
+  contentClassName?: string;
 }) {
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
@@ -36,7 +38,12 @@ export function BottomSheet({
           ) : (
             <Drawer.Title className="sr-only">底部面板</Drawer.Title>
           )}
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(env(safe-area-inset-bottom)+20px)] touch-pan-y">
+          <div
+            className={
+              contentClassName ??
+              "min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(env(safe-area-inset-bottom)+20px)] touch-pan-y"
+            }
+          >
             {children}
           </div>
         </Drawer.Content>

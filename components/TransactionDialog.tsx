@@ -15,6 +15,11 @@ import {
   defaultCategory,
   validateDraft,
 } from "@/lib/transaction-utils";
+import {
+  CURRENCY_CODES,
+  CURRENCY_META,
+  normalizeCurrency,
+} from "@/lib/currency";
 import type { TransactionDraft } from "@/lib/types";
 
 const fieldClass =
@@ -142,7 +147,7 @@ export function TransactionDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <label className="text-xs font-medium text-[#9A7B55]">
-              金额（HK$）
+              金额
               <input
                 className={`${fieldClass} mt-2 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                 inputMode="decimal"
@@ -158,18 +163,39 @@ export function TransactionDialog({
               />
             </label>
             <label className="text-xs font-medium text-[#9A7B55]">
-              日期
-              <input
+              币种
+              <select
                 className={`${fieldClass} mt-2`}
                 onChange={(event) =>
-                  onChange({ ...value, date: event.target.value })
+                  onChange({
+                    ...value,
+                    currency: normalizeCurrency(event.target.value),
+                  })
                 }
-                required
-                type="date"
-                value={value.date}
-              />
+                value={normalizeCurrency(value.currency)}
+              >
+                {CURRENCY_CODES.map((code) => (
+                  <option key={code} value={code}>
+                    {CURRENCY_META[code].flag} {code} (
+                    {CURRENCY_META[code].symbol})
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
+
+          <label className="block text-xs font-medium text-[#9A7B55]">
+            日期
+            <input
+              className={`${fieldClass} mt-2`}
+              onChange={(event) =>
+                onChange({ ...value, date: event.target.value })
+              }
+              required
+              type="date"
+              value={value.date}
+            />
+          </label>
 
           <label className="block text-xs font-medium text-[#9A7B55]">
             分类
