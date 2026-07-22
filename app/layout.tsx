@@ -15,8 +15,8 @@ export const metadata: Metadata = {
     title: "CyberBookkeeper",
   },
   icons: {
-    icon: "/icons/icon.svg",
-    apple: "/icons/icon.svg",
+    icon: [{ url: "/icons/icon.png", type: "image/png" }],
+    apple: [{ url: "/icons/icon.png", type: "image/png" }],
   },
   other: {
     "apple-mobile-web-app-status-bar-style": "default",

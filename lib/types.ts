@@ -18,6 +18,38 @@ export interface ParsedTransaction extends TransactionDraft {
   comment: string;
 }
 
+/** AI 解析出的周期/固定收支（写入规划页） */
+export interface ParsedRecurringData {
+  title: string;
+  amount: number;
+  direction: "expense" | "income";
+  category: string;
+  period_type: "daily" | "weekly" | "monthly";
+  /** 按周：1–7 = 周一至周日 */
+  by_days?: number[];
+  day_of_month?: number;
+  start_date: string;
+  end_date?: string;
+  auto_record: boolean;
+}
+
+/**
+ * 统一解析结果：
+ * - is_recurring=false → 普通账单（可多笔）
+ * - is_recurring=true  → 周期规则（写入规划）
+ */
+export type ParseSuccessPayload =
+  | {
+      is_recurring: false;
+      data: ParsedTransaction[];
+      reply_text: string;
+    }
+  | {
+      is_recurring: true;
+      data: ParsedRecurringData;
+      reply_text: string;
+    };
+
 export type ParseErrorCode =
   | "EMPTY_INPUT"
   | "UNPARSEABLE"
@@ -27,7 +59,7 @@ export type ParseErrorCode =
   | "SERVER_MISCONFIGURED";
 
 export type ParseApiResponse =
-  | { ok: true; data: ParsedTransaction[] }
+  | ({ ok: true } & ParseSuccessPayload)
   | { ok: false; code: ParseErrorCode; message: string };
 
 export type SummaryApiResponse =
