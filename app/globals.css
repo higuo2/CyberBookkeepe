@@ -84,6 +84,13 @@ html[data-font-style="serif"] {
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+  /* Hide scrollbars everywhere; overflow / touch / wheel scrolling stay intact */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
 }
 
 html {

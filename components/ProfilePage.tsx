@@ -173,6 +173,9 @@ export function ProfilePage() {
         .gte("created_at", "1970-01-01");
       if (chatError) throw chatError;
 
+      const { clearPlannerCloud } = await import("@/lib/planner-cloud");
+      await clearPlannerCloud();
+
       for (const key of PLANNER_STORAGE_KEYS) {
         localStorage.removeItem(key);
       }

@@ -100,7 +100,7 @@ export const en: Messages = {
   "record.greeting.afternoon": "Good afternoon",
   "record.greeting.evening": "Good evening",
   "record.welcome":
-    "{greeting} — I'm your wallet kitty. What would you like to log? Tap Confirm after parsing.",
+    "{greeting} — I'm River～ your exclusive wallet kitty. What would you like to log? Tap Confirm after parsing.",
   "record.chip.coffee": "Coffee $28",
   "record.chip.lunch": "Quick lunch $45",
   "record.chip.commute": "Weekday commute",

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { hydratePlannerFromCloud } from "@/lib/planner-cloud";
 import {
   formatAutoSyncToast,
   purgeLegacyDemoRecurringTransactions,
@@ -10,7 +11,7 @@ import {
 import { readRecurringItems } from "@/lib/planner";
 
 /**
- * 全局初始化：登录后任意页面挂载时检查到期周期项并写入主账单。
+ * 全局初始化：先拉云端规划，再检查到期周期项并写入主账单。
  * 同会话内只跑一次，避免路由切换重复 toast。
  */
 export function RecurringAutoSync() {
@@ -23,6 +24,7 @@ export function RecurringAutoSync() {
     const timer = window.setTimeout(() => {
       void (async () => {
         try {
+          await hydratePlannerFromCloud();
           // 先清本地演示种子，再清云端误写入的演示账单
           readRecurringItems();
           await purgeLegacyDemoRecurringTransactions();

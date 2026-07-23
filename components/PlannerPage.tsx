@@ -137,15 +137,39 @@ export function PlannerPage() {
   }, []);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
+    let cancelled = false;
+    const applyLocal = () => {
+      if (cancelled) return;
       setGoals(readGoals());
       setItems(readRecurringItems());
       setBudget(readBudgetFromStorage());
       setSpendMode(readBudgetSpendMode());
       setReady(true);
-      void refreshMonthLedger();
+    };
+
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const { hydratePlannerFromCloud } = await import(
+            "@/lib/planner-cloud"
+          );
+          await hydratePlannerFromCloud();
+        } catch {
+          // keep local
+        }
+        applyLocal();
+        void refreshMonthLedger();
+      })();
     }, 0);
-    return () => window.clearTimeout(timer);
+
+    const onHydrated = () => applyLocal();
+    window.addEventListener("planner-cloud-hydrated", onHydrated);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      window.removeEventListener("planner-cloud-hydrated", onHydrated);
+    };
   }, [refreshMonthLedger]);
 
   const estimatedFixed = useMemo(

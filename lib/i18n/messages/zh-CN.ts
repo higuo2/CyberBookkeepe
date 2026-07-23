@@ -98,7 +98,7 @@ export const zhCN = {
   "record.greeting.afternoon": "下午好",
   "record.greeting.evening": "晚上好",
   "record.welcome":
-    "{greeting}，我是你的钱包小猫。今天想记什么账？解析后请点「确认存入」哦～",
+    "{greeting}，我是River～你的专属钱包小猫。今天想记什么账？解析后请点「确认存入」哦～",
   "record.chip.coffee": "咖啡 $28",
   "record.chip.lunch": "快捷午餐 $45",
   "record.chip.commute": "工作日交通",

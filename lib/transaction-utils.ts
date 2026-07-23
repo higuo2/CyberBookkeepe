@@ -201,4 +201,10 @@ export function readBudgetFromStorage() {
 
 export function writeBudgetToStorage(amount: number) {
   localStorage.setItem(BUDGET_STORAGE_KEY, String(Math.max(0, amount)));
+  if (
+    typeof window !== "undefined" &&
+    !(globalThis as { __plannerCloudMutePush?: boolean }).__plannerCloudMutePush
+  ) {
+    void import("@/lib/planner-cloud").then((m) => m.schedulePlannerCloudPush());
+  }
 }

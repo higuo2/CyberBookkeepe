@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { CatAvatar } from "@/components/CatAvatar";
 import { useI18n } from "@/components/LocaleProvider";
 
 const STORAGE_KEY = "cyberbookkeeper_auth";
@@ -53,7 +52,17 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       <main className="mx-auto grid h-dvh w-full max-w-md place-items-center overflow-x-hidden px-6 pt-[calc(env(safe-area-inset-top)+12px)] pb-[calc(env(safe-area-inset-bottom)+12px)] touch-pan-y">
         <section className="w-full max-w-sm rounded-2xl border border-[#EAE5D9] bg-white p-7 shadow-2xs">
           <div className="mb-6">
-            <CatAvatar className="shadow-2xs" size={72} />
+            {/* App brand logo — separate from River chat avatar */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt=""
+              aria-hidden="true"
+              className="size-[72px] shrink-0 rounded-[22%] object-contain shadow-2xs"
+              draggable={false}
+              height={72}
+              src="/icons/icon.png"
+              width={72}
+            />
           </div>
           <p className="text-sm font-medium text-[#9C9285]">{t("auth.brand")}</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#2C2420]">

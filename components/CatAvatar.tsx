@@ -1,4 +1,4 @@
-/** 聊天 / 登录头像：品牌插画 logo */
+/** 记账对话头像：River（与 App logo 分离） */
 export function CatAvatar({
   size = 44,
   className = "",
@@ -15,7 +15,7 @@ export function CatAvatar({
       alt=""
       aria-hidden="true"
       className={[
-        "shrink-0 rounded-[22%] object-cover shadow-sm",
+        "shrink-0 rounded-full object-cover shadow-sm",
         thinking ? "animate-pulse" : "",
         className,
       ]
@@ -23,7 +23,7 @@ export function CatAvatar({
         .join(" ")}
       draggable={false}
       height={size}
-      src="/icons/cat-avatar.png"
+      src="/icons/river-avatar.png"
       style={{ width: size, height: size }}
       width={size}
     />

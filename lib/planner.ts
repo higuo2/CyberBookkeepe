@@ -394,6 +394,7 @@ export function readAccounts(): PlannerAccount[] {
 
 export function writeAccounts(accounts: PlannerAccount[]) {
   writeJson(ACCOUNTS_KEY, accounts);
+  scheduleCloudPush();
 }
 
 export function readLedger(): AccountLedgerEntry[] {
@@ -402,6 +403,7 @@ export function readLedger(): AccountLedgerEntry[] {
 
 export function writeLedger(entries: AccountLedgerEntry[]) {
   writeJson(LEDGER_KEY, entries);
+  scheduleCloudPush();
 }
 
 export function readGoals(): WishlistGoal[] {
@@ -430,6 +432,7 @@ export function readGoals(): WishlistGoal[] {
 
 export function writeGoals(goals: WishlistGoal[]) {
   writeJson(GOALS_KEY, goals);
+  scheduleCloudPush();
 }
 
 export function readRecurringItems(): RecurringItem[] {
@@ -465,6 +468,7 @@ export function readRecurringItems(): RecurringItem[] {
 export function writeRecurringItems(items: RecurringItem[]) {
   const cleaned = items.filter((item) => !isLegacyDemoRecurringItem(item));
   writeJson(SUBS_KEY, cleaned);
+  scheduleCloudPush();
 }
 
 /** @deprecated */
@@ -484,6 +488,17 @@ export function readBudgetSpendMode(): BudgetSpendMode {
 
 export function writeBudgetSpendMode(mode: BudgetSpendMode) {
   writeJson(BUDGET_SPEND_MODE_KEY, mode);
+  scheduleCloudPush();
+}
+
+function scheduleCloudPush() {
+  if (typeof window === "undefined") return;
+  if (
+    (globalThis as { __plannerCloudMutePush?: boolean }).__plannerCloudMutePush
+  ) {
+    return;
+  }
+  void import("@/lib/planner-cloud").then((m) => m.schedulePlannerCloudPush());
 }
 
 export function sumBalances(accounts: PlannerAccount[]) {

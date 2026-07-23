@@ -100,7 +100,7 @@ export const zhTW: Messages = {
   "record.greeting.afternoon": "下午好",
   "record.greeting.evening": "晚上好",
   "record.welcome":
-    "{greeting}，我是你的錢包小貓。今天想記什麼帳？解析後請點「確認存入」哦～",
+    "{greeting}，我是River～你的專屬錢包小貓。今天想記什麼帳？解析後請點「確認存入」哦～",
   "record.chip.coffee": "咖啡 $28",
   "record.chip.lunch": "快捷午餐 $45",
   "record.chip.commute": "工作日交通",
