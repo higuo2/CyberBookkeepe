@@ -1,26 +1,143 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
-:root {
+:root,
+html[data-theme="cream"] {
   color-scheme: light;
-  /* Quiet Luxury / Parchment */
+  /* Quiet Luxury / Parchment — default cream */
   --cream-bg: #f6f4ee;
   --cream-bg-soft: #fbf9f5;
   --cream-card: #ffffff;
   --cream-border: #eae5d9;
   --cream-divide: #f0ece1;
   --cream: var(--cream-bg);
-  /* Semantic — Morandi */
   --brand-primary: #c86235;
   --expense: #b8785c;
   --income: #5b7a66;
   --danger: #a87870;
-  /* Ink */
   --ink: #2c2420;
   --ink-body: #5a5046;
   --ink-muted: #9c9285;
   --font-scale: 1;
+  /* Semantic theme aliases (use these in components) */
+  --bg-main: var(--cream-bg);
+  --card-bg: var(--cream-card);
+  --primary: var(--brand-primary);
+  --text-main: var(--ink);
+  --color-bg-main: var(--cream-bg);
+  --color-bg-card: var(--cream-card);
+  --color-bg-soft: var(--cream-divide);
+  --color-border: var(--cream-border);
+  --color-border-theme: var(--cream-border);
+  --color-primary: var(--brand-primary);
+  --color-text-main: var(--ink);
+  --color-text-body: var(--ink-body);
+  --color-text-muted: var(--ink-muted);
   background: var(--cream-bg);
+}
+
+html[data-theme="titanium"] {
+  color-scheme: dark;
+  --cream-bg: #000000;
+  --cream-bg-soft: #0a0a0c;
+  --cream-card: #141416;
+  --cream-border: rgba(255, 255, 255, 0.12);
+  --cream-divide: #1c1c1e;
+  --brand-primary: #0a84ff;
+  --ink: #f5f5f7;
+  --ink-body: #c7c7cc;
+  --ink-muted: #8e8e93;
+  --bg-main: var(--cream-bg);
+  --card-bg: var(--cream-card);
+  --primary: var(--brand-primary);
+  --text-main: var(--ink);
+  --color-bg-main: var(--cream-bg);
+  --color-bg-card: var(--cream-card);
+  --color-bg-soft: var(--cream-divide);
+  --color-border: var(--cream-border);
+  --color-border-theme: var(--cream-border);
+  --color-primary: var(--brand-primary);
+  --color-text-main: var(--ink);
+  --color-text-body: var(--ink-body);
+  --color-text-muted: var(--ink-muted);
+}
+
+html[data-theme="cyber"] {
+  color-scheme: dark;
+  --cream-bg: #0f0e17;
+  --cream-bg-soft: #12111c;
+  --cream-card: #1b1a26;
+  --cream-border: rgba(0, 240, 255, 0.25);
+  --cream-divide: #252433;
+  --brand-primary: #ff007f;
+  --ink: #fffffe;
+  --ink-body: #e8e6f0;
+  --ink-muted: #9b97b0;
+  --bg-main: var(--cream-bg);
+  --card-bg: var(--cream-card);
+  --primary: var(--brand-primary);
+  --text-main: var(--ink);
+  --color-bg-main: var(--cream-bg);
+  --color-bg-card: var(--cream-card);
+  --color-bg-soft: var(--cream-divide);
+  --color-border: var(--cream-border);
+  --color-border-theme: var(--cream-border);
+  --color-primary: var(--brand-primary);
+  --color-text-main: var(--ink);
+  --color-text-body: var(--ink-body);
+  --color-text-muted: var(--ink-muted);
+}
+
+html[data-theme="matcha"] {
+  color-scheme: light;
+  --cream-bg: #f2f7f4;
+  --cream-bg-soft: #f7fbf8;
+  --cream-card: #ffffff;
+  --cream-border: rgba(131, 197, 190, 0.35);
+  --cream-divide: #e4efe8;
+  --brand-primary: #83c5be;
+  --ink: #2b4c3f;
+  --ink-body: #3d5c50;
+  --ink-muted: #7a9a8c;
+  --bg-main: var(--cream-bg);
+  --card-bg: var(--cream-card);
+  --primary: var(--brand-primary);
+  --text-main: var(--ink);
+  --color-bg-main: var(--cream-bg);
+  --color-bg-card: var(--cream-card);
+  --color-bg-soft: var(--cream-divide);
+  --color-border: var(--cream-border);
+  --color-border-theme: var(--cream-border);
+  --color-primary: var(--brand-primary);
+  --color-text-main: var(--ink);
+  --color-text-body: var(--ink-body);
+  --color-text-muted: var(--ink-muted);
+}
+
+html[data-theme="sky"] {
+  color-scheme: light;
+  --cream-bg: #f0f6fc;
+  --cream-bg-soft: #f7fafe;
+  --cream-card: #ffffff;
+  --cream-border: rgba(0, 122, 255, 0.2);
+  --cream-divide: #e2ebf5;
+  --brand-primary: #007aff;
+  --ink: #0f172a;
+  --ink-body: #334155;
+  --ink-muted: #94a3b8;
+  --bg-main: var(--cream-bg);
+  --card-bg: var(--cream-card);
+  --primary: var(--brand-primary);
+  --text-main: var(--ink);
+  --color-bg-main: var(--cream-bg);
+  --color-bg-card: var(--cream-card);
+  --color-bg-soft: var(--cream-divide);
+  --color-border: var(--cream-border);
+  --color-border-theme: var(--cream-border);
+  --color-primary: var(--brand-primary);
+  --color-text-main: var(--ink);
+  --color-text-body: var(--ink-body);
+  --color-text-muted: var(--ink-muted);
 }
 
 /* —— App font themes (CJK-aware stacks; sync with FONT_FAMILY_STACK) —— */
@@ -84,7 +201,6 @@ html[data-font-style="serif"] {
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
-  /* Hide scrollbars everywhere; overflow / touch / wheel scrolling stay intact */
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -97,11 +213,12 @@ html {
   min-height: 100%;
   height: 100dvh;
   overflow-x: hidden;
-  background: #f6f4ee;
+  background: var(--cream-bg);
   touch-action: pan-y;
   font-size: calc(16px * var(--font-scale, 1));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease;
 }
 
 body {
@@ -111,16 +228,19 @@ body {
   overflow-x: hidden;
   overscroll-behavior: none;
   touch-action: pan-y;
-  background: #f6f4ee;
-  color: #3a322b;
+  background: var(--cream-bg);
+  color: var(--ink-body);
   -webkit-overflow-scrolling: touch;
   font-family: inherit;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 #__next,
 #root {
   min-height: 100dvh;
-  background: #f6f4ee;
+  background: var(--cream-bg);
 }
 
 button,
@@ -154,17 +274,15 @@ button {
   font-feature-settings: "tnum";
 }
 
-/* Quiet luxury card surface — Level 1 */
 .card-quiet {
-  border: 1px solid #eae5d9;
-  background: #ffffff;
+  border: 1px solid var(--cream-border);
+  background: var(--cream-card);
   border-radius: 1rem;
   box-shadow: 0 1px rgb(0 0 0 / 0.05);
 }
 
-/* Level 2 inset well */
 .inset-well {
-  background: #f0ece1;
+  background: var(--cream-divide);
 }
 
 .text-title {

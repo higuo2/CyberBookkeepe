@@ -55,6 +55,7 @@ import {
   reconcileRecurringItemLedger,
   syncDueRecurringItems,
 } from "@/lib/recurring-sync";
+import { completeMilestone } from "@/lib/can-system";
 import { readBudgetFromStorage } from "@/lib/transaction-utils";
 import { filterActiveTransactions } from "@/lib/utils";
 import { useI18n } from "@/components/LocaleProvider";
@@ -65,7 +66,7 @@ type SheetKind =
   | null;
 
 const fieldClass =
-  "mt-2 h-12 w-full rounded-2xl border border-[#EAE5D9] bg-[#F0ECE1] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#C86235] focus:ring-4 focus:ring-[#C86235]/15 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+  "mt-2 h-12 w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] px-3 text-sm text-[var(--color-text-main)] outline-none transition-all focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/15 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
 function IconPicker({
   options,
@@ -84,8 +85,8 @@ function IconPicker({
           <button
             className={`grid size-10 place-items-center rounded-xl transition-all duration-150 active:scale-[0.98] ${
               active
-                ? "bg-[#C86235]/20 text-[#8C6D53] ring-2 ring-[#C86235]"
-                : "bg-[#F6F4EE] text-[#9C9181]"
+                ? "bg-[var(--color-primary)]/20 text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]"
+                : "bg-[var(--color-bg-main)] text-[var(--color-text-main)] opacity-60"
             }`}
             key={iconId}
             onClick={() => onChange(iconId)}
@@ -386,6 +387,11 @@ export function PlannerPage() {
     writeRecurringItems(nextItems);
     setSheet(null);
 
+    if (isNewRecurring) {
+      const milestone = completeMilestone("milestone_recurring");
+      if (milestone.awarded) toast.success(t("can.milestone.recurring"));
+    }
+
     if (!navigator.onLine) {
       toast.success(
         isNewRecurring
@@ -491,7 +497,6 @@ export function PlannerPage() {
         <PageHeader
           caption={t("planner.eyebrow")}
           className="mb-4"
-          description={t("planner.subtitle")}
           title={t("planner.title")}
         />
 
@@ -502,7 +507,7 @@ export function PlannerPage() {
             stats={budgetStats}
           />
 
-          <section className="rounded-2xl border border-[#EAE5D9] bg-white p-4 shadow-2xs">
+          <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 shadow-2xs">
             <PlannerCardHeader
               action="plus"
               actionAriaLabel={t("planner.aria.addRecurring")}
@@ -516,19 +521,19 @@ export function PlannerPage() {
                 const isIncome = item.direction === "income";
                 return (
                   <button
-                    className="relative w-full rounded-xl bg-[#F0ECE1]/70 p-3 text-left transition-all duration-150 active:scale-[0.98]"
+                    className="relative w-full rounded-xl bg-[var(--color-bg-soft)]/70 p-3 text-left transition-all duration-150 active:scale-[0.98]"
                     key={item.id}
                     onClick={() => openRecurring(item)}
                     type="button"
                   >
                     {status.kind === "logged" && (
-                      <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#E8EFE9] px-2 py-0.5 text-[10px] font-bold text-[#5B7A66]">
+                      <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#E8EFE9] px-2 py-0.5 text-[10px] font-bold text-income">
                         <CheckCircle2 className="size-3.5" strokeWidth={2} />
                         {t("planner.loggedThisMonth")}
                       </span>
                     )}
                     {status.kind === "upcoming" && (
-                      <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#EFEAE8] px-2 py-0.5 text-[10px] font-bold text-[#B8785C]">
+                      <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#EFEAE8] px-2 py-0.5 text-[10px] font-bold text-expense">
                         <Clock className="size-3.5" strokeWidth={2} />
                         {status.days === 0
                           ? t("planner.today")
@@ -537,7 +542,7 @@ export function PlannerPage() {
                       </span>
                     )}
                     {status.kind === "due_pending" && (
-                      <span className="absolute right-3 top-3 rounded-full bg-[#F2ECE4] px-2 py-0.5 text-[10px] font-bold text-[#8C6D53]">
+                      <span className="absolute right-3 top-3 rounded-full bg-[#F2ECE4] px-2 py-0.5 text-[10px] font-bold text-[var(--color-primary)]">
                         {t("planner.pendingLog")}
                       </span>
                     )}
@@ -545,8 +550,8 @@ export function PlannerPage() {
                       <span
                         className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-full ${
                           isIncome
-                            ? "bg-[#E8EFE9] text-[#5B7A66]"
-                            : "bg-[#EFEAE8] text-[#B8785C]"
+                            ? "bg-[#E8EFE9] text-income"
+                            : "bg-[#EFEAE8] text-expense"
                         }`}
                       >
                         <AppIcon
@@ -560,7 +565,7 @@ export function PlannerPage() {
                         />
                       </span>
                       <div className="min-w-0">
-                        <p className="font-extrabold text-[#4A3E3D]">
+                        <p className="font-extrabold text-[var(--color-text-main)]">
                           {item.name}
                         </p>
                         <p
@@ -571,7 +576,7 @@ export function PlannerPage() {
                           {amountLine}
                         </p>
                         {detailLine ? (
-                          <p className="mt-1 text-xs text-[#A08875]">
+                          <p className="mt-1 text-xs text-[var(--color-text-main)] opacity-50">
                             {detailLine}
                           </p>
                         ) : null}
@@ -583,7 +588,7 @@ export function PlannerPage() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-[#EAE5D9] bg-white p-4 shadow-2xs">
+          <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 shadow-2xs">
             <PlannerCardHeader
               action="plus"
               actionAriaLabel={t("planner.aria.addWish")}
@@ -592,7 +597,7 @@ export function PlannerPage() {
             />
             {goals.length === 0 ? (
               <button
-                className="w-full rounded-xl border border-dashed border-[#EAE5D9] py-6 text-center text-[13px] text-[#9C9285] transition-all active:scale-[0.98]"
+                className="w-full rounded-xl border border-dashed border-[var(--color-border)] py-6 text-center text-[13px] text-[var(--color-text-main)] opacity-60 transition-all active:scale-[0.98]"
                 onClick={() => openGoal()}
                 type="button"
               >
@@ -604,7 +609,7 @@ export function PlannerPage() {
                   const pct = goalProgress(goal);
                   return (
                     <div
-                      className="rounded-xl bg-[#F0ECE1]/70 p-3"
+                      className="rounded-xl bg-[var(--color-bg-soft)]/70 p-3"
                       key={goal.id}
                     >
                       <button
@@ -613,8 +618,8 @@ export function PlannerPage() {
                         type="button"
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <p className="flex min-w-0 items-center gap-2 font-extrabold text-[#4A3E3D]">
-                            <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#EFEAE8] text-[#B8785C]">
+                          <p className="flex min-w-0 items-center gap-2 font-extrabold text-[var(--color-text-main)]">
+                            <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#EFEAE8] text-expense">
                               <AppIcon
                                 className="size-3.5"
                                 id={goal.emoji || "gift"}
@@ -622,7 +627,7 @@ export function PlannerPage() {
                             </span>
                             <span className="truncate">{goal.title}</span>
                           </p>
-                          <p className="shrink-0 font-numeric text-xs font-semibold text-[#9C9285]">
+                          <p className="shrink-0 font-numeric text-xs font-semibold text-[var(--color-text-main)] opacity-60">
                             {pct.toFixed(0)}%
                           </p>
                         </div>
@@ -632,15 +637,15 @@ export function PlannerPage() {
                             target: formatHKD(goal.target),
                           })}
                         </p>
-                        <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[#F0ECE1]">
+                        <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[var(--color-bg-soft)]">
                           <div
-                            className="h-full rounded-full bg-[#C86235] transition-all"
+                            className="h-full rounded-full bg-[var(--color-primary)] transition-all"
                             style={{ width: `${pct}%` }}
                           />
                         </div>
                       </button>
                       <button
-                        className="mt-3 flex h-10 w-full items-center justify-center rounded-xl bg-[#C86235] text-sm font-bold text-white transition-all duration-150 active:scale-[0.98]"
+                        className="mt-3 flex h-10 w-full items-center justify-center rounded-xl bg-[var(--color-primary)] text-sm font-bold text-white transition-all duration-150 active:scale-[0.98]"
                         onClick={() => openGoal(goal, true)}
                         type="button"
                       >
@@ -662,14 +667,14 @@ export function PlannerPage() {
       >
         <form className="space-y-4 pt-1" onSubmit={saveGoal}>
           <div>
-            <p className="text-xs font-medium text-[#A08875]">{t("planner.wishIcon")}</p>
+            <p className="text-xs font-medium text-[var(--color-text-main)] opacity-50">{t("planner.wishIcon")}</p>
             <IconPicker
               onChange={(emoji) => setGoalForm((prev) => ({ ...prev, emoji }))}
               options={GOAL_EMOJIS}
               value={goalForm.emoji}
             />
           </div>
-          <label className="block text-xs font-medium text-[#A08875]">
+          <label className="block text-xs font-medium text-[var(--color-text-main)] opacity-50">
             {t("planner.wishName")}
             <input
               className={fieldClass}
@@ -681,7 +686,7 @@ export function PlannerPage() {
             />
           </label>
           <div className="grid grid-cols-2 gap-3">
-            <label className="block text-xs font-medium text-[#A08875]">
+            <label className="block text-xs font-medium text-[var(--color-text-main)] opacity-50">
               {t("planner.wishTarget")}
               <input
                 className={fieldClass}
@@ -698,7 +703,7 @@ export function PlannerPage() {
                 value={goalForm.target}
               />
             </label>
-            <label className="block text-xs font-medium text-[#A08875]">
+            <label className="block text-xs font-medium text-[var(--color-text-main)] opacity-50">
               {t("planner.wishSaved")}
               <input
                 className={fieldClass}
@@ -718,12 +723,12 @@ export function PlannerPage() {
           </div>
           {!isNewGoal && activeGoal && (
             <>
-              <div className="rounded-2xl bg-[#F0ECE1] p-4">
-                <p className="text-sm leading-6 text-[#8C6D53]">
+              <div className="rounded-2xl bg-[var(--color-bg-soft)] p-4">
+                <p className="text-sm leading-6 text-[var(--color-primary)]">
                   {t("planner.wishCloser", { title: goalForm.title || activeGoal.title })}
                 </p>
               </div>
-              <label className="block text-xs font-medium text-[#A08875]">
+              <label className="block text-xs font-medium text-[var(--color-text-main)] opacity-50">
                 {t("planner.depositOptional")}
                 <input
                   autoFocus={sheet?.type === "goal" && sheet.focusDeposit}
@@ -745,7 +750,7 @@ export function PlannerPage() {
             </>
           )}
           <button
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#C86235] font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98]"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--color-primary)] font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98]"
             type="submit"
           >
             <Save className="size-5" strokeWidth={2.25} />
@@ -753,7 +758,7 @@ export function PlannerPage() {
           </button>
           {activeGoal && (
             <button
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#EFEAE8] text-sm font-bold text-[#B8785C] transition-all duration-150 active:scale-[0.98]"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#EFEAE8] text-sm font-bold text-expense transition-all duration-150 active:scale-[0.98]"
               onClick={deleteGoal}
               type="button"
             >

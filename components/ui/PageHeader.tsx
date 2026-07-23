@@ -18,10 +18,16 @@ export function PageHeader({
     <header className={`shrink-0 ${className}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium text-[#9C9285]">{caption}</p>
-          <h1 className="mt-0.5 text-2xl font-bold text-[#2C2420]">{title}</h1>
+          <p className="text-xs font-medium text-[var(--color-text-main)] opacity-60">
+            {caption}
+          </p>
+          <h1 className="mt-0.5 text-2xl font-bold text-[var(--color-text-main)]">
+            {title}
+          </h1>
           {description ? (
-            <p className="mt-1 text-xs text-[#9C9285]">{description}</p>
+            <p className="mt-1 text-xs text-[var(--color-text-main)] opacity-60">
+              {description}
+            </p>
           ) : null}
         </div>
         {actions ? (

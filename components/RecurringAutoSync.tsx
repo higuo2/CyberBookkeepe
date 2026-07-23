@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { hydrateThemeOnBoot } from "@/lib/can-system";
 import { hydratePlannerFromCloud } from "@/lib/planner-cloud";
 import {
   formatAutoSyncToast,
@@ -11,8 +12,9 @@ import {
 import { readRecurringItems } from "@/lib/planner";
 
 /**
- * 全局初始化：先拉云端规划，再检查到期周期项并写入主账单。
+ * 全局初始化：先恢复主题与云端规划，再检查到期周期项并写入主账单。
  * 同会话内只跑一次，避免路由切换重复 toast。
+ * 周期自动入账不触发打卡。
  */
 export function RecurringAutoSync() {
   const ran = useRef(false);
@@ -21,10 +23,13 @@ export function RecurringAutoSync() {
     if (ran.current) return;
     ran.current = true;
 
+    hydrateThemeOnBoot();
+
     const timer = window.setTimeout(() => {
       void (async () => {
         try {
           await hydratePlannerFromCloud();
+          hydrateThemeOnBoot();
           // 先清本地演示种子，再清云端误写入的演示账单
           readRecurringItems();
           await purgeLegacyDemoRecurringTransactions();

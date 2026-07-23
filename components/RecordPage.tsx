@@ -70,8 +70,27 @@ import type {
 import { chatMsgMarker, cleanNote } from "@/lib/utils";
 import { useI18n } from "@/components/LocaleProvider";
 import type { MessageKey, TranslateFn } from "@/lib/i18n";
+import {
+  completeMilestone,
+  processDailyCheckin,
+  type CheckinResult,
+} from "@/lib/can-system";
 
 type ChatMessage = UiChatMessage;
+
+/** 打卡正反馈进 River 气泡，避免与 toast 连弹 */
+function checkinBubbleText(result: CheckinResult, t: TranslateFn): string | null {
+  if (!result.didCheckin) return null;
+  const parts = [t("can.checkin.fragment")];
+  if (result.synthesizedCan) parts.push(t("can.checkin.synthesize"));
+  if (result.streakBonus) parts.push(t("can.checkin.streak7"));
+  return parts.join(" ");
+}
+
+function toastRecurringMilestone(t: TranslateFn) {
+  const m = completeMilestone("milestone_recurring");
+  if (m.awarded) toast.success(t("can.milestone.recurring"));
+}
 
 const QUICK_CHIPS: {
   labelKey: MessageKey;
@@ -299,6 +318,19 @@ export function RecordPage() {
     });
   }, [messages, busy]);
 
+  function pushCheckinBubble(result: CheckinResult) {
+    const text = checkinBubbleText(result, t);
+    if (!text) return;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `checkin-${Date.now()}`,
+        kind: "bot-text" as const,
+        text,
+      },
+    ]);
+  }
+
   const headerDate = useMemo(() => formatHeaderDate(locale), [locale]);
 
   async function sendText(raw: string) {
@@ -445,6 +477,7 @@ export function RecordPage() {
         setTodaySpend((prev) => prev + Number(row.amount));
       }
       toast.success(t("toast.saveSuccess"));
+      if (!existing) pushCheckinBubble(processDailyCheckin());
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : t("toast.saveFail"),
@@ -478,6 +511,7 @@ export function RecordPage() {
         ),
       );
       toast.success(t("toast.saveSuccess"));
+      toastRecurringMilestone(t);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : t("toast.savePlannerFail"),
@@ -566,6 +600,7 @@ export function RecordPage() {
       setTxDialogOpen(false);
       setTxEditTarget(null);
       toast.success(t("toast.saveSuccess"));
+      if (!existing) pushCheckinBubble(processDailyCheckin());
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : t("toast.saveFail"),
@@ -724,6 +759,7 @@ export function RecordPage() {
       setRecurringOpen(false);
       setRecurringEditId(null);
       toast.success(t("toast.saveSuccess"));
+      toastRecurringMilestone(t);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : t("toast.savePlannerFail"),
@@ -745,17 +781,21 @@ export function RecordPage() {
   return (
     <>
       <main className="relative flex h-full min-h-0 flex-col">
-        <header className="z-20 flex shrink-0 items-center justify-between border-b border-[#EAE5D9]/60 px-5 pb-3 pt-[calc(env(safe-area-inset-top)+12px)]">
-          <div>
-            <p className="text-caption">{headerDate}</p>
-            <p className="mt-0.5 text-base font-semibold text-[#4A3E31]">
+        <header className="z-20 flex shrink-0 items-center justify-between gap-3 border-b border-[var(--color-border)]/60 px-5 pb-3 pt-[calc(env(safe-area-inset-top)+12px)]">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium text-[var(--color-text-main)] opacity-50">
+              {headerDate}
+            </p>
+            <p className="mt-0.5 text-lg font-bold text-[var(--color-text-main)]">
               {t("record.todaySpend")}{" "}
-              <span className="font-numeric text-[#B8785C]">
+              <span className="font-numeric text-[var(--color-primary)]">
                 {formatMoney(todaySpend, readDefaultCurrency())}
               </span>
             </p>
           </div>
-          <CatAvatar size={44} />
+          <div className="shrink-0">
+            <CatAvatar size={44} />
+          </div>
         </header>
 
         <div
@@ -765,7 +805,7 @@ export function RecordPage() {
           {!historyReady ? (
             <div className="flex items-end gap-2 pt-4">
               <CatAvatar size={36} thinking />
-              <div className="rounded-2xl rounded-bl-md border border-[#F0E6D6] bg-[#FFFDF7] px-4 py-3 text-sm text-[#9A7B55] shadow-sm">
+              <div className="rounded-2xl rounded-bl-md border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-3 text-sm text-[var(--color-text-main)] opacity-60 shadow-sm">
                 {t("record.loadingHistory")}
               </div>
             </div>
@@ -775,7 +815,7 @@ export function RecordPage() {
             if (message.kind === "user") {
               return (
                 <div className="flex justify-end" key={message.id}>
-                  <div className="max-w-[80%] rounded-2xl rounded-br-md bg-[#D1EBE1] px-4 py-2.5 text-[15px] leading-6 text-[#3D4A45] shadow-sm">
+                  <div className="max-w-[80%] rounded-2xl rounded-br-md bg-[var(--color-bg-soft)] px-4 py-2.5 text-[15px] leading-6 text-[var(--color-text-main)] shadow-sm">
                     {message.text}
                   </div>
                 </div>
@@ -790,7 +830,7 @@ export function RecordPage() {
                     className={`max-w-[82%] rounded-2xl rounded-bl-md px-4 py-3 text-[15px] leading-6 shadow-sm ${
                       message.kind === "bot-error"
                         ? "bg-danger/10 text-danger"
-                        : "border border-[#F0E6D6] bg-[#FFFDF7] text-[#5C4A32]"
+                        : "border border-[var(--color-border)] bg-[var(--color-bg-card)] text-[var(--color-text-main)]"
                     }`}
                   >
                     {message.text}
@@ -806,35 +846,37 @@ export function RecordPage() {
               return (
                 <div className="flex items-end gap-2" key={message.id}>
                   <CatAvatar size={36} />
-                  <div className="max-w-[88%] rounded-3xl border border-[#F0E6D6] bg-[#FFFDF7] p-3.5 shadow-sm">
-                    <p className="text-[15px] leading-6 text-[#5C4A32]">
+                  <div className="max-w-[88%] rounded-3xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3.5 shadow-sm">
+                    <p className="text-[15px] leading-6 text-[var(--color-text-main)]">
                       {message.replyText}
                     </p>
                     <div className="mt-3 rounded-2xl bg-[#F2ECE4] p-3">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#F4E8D1] px-1.5 py-0.5 text-[10px] font-semibold text-[#B37233]">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#F4E8D1] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--color-primary)]">
                           <RefreshCw className="size-3.5" strokeWidth={2} />
                           {t("record.badge.period")}
                         </span>
-                        <p className="truncate text-sm font-extrabold text-[#4A3E3D]">
+                        <p className="truncate text-sm font-extrabold text-[var(--color-text-main)]">
                           {item.title}
                         </p>
                       </div>
                       <p
                         className={`mt-1.5 font-numeric text-sm font-semibold ${
                           item.direction === "income"
-                            ? "text-[#5B7A66]"
-                            : "text-[#8C6D53]"
+                            ? "text-income"
+                            : "text-[var(--color-primary)]"
                         }`}
                       >
                         {item.direction === "income" ? "+" : ""}
                         {formatMoney(
                           item.amount,
                           item.currency ?? readDefaultCurrency(),
-                        )}{" "}
-                        · {dirLabel}
+                        )}
+                        {locale.startsWith("zh")
+                          ? `（${dirLabel}）`
+                          : ` (${dirLabel})`}
                       </p>
-                      <p className="mt-1 text-xs text-[#A08875]">
+                      <p className="mt-1 text-xs text-[var(--color-text-main)] opacity-50">
                         {periodLabel(item, t)}
                         {item.end_date ? t("record.untilDate", { date: item.end_date }) : ""}
                       </p>
@@ -843,7 +885,7 @@ export function RecordPage() {
                     {status === "pending" ? (
                       <div className="mt-3 flex gap-2">
                         <button
-                          className="h-10 flex-1 rounded-xl border border-[#E8D5B5] bg-white text-sm font-semibold text-[#8C6D53] transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+                          className="h-10 flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] text-sm font-semibold text-[var(--color-primary)] transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
                           disabled={actionBusy}
                           onClick={() => openCustomRecurring(message.id)}
                           type="button"
@@ -854,7 +896,7 @@ export function RecordPage() {
                           </span>
                         </button>
                         <button
-                          className="h-10 flex-1 rounded-xl bg-[#C86235] text-sm font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+                          className="h-10 flex-1 rounded-xl bg-[var(--color-primary)] text-sm font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
                           disabled={actionBusy}
                           onClick={() => void confirmRecurring(message.id)}
                           type="button"
@@ -866,7 +908,7 @@ export function RecordPage() {
                         </button>
                       </div>
                     ) : status === "confirmed" ? (
-                      <p className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#5B7A66]">
+                      <p className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-income">
                         <CheckCircle2 className="size-3.5" strokeWidth={2} />
                         {t("record.savedToPlanner")}
                       </p>
@@ -881,7 +923,7 @@ export function RecordPage() {
                 {message.replyText ? (
                   <div className="flex items-end gap-2">
                     <CatAvatar size={36} />
-                    <div className="max-w-[82%] rounded-2xl rounded-bl-md border border-[#F0E6D6] bg-[#FFFDF7] px-4 py-3 text-[15px] leading-6 text-[#5C4A32] shadow-sm">
+                    <div className="max-w-[82%] rounded-2xl rounded-bl-md border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-3 text-[15px] leading-6 text-[var(--color-text-main)] shadow-sm">
                       {message.replyText}
                     </div>
                   </div>
@@ -895,8 +937,8 @@ export function RecordPage() {
                       key={`${message.id}-${index}`}
                     >
                       <CatAvatar size={36} />
-                      <div className="max-w-[88%] rounded-3xl border border-[#F0E6D6] bg-[#FFFDF7] p-3.5 shadow-sm">
-                        <p className="text-[15px] leading-6 text-[#5C4A32]">
+                      <div className="max-w-[88%] rounded-3xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3.5 shadow-sm">
+                        <p className="text-[15px] leading-6 text-[var(--color-text-main)]">
                           {record.status === "pending"
                             ? t("record.detected", {
                                 category: categoryLabel(record.category, t),
@@ -916,13 +958,13 @@ export function RecordPage() {
                                 time: record.recordedAt ? `, ${record.recordedAt}` : "",
                               })}
                         </p>
-                        <p className="mt-2 text-sm leading-5 text-[#9A7B55]">
+                        <p className="mt-2 text-sm leading-5 text-[var(--color-text-main)] opacity-60">
                           {record.comment}
                         </p>
 
                         <div className="mt-3 rounded-2xl bg-[#F2ECE4] p-3">
                           <div className="flex items-center gap-3">
-                            <div className="grid size-11 shrink-0 place-items-center rounded-full bg-[#F2ECE4] text-[#8C7A6B] shadow-quiet">
+                            <div className="grid size-11 shrink-0 place-items-center rounded-full bg-[#F2ECE4] text-[var(--color-text-main)] opacity-60 shadow-quiet">
                               {record.category === "其它支出" ||
                               record.category === "其它" ? (
                                 <Star className="size-5 fill-current" strokeWidth={2} />
@@ -934,7 +976,7 @@ export function RecordPage() {
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="font-semibold text-[#5C4A32]">
+                              <p className="font-semibold text-[var(--color-text-main)]">
                                 {categoryLabel(record.category, t)}
                               </p>
                               <p className="truncate text-sm text-[#A08B68]">
@@ -944,8 +986,8 @@ export function RecordPage() {
                             <p
                               className={`shrink-0 font-numeric text-base font-semibold ${
                                 record.type === "EXPENSE"
-                                  ? "text-[#B8785C]"
-                                  : "text-[#5B7A66]"
+                                  ? "text-expense"
+                                  : "text-income"
                               }`}
                             >
                               {record.type === "EXPENSE" ? "-" : "+"}
@@ -960,7 +1002,7 @@ export function RecordPage() {
                         {record.status === "pending" ? (
                           <div className="mt-3 flex gap-2">
                             <button
-                              className="h-10 flex-1 rounded-xl border border-[#E8D5B5] bg-white text-sm font-semibold text-[#8C6D53] transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+                              className="h-10 flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] text-sm font-semibold text-[var(--color-primary)] transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
                               disabled={actionBusy}
                               onClick={() =>
                                 openCustomTransaction(message.id, index)
@@ -973,7 +1015,7 @@ export function RecordPage() {
                               </span>
                             </button>
                             <button
-                              className="h-10 flex-1 rounded-xl bg-[#C86235] text-sm font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+                              className="h-10 flex-1 rounded-xl bg-[var(--color-primary)] text-sm font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
                               disabled={actionBusy}
                               onClick={() =>
                                 void confirmTransaction(message.id, index)
@@ -989,7 +1031,7 @@ export function RecordPage() {
                             </button>
                           </div>
                         ) : record.status === "confirmed" ? (
-                          <p className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#5B7A66]">
+                          <p className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-income">
                             <CheckCircle2
                               className="size-3.5"
                               strokeWidth={2}
@@ -1008,25 +1050,25 @@ export function RecordPage() {
           {busy && (
             <div className="flex items-end gap-2">
               <CatAvatar size={36} thinking />
-              <div className="rounded-2xl rounded-bl-md border border-[#F0E6D6] bg-[#FFFDF7] px-4 py-3 text-sm text-[#9A7B55] shadow-sm">
+              <div className="rounded-2xl rounded-bl-md border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-3 text-sm text-[var(--color-text-main)] opacity-60 shadow-sm">
                 {t("record.thinking")}
               </div>
             </div>
           )}
         </div>
 
-        <div className="z-30 shrink-0 border-t border-[#EAE5D9]/60 bg-[#F6F4EE]/85 px-0 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 backdrop-blur-lg">
+        <div className="z-30 shrink-0 border-t border-[var(--color-border)]/60 bg-[var(--color-bg-main)]/85 px-0 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 backdrop-blur-lg">
           <div className="mb-1.5 flex gap-1 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {QUICK_CHIPS.map((chip) => {
               const Icon = chip.Icon;
               return (
                 <button
-                  className="inline-flex h-6 shrink-0 items-center gap-0.5 rounded-full border border-[#EAE5D9] bg-white px-2 text-[6px] leading-none font-medium text-[#6B5A40] transition-all duration-150 active:scale-[0.98]"
+                  className="inline-flex h-6 shrink-0 items-center gap-0.5 rounded-full border border-[var(--color-border)] bg-[var(--color-bg-card)] px-2 text-[6px] leading-none font-medium text-[var(--color-text-main)] opacity-70 transition-all duration-150 active:scale-[0.98]"
                   key={chip.labelKey}
                   onClick={() => handleChip(chip)}
                   type="button"
                 >
-                  <Icon className="size-2.5 text-[#B37233]" strokeWidth={2.25} />
+                  <Icon className="size-2.5 text-[var(--color-primary)]" strokeWidth={2.25} />
                   {t(chip.labelKey)}
                 </button>
               );
@@ -1034,12 +1076,12 @@ export function RecordPage() {
           </div>
 
           <form
-            className="mx-4 flex items-center gap-2 rounded-2xl border border-[#EAE5D9] bg-white px-2 py-1.5 shadow-sm"
+            className="mx-4 flex items-center gap-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-2 py-1.5 shadow-sm"
             onSubmit={onSubmit}
           >
             <button
               aria-label={t("record.aria.voice")}
-              className="grid size-10 shrink-0 place-items-center rounded-full bg-[#FFF3E0] text-[#B37233] transition-all duration-150 active:scale-[0.98]"
+              className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--color-bg-soft)] text-[var(--color-primary)] transition-all duration-150 active:scale-[0.98]"
               onClick={() =>
                 toast.message(t("toast.voiceSoon"))
               }
@@ -1048,7 +1090,7 @@ export function RecordPage() {
               <Mic className="size-5" strokeWidth={2.25} />
             </button>
             <input
-              className="h-10 min-w-0 flex-1 bg-transparent text-[15px] text-[#5C4A32] outline-none placeholder:text-[#C0B49A]"
+              className="h-10 min-w-0 flex-1 bg-transparent text-[15px] text-[var(--color-text-main)] outline-none placeholder:text-[#C0B49A]"
               disabled={busy || !historyReady}
               onChange={(event) => setInput(event.target.value)}
               placeholder={t("record.inputPlaceholder")}
@@ -1057,7 +1099,7 @@ export function RecordPage() {
             />
             <button
               aria-label={t("record.aria.send")}
-              className="grid size-10 shrink-0 place-items-center rounded-full bg-[#C86235] text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+              className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--color-primary)] text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
               disabled={busy || !historyReady || !input.trim()}
               type="submit"
             >

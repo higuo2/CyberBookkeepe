@@ -44,7 +44,7 @@ export function BottomNav() {
   const t = useT();
 
   return (
-    <nav className="z-50 shrink-0 border-t border-[#EAE5D9]/60 bg-[#F6F4EE]/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg">
+    <nav className="z-50 shrink-0 border-t border-[var(--color-border)]/60 bg-[var(--color-bg-main)]/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg">
       <div className="flex h-[60px] items-center justify-around px-2">
         {tabs.map(({ href, labelKey, outline: Outline, solid: Solid }) => {
           const active =
@@ -61,21 +61,21 @@ export function BottomNav() {
               <span
                 className={`transition-all duration-200 ${
                   active
-                    ? "rounded-full bg-[#F0ECE1] px-3 py-0.5"
+                    ? "rounded-full bg-[var(--color-bg-soft)] px-3 py-0.5"
                     : "rounded-full px-3 py-0.5"
                 }`}
               >
                 <Icon
                   aria-hidden="true"
-                  className="h-5 w-5"
+                  className="h-5 w-5 text-[var(--color-text-main)]"
                   strokeWidth={active ? 2.25 : 1.75}
                 />
               </span>
               <span
                 className={`text-[10px] tracking-tight transition-all duration-200 ${
                   active
-                    ? "font-bold text-[#2C2420]"
-                    : "font-medium text-[#9C9285]"
+                    ? "font-bold text-[var(--color-text-main)]"
+                    : "font-medium text-[var(--color-text-main)] opacity-50"
                 }`}
               >
                 {t(labelKey)}

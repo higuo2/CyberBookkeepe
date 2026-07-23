@@ -23,6 +23,7 @@ import {
 import { formatHKD, writeBudgetToStorage } from "@/lib/transaction-utils";
 import type { MonthBudgetStats } from "@/lib/types";
 import { useT } from "@/components/LocaleProvider";
+import { completeMilestone } from "@/lib/can-system";
 
 function formatDailyAmount(amount: number) {
   const daily = Math.max(0, Math.round(amount));
@@ -67,6 +68,10 @@ export function BudgetProgressCard({
       onBudgetSaved?.(amount);
       setOpen(false);
       toast.success(t("toast.budgetUpdated"));
+      if (amount > 0) {
+        const m = completeMilestone("milestone_budget");
+        if (m.awarded) toast.success(t("can.milestone.budget"));
+      }
     } finally {
       setSaving(false);
     }
@@ -79,7 +84,7 @@ export function BudgetProgressCard({
 
   return (
     <>
-      <section className="rounded-2xl border border-[#EAE5D9] bg-white p-4 shadow-2xs">
+      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 shadow-2xs">
         <PlannerCardHeader
           action="pencil"
           actionAriaLabel={t("budget.aria.edit")}
@@ -88,14 +93,14 @@ export function BudgetProgressCard({
         />
 
         {stats.budget <= 0 ? (
-          <p className="text-[13px] text-[#9C9285]">{t("budget.empty")}</p>
+          <p className="text-[13px] text-[var(--color-text-main)] opacity-60">{t("budget.empty")}</p>
         ) : (
           <>
-            <div className="mt-1 grid grid-cols-2 gap-1.5 rounded-2xl bg-[#F0ECE1] p-1">
+            <div className="mt-1 grid grid-cols-2 gap-1.5 rounded-2xl bg-[var(--color-bg-soft)] p-1">
               <button
-                className={`h-8 rounded-xl text-[11px] font-bold transition-all duration-150 active:scale-[0.98] ${
+                className={`h-8 rounded-xl text-[8px] font-bold transition-all duration-150 active:scale-[0.98] ${
                   stats.spendMode === "actual"
-                    ? "bg-white text-[#2C2420] shadow-sm"
+                    ? "bg-[var(--color-bg-card)] text-[var(--color-text-main)] shadow-sm"
                     : "text-[#8C8273]"
                 }`}
                 onClick={() => setMode("actual")}
@@ -104,9 +109,9 @@ export function BudgetProgressCard({
                 {t("budget.mode.spentOnly")}
               </button>
               <button
-                className={`h-8 rounded-xl text-[11px] font-bold transition-all duration-150 active:scale-[0.98] ${
+                className={`h-8 rounded-xl text-[8px] font-bold transition-all duration-150 active:scale-[0.98] ${
                   stats.spendMode === "reserve_fixed"
-                    ? "bg-white text-[#2C2420] shadow-sm"
+                    ? "bg-[var(--color-bg-card)] text-[var(--color-text-main)] shadow-sm"
                     : "text-[#8C8273]"
                 }`}
                 onClick={() => setMode("reserve_fixed")}
@@ -136,7 +141,7 @@ export function BudgetProgressCard({
               )}
             </p>
 
-            <div className="mt-3 grid grid-cols-3 divide-x divide-[#EAE5D9] text-center">
+            <div className="mt-3 grid grid-cols-3 divide-x divide-[var(--color-border)] text-center">
               <div className="px-1.5">
                 <MetricLabel>{t("budget.used")}</MetricLabel>
                 <MetricValue>{formatHKD(stats.spent)}</MetricValue>
@@ -144,7 +149,7 @@ export function BudgetProgressCard({
               <div className="px-1.5">
                 <MetricLabel>{t("budget.remaining")}</MetricLabel>
                 <MetricValue
-                  className={overspent ? "text-danger" : "text-[#2C2420]"}
+                  className={overspent ? "text-danger" : "text-[var(--color-text-main)]"}
                 >
                   {formatHKD(stats.remaining)}
                 </MetricValue>
@@ -160,7 +165,7 @@ export function BudgetProgressCard({
               </div>
             </div>
 
-            <div className="mt-3 h-3 overflow-hidden rounded-full bg-[#F0ECE1]">
+            <div className="mt-3 h-3 overflow-hidden rounded-full bg-[var(--color-bg-soft)]">
               <div
                 className={`h-full rounded-full transition-all ${budgetBarColor(stats.ratio)}`}
                 style={{ width }}
@@ -193,7 +198,7 @@ export function BudgetProgressCard({
             {t("budget.totalLabel")}
             <input
               autoFocus
-              className="mt-2 h-12 w-full rounded-2xl border border-[#EAE5D9] bg-[#F0ECE1] px-3 text-sm text-[#2C2420] outline-none transition-all focus:border-[#C86235] focus:ring-4 focus:ring-[#C86235]/15"
+              className="mt-2 h-12 w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] px-3 text-sm text-[var(--color-text-main)] outline-none transition-all focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/15"
               inputMode="decimal"
               min="0"
               onChange={(event) => setInput(event.target.value)}
@@ -204,7 +209,7 @@ export function BudgetProgressCard({
             />
           </label>
           <button
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#C86235] font-bold text-white shadow-2xs transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--color-primary)] font-bold text-white shadow-2xs transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
             disabled={saving}
             type="submit"
           >

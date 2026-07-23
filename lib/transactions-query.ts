@@ -29,7 +29,7 @@ function extractErrorMessage(error: unknown): string {
     const parts = [o.message, o.details, o.hint, o.code]
       .map((v) => (v == null ? "" : String(v).trim()))
       .filter(Boolean);
-    return parts.join(" · ");
+    return parts.join(", ");
   }
   return String(error);
 }

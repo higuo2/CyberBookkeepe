@@ -38,11 +38,18 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
-      className="font-app-rounded min-h-screen overflow-x-hidden bg-[#F6F4EE] antialiased"
+      className="font-app-rounded min-h-screen overflow-x-hidden bg-[var(--color-bg-main)] antialiased"
       data-font-style="rounded"
+      data-theme="cream"
       lang="zh-CN"
     >
       <head>
+        {/* 尽早恢复已保存主题，避免闪回默认 cream */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var id=localStorage.getItem("cyberbookkeeper_current_theme");if(id==="cream"||id==="titanium"||id==="cyber"||id==="matcha"||id==="sky"){document.documentElement.setAttribute("data-theme",id);}}catch(e){}})();`,
+          }}
+        />
         {/* next/font 的 Noto Serif SC 无中文 subset；用 Google CSS 拉取 CJK unicode-range */}
         <link href="https://fonts.googleapis.com" rel="preconnect" />
         <link
@@ -55,7 +62,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen overflow-x-hidden bg-[#F6F4EE] text-[#3A322B] antialiased touch-pan-y overscroll-none">
+      <body className="min-h-screen overflow-x-hidden bg-[var(--color-bg-main)] text-[var(--color-text-main)] antialiased touch-pan-y overscroll-none">
         <AppShell>{children}</AppShell>
       </body>
     </html>

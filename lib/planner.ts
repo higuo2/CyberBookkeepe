@@ -542,6 +542,17 @@ function weekdayLabel(codes: WeekdayCode[], t?: TranslateFn) {
     .join("");
 }
 
+/** 主信息 + 括号补充：A（B C） */
+function joinWithParens(parts: Array<string | null | undefined>, locale: string) {
+  const list = parts.map((p) => (p == null ? "" : String(p).trim())).filter(Boolean);
+  if (list.length === 0) return "";
+  if (list.length === 1) return list[0]!;
+  const zh = String(locale).startsWith("zh");
+  const open = zh ? "（" : " (";
+  const close = zh ? "）" : ")";
+  return `${list[0]}${open}${list.slice(1).join(" ")}${close}`;
+}
+
 export function formatRecurringLine(
   item: RecurringItem,
   t?: TranslateFn,
@@ -564,7 +575,7 @@ export function formatRecurringLine(
           `+${formatHKD(item.amount)}/天`
         : t?.("planner.line.perDay", { amount: formatHKD(item.amount) }) ??
           `${formatHKD(item.amount)}/天`;
-    const detail = [weekdayLabel(days, t), end].filter(Boolean).join(" · ");
+    const detail = joinWithParens([weekdayLabel(days, t), end], locale);
     return { amountLine: amountDisplay, detailLine: detail };
   }
 
@@ -581,32 +592,34 @@ export function formatRecurringLine(
     if (item.direction === "income") {
       return {
         amountLine: amountDisplay,
-        detailLine: [
-          day
-            ? (t?.("planner.line.monthlyDay", { day }) ?? `每月${day}日`)
-            : (t?.("planner.line.monthly") ?? "每月"),
-          end,
-        ]
-          .filter(Boolean)
-          .join(" · "),
+        detailLine: joinWithParens(
+          [
+            day
+              ? (t?.("planner.line.monthlyDay", { day }) ?? `每月${day}日`)
+              : (t?.("planner.line.monthly") ?? "每月"),
+            end,
+          ],
+          locale,
+        ),
       };
     }
     return {
       amountLine:
         t?.("planner.line.perMonth", { amount: amountDisplay }) ??
         `${amountDisplay} / 月`,
-      detailLine: [
-        day
-          ? (t?.("planner.line.monthlyDay", { day }) ?? `每月${day}日`)
-          : item.nextDate
-            ? (t?.("planner.line.next", {
-                date: formatChargeDate(item.nextDate, locale),
-              }) ?? `下次 ${formatChargeDate(item.nextDate, locale)}`)
-            : "",
-        end,
-      ]
-        .filter(Boolean)
-        .join(" · "),
+      detailLine: joinWithParens(
+        [
+          day
+            ? (t?.("planner.line.monthlyDay", { day }) ?? `每月${day}日`)
+            : item.nextDate
+              ? (t?.("planner.line.next", {
+                  date: formatChargeDate(item.nextDate, locale),
+                }) ?? `下次 ${formatChargeDate(item.nextDate, locale)}`)
+              : "",
+          end,
+        ],
+        locale,
+      ),
     };
   }
 
@@ -614,16 +627,17 @@ export function formatRecurringLine(
     amountLine:
       t?.("planner.line.perYear", { amount: amountDisplay }) ??
       `${amountDisplay} / 年`,
-    detailLine: [
-      item.nextDate
-        ? (t?.("planner.line.next", {
-            date: formatChargeDate(item.nextDate, locale),
-          }) ?? `下次 ${formatChargeDate(item.nextDate, locale)}`)
-        : "",
-      end,
-    ]
-      .filter(Boolean)
-      .join(" · "),
+    detailLine: joinWithParens(
+      [
+        item.nextDate
+          ? (t?.("planner.line.next", {
+              date: formatChargeDate(item.nextDate, locale),
+            }) ?? `下次 ${formatChargeDate(item.nextDate, locale)}`)
+          : "",
+        end,
+      ],
+      locale,
+    ),
   };
 }
 

@@ -5,17 +5,23 @@ import {
   ChevronRight,
   Coins,
   Download,
+  Flame,
   Globe,
   Heart,
   Info,
   LoaderCircle,
+  Palette,
   Trash2,
   Type,
 } from "lucide-react";
 import { toast } from "sonner";
 import { BottomSheet } from "@/components/BottomSheet";
+import { CheckinRulesModal } from "@/components/CheckinRulesModal";
 import { ConfirmDialog, SettingsRow } from "@/components/ConfirmDialog";
 import { CurrencyIcon } from "@/components/AppIcons";
+import { CatCanIcon } from "@/components/icons/CatCanIcon";
+import { ThemeStoreSheet } from "@/components/ThemeStoreSheet";
+import { TipRiverSheet } from "@/components/TipRiverSheet";
 import { PageHeader } from "@/components/ui/PageHeader";
 import {
   CURRENCY_CODES,
@@ -45,6 +51,12 @@ import {
   type FontSize,
   type FontStyle,
 } from "@/context/FontContext";
+import {
+  CAN_STATE_EVENT,
+  completeMilestone,
+  readCanState,
+  themeDisplayName,
+} from "@/lib/can-system";
 
 const PLANNER_STORAGE_KEYS = [
   "cyberbookkeeper_planner_accounts",
@@ -57,6 +69,8 @@ const PLANNER_STORAGE_KEYS = [
   "cyberbookkeeper_demo_goals_purged_v1",
   "cyberbookkeeper_demo_rec_tx_purged_v1",
   "cyberbookkeeper_chat_user_id",
+  "cyberbookkeeper_can_economy_v1",
+  "cyberbookkeeper_current_theme",
 ];
 
 const FONT_STYLE_OPTIONS: {
@@ -90,15 +104,25 @@ export function ProfilePage() {
   const [isLanguageSheetOpen, setIsLanguageSheetOpen] = useState(false);
   const [isCurrencySheetOpen, setIsCurrencySheetOpen] = useState(false);
   const [isFontStyleSheetOpen, setIsFontStyleSheetOpen] = useState(false);
+  const [isThemeStoreOpen, setIsThemeStoreOpen] = useState(false);
+  const [isTipRiverOpen, setIsTipRiverOpen] = useState(false);
+  const [isCheckinRulesOpen, setIsCheckinRulesOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [canState, setCanState] = useState(() => readCanState());
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setCurrency(readDefaultCurrency());
+      setCanState(readCanState());
     }, 0);
-    return () => window.clearTimeout(timer);
+    const onCan = () => setCanState(readCanState());
+    window.addEventListener(CAN_STATE_EVENT, onCan);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener(CAN_STATE_EVENT, onCan);
+    };
   }, []);
 
   function handleLanguageChange(next: Locale, label: string) {
@@ -119,8 +143,12 @@ export function ProfilePage() {
     setFontStyle(next);
   }
 
+  function handleThemeClick() {
+    setIsThemeStoreOpen(true);
+  }
+
   function handleTipClick() {
-    toast.message(t("toast.tipThanks"));
+    setIsTipRiverOpen(true);
   }
 
   function fontStyleLabel(style: FontStyle) {
@@ -147,6 +175,10 @@ export function ProfilePage() {
         return;
       }
       exportTransactionsToXlsx(rows, { t });
+      const milestone = completeMilestone("milestone_export");
+      if (milestone.awarded) {
+        toast.success(t("can.milestone.export"));
+      }
       toast.success(t("toast.exportDone", { count: rows.length }), {
         id: toastId,
       });
@@ -204,16 +236,15 @@ export function ProfilePage() {
       <PageHeader
         caption={t("settings.eyebrow")}
         className="px-1"
-        description={t("settings.subtitle")}
         title={t("settings.title")}
       />
 
       {/* 卡片 A：偏好设置 */}
       <section className="mt-6">
-        <p className="mb-2 px-1 text-caption font-semibold tracking-wide">
+        <p className="mb-2 px-1 text-caption font-semibold tracking-wide text-[var(--color-text-main)] opacity-60">
           {t("settings.section.preferences")}
         </p>
-        <div className="overflow-hidden rounded-2xl border border-[#EAE5D9] bg-white shadow-2xs divide-y divide-[#F0ECE1]">
+        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-2xs divide-y divide-[var(--color-bg-soft)]">
           <SettingsRow
             icon={<Globe className="size-4" strokeWidth={2} />}
             label={t("settings.language")}
@@ -231,34 +262,34 @@ export function ProfilePage() {
             icon={<Type className="size-4" strokeWidth={2} />}
             label={t("settings.fontStyle")}
             onClick={() => setIsFontStyleSheetOpen(true)}
-            value={`${fontStyleLabel(fontStyle)} · ${fontSizeLabel(fontSize)}`}
+            value={`${fontStyleLabel(fontStyle)}${locale.startsWith("zh") ? `（${fontSizeLabel(fontSize)}）` : ` (${fontSizeLabel(fontSize)})`}`}
           />
         </div>
       </section>
 
       {/* 卡片 B：数据管理 */}
       <section className="mt-5">
-        <p className="mb-2 px-1 text-caption font-semibold tracking-wide">
+        <p className="mb-2 px-1 text-caption font-semibold tracking-wide text-[var(--color-text-main)] opacity-60">
           {t("settings.section.data")}
         </p>
-        <div className="overflow-hidden rounded-2xl border border-[#EAE5D9] bg-white shadow-2xs divide-y divide-[#F0ECE1]">
+        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-2xs divide-y divide-[var(--color-bg-soft)]">
           <button
-            className="flex w-full items-center gap-3 px-4 py-4 text-left transition-all duration-150 active:scale-[0.98] active:bg-[#F0ECE1]/80 disabled:opacity-50"
+            className="flex w-full items-center gap-3 px-4 py-4 text-left transition-all duration-150 active:scale-[0.98] active:bg-[var(--color-bg-soft)]/80 disabled:opacity-50"
             disabled={exporting}
             onClick={() => void exportAll()}
             type="button"
           >
-            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#F0ECE1] text-[#8C7A6B]">
+            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-bg-soft)] text-[var(--color-text-main)] opacity-80">
               {exporting ? (
                 <LoaderCircle className="size-4 animate-spin" strokeWidth={2} />
               ) : (
                 <Download className="size-4" strokeWidth={2} />
               )}
             </span>
-            <span className="min-w-0 flex-1 text-body font-semibold">
+            <span className="min-w-0 flex-1 text-body font-semibold text-[var(--color-text-main)]">
               {t("settings.exportData")}
             </span>
-            <ChevronRight className="size-4 shrink-0 text-[#D4C4B0]" strokeWidth={2} />
+            <ChevronRight className="size-4 shrink-0 text-[var(--color-text-main)] opacity-30" strokeWidth={2} />
           </button>
           <SettingsRow
             danger
@@ -271,20 +302,61 @@ export function ProfilePage() {
 
       {/* 卡片 C：关于 */}
       <section className="mt-5">
-        <p className="mb-2 px-1 text-caption font-semibold tracking-wide">
+        <p className="mb-2 px-1 text-caption font-semibold tracking-wide text-[var(--color-text-main)] opacity-60">
           {t("settings.section.about")}
         </p>
-        <div className="overflow-hidden rounded-2xl border border-[#EAE5D9] bg-white shadow-2xs divide-y divide-[#F0ECE1]">
+        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-2xs divide-y divide-[var(--color-bg-soft)]">
           <SettingsRow
+            chevron
+            icon={<Palette className="size-4" strokeWidth={2} />}
+            label={t("settings.theme")}
+            onClick={handleThemeClick}
+            value={themeDisplayName(canState.current_theme)}
+          />
+          <SettingsRow
+            chevron
             icon={<Heart className="size-4" strokeWidth={2} />}
             label={t("settings.tipCat")}
             onClick={handleTipClick}
+            value={
+              <>
+                <CatCanIcon className="size-4 text-[var(--color-primary)]" />
+                {canState.cans_count}
+              </>
+            }
+          />
+          <SettingsRow
+            chevron
+            icon={
+              <Flame
+                className="size-4 text-[var(--color-primary)]"
+                strokeWidth={2}
+              />
+            }
+            label={t("settings.checkin")}
+            onClick={() => setIsCheckinRulesOpen(true)}
+            value={
+              <span className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-primary)]">
+                <span>
+                  {t("can.checkin.streak", {
+                    days: canState.checkin_streak,
+                  })}
+                </span>
+                <span className="opacity-80">
+                  {locale.startsWith("zh") ? "（" : " ("}
+                  {t("can.checkin.fragmentsShort", {
+                    n: canState.can_fragments,
+                  })}
+                  {locale.startsWith("zh") ? "）" : ")"}
+                </span>
+              </span>
+            }
           />
           <SettingsRow
             chevron={false}
             icon={<Info className="size-4" strokeWidth={2} />}
             label={t("settings.version")}
-            value="v2.0"
+            value="v3.0"
           />
         </div>
       </section>
@@ -301,8 +373,8 @@ export function ProfilePage() {
               <button
                 className={`flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold transition-all duration-150 active:scale-[0.98] ${
                   active
-                    ? "bg-[#C86235]/15 text-[#8C6D53] ring-2 ring-[#C86235]"
-                    : "bg-[#F0ECE1] text-[#4A3E31]"
+                    ? "bg-[var(--color-primary)]/15 text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]"
+                    : "bg-[var(--color-bg-soft)] text-[var(--color-text-main)]"
                 }`}
                 key={option.code}
                 onClick={() => handleLanguageChange(option.code, option.label)}
@@ -310,7 +382,7 @@ export function ProfilePage() {
               >
                 <span>{option.label}</span>
                 {active ? (
-                  <span className="text-xs">{t("settings.current")}</span>
+                  <span className="text-xs opacity-70">{t("settings.current")}</span>
                 ) : null}
               </button>
             );
@@ -331,8 +403,8 @@ export function ProfilePage() {
                 <button
                   className={`flex h-14 w-full items-center justify-between rounded-2xl px-4 text-left transition-all duration-150 active:scale-[0.98] ${
                     active
-                      ? "bg-[#C86235]/15 text-[#8C6D53] ring-2 ring-[#C86235]"
-                      : "bg-[#F0ECE1] text-[#4A3E31]"
+                      ? "bg-[var(--color-primary)]/15 text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]"
+                      : "bg-[var(--color-bg-soft)] text-[var(--color-text-main)]"
                   }`}
                   key={option.code}
                   onClick={() => handleFontStyleChange(option.code)}
@@ -344,13 +416,13 @@ export function ProfilePage() {
                       {t(option.labelKey)}
                     </span>
                     {option.hintKey ? (
-                      <span className="mt-0.5 block text-xs text-[#9C9285]">
+                      <span className="mt-0.5 block text-xs text-[var(--color-text-main)] opacity-60">
                         {t(option.hintKey)}
                       </span>
                     ) : null}
                   </span>
                   {active ? (
-                    <span className="text-xs font-semibold">
+                    <span className="text-xs font-semibold opacity-70">
                       {t("settings.current")}
                     </span>
                   ) : null}
@@ -360,19 +432,19 @@ export function ProfilePage() {
           </div>
 
           <div>
-            <p className="mb-2 px-0.5 text-xs font-semibold text-[#9C9285]">
+            <p className="mb-2 px-0.5 text-xs font-semibold text-[var(--color-text-main)] opacity-60">
               {t("settings.fontSize")}
             </p>
             <div className="flex items-center gap-3">
               <span
                 aria-hidden
-                className="select-none text-[11px] font-semibold text-[#9C9285]"
+                className="select-none text-[11px] font-semibold text-[var(--color-text-main)] opacity-60"
               >
                 A
               </span>
               <div
                 aria-label={t("settings.fontSize")}
-                className="grid flex-1 grid-cols-3 rounded-2xl bg-[#F0ECE1] p-1"
+                className="grid flex-1 grid-cols-3 rounded-2xl bg-[var(--color-bg-soft)] p-1"
                 role="radiogroup"
               >
                 {FONT_SIZE_OPTIONS.map((option) => {
@@ -382,8 +454,8 @@ export function ProfilePage() {
                       aria-checked={active}
                       className={`h-9 rounded-xl text-xs font-semibold transition-all duration-150 active:scale-[0.98] ${
                         active
-                          ? "bg-white text-[#2C2420] shadow-sm"
-                          : "text-[#9C9285]"
+                          ? "bg-[var(--color-bg-card)] text-[var(--color-text-main)] shadow-sm"
+                          : "text-[var(--color-text-main)] opacity-60"
                       }`}
                       key={option.code}
                       onClick={() => setFontSize(option.code)}
@@ -397,7 +469,7 @@ export function ProfilePage() {
               </div>
               <span
                 aria-hidden
-                className="select-none text-lg font-semibold leading-none text-[#9C9285]"
+                className="select-none text-lg font-semibold leading-none text-[var(--color-text-main)] opacity-60"
               >
                 A
               </span>
@@ -405,11 +477,11 @@ export function ProfilePage() {
           </div>
 
           <p
-            className="rounded-2xl bg-[#F0ECE1] px-3.5 py-3 text-sm leading-6 text-[#4A3E31]"
+            className="rounded-2xl bg-[var(--color-bg-soft)] px-3.5 py-3 text-sm leading-6 text-[var(--color-text-main)]"
             style={{ fontFamily: FONT_FAMILY_STACK[fontStyle] }}
           >
             {t("settings.fontPreview")}
-            <span className="mt-1 block font-numeric text-base font-semibold text-[#B8785C]">
+            <span className="mt-1 block font-numeric text-base font-semibold text-expense">
               $1,280.50
             </span>
           </p>
@@ -428,8 +500,8 @@ export function ProfilePage() {
               <button
                 className={`flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold transition-all duration-150 active:scale-[0.98] ${
                   active
-                    ? "bg-[#C86235]/15 text-[#8C6D53] ring-2 ring-[#C86235]"
-                    : "bg-[#F0ECE1] text-[#4A3E31]"
+                    ? "bg-[var(--color-primary)]/15 text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]"
+                    : "bg-[var(--color-bg-soft)] text-[var(--color-text-main)]"
                 }`}
                 key={code}
                 onClick={() => handleCurrencyChange(code)}
@@ -437,23 +509,37 @@ export function ProfilePage() {
               >
                 <span className="flex items-center gap-2">
                   <CurrencyIcon
-                    className={`size-4 ${active ? "text-[#8C6D53]" : "text-[#A08875]"}`}
+                    className={`size-4 ${active ? "text-[var(--color-primary)]" : "text-[var(--color-text-main)] opacity-50"}`}
                     code={code}
                     strokeWidth={2}
                   />
                   {code} ({translateCurrencyLabel(code, t)})
                 </span>
                 {active ? (
-                  <span className="text-xs">{t("settings.current")}</span>
+                  <span className="text-xs opacity-70">{t("settings.current")}</span>
                 ) : null}
               </button>
             );
           })}
-          <p className="px-1 pt-2 text-caption leading-5">
+          <p className="px-1 pt-2 text-caption leading-5 text-[var(--color-text-main)] opacity-60">
             {t("settings.currencyHint")}
           </p>
         </div>
       </BottomSheet>
+
+      <ThemeStoreSheet
+        onOpenChange={setIsThemeStoreOpen}
+        open={isThemeStoreOpen}
+      />
+      <TipRiverSheet
+        onOpenChange={setIsTipRiverOpen}
+        open={isTipRiverOpen}
+      />
+      <CheckinRulesModal
+        onOpenChange={setIsCheckinRulesOpen}
+        open={isCheckinRulesOpen}
+        state={canState}
+      />
 
       <ConfirmDialog
         busy={resetting}

@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
 import { useT } from "@/components/LocaleProvider";
 
-/** 居中确认弹窗（奶油风） */
+/** 居中确认弹窗（主题变量） */
 export function ConfirmDialog({
   open,
   title,
@@ -35,12 +35,16 @@ export function ConfirmDialog({
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/35 px-6 backdrop-blur-sm"
       role="dialog"
     >
-      <div className="w-full max-w-sm rounded-3xl bg-[#FBF9F5] p-5 shadow-xl">
-        <h2 className="text-lg font-extrabold text-[#4A3E3D]">{title}</h2>
-        <p className="mt-2 text-sm leading-6 text-[#9A7B55]">{description}</p>
+      <div className="w-full max-w-sm rounded-3xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5 shadow-xl">
+        <h2 className="text-lg font-extrabold text-[var(--color-text-main)]">
+          {title}
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-[var(--color-text-main)] opacity-60">
+          {description}
+        </p>
         <div className="mt-5 flex gap-3">
           <button
-            className="h-11 flex-1 rounded-2xl border border-[#EAE5D9] bg-white text-sm font-semibold text-[#8C6D53] transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+            className="h-11 flex-1 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] text-sm font-semibold text-[var(--color-text-main)] transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
             disabled={busy}
             onClick={onCancel}
             type="button"
@@ -49,7 +53,7 @@ export function ConfirmDialog({
           </button>
           <button
             className={`h-11 flex-1 rounded-2xl text-sm font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50 ${
-              confirmDanger ? "bg-danger" : "bg-brand-primary"
+              confirmDanger ? "bg-danger" : "bg-[var(--color-primary)]"
             }`}
             disabled={busy}
             onClick={onConfirm}
@@ -74,7 +78,7 @@ export function SettingsRow({
 }: {
   icon: ReactNode;
   label: string;
-  value?: string;
+  value?: ReactNode;
   onClick?: () => void;
   danger?: boolean;
   chevron?: boolean;
@@ -87,32 +91,32 @@ export function SettingsRow({
     <Comp
       className={`flex w-full items-center gap-3 px-4 py-4 text-left transition-all duration-150 ${
         interactive
-          ? "active:scale-[0.98] active:bg-[#F0ECE1]/80"
+          ? "active:scale-[0.98] active:bg-[var(--color-bg-soft)]/80"
           : ""
       } ${disabled ? "opacity-80" : ""}`}
       disabled={interactive ? disabled : undefined}
       onClick={interactive ? onClick : undefined}
       type={interactive ? "button" : undefined}
     >
-      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#F0ECE1] text-[#8C7A6B]">
+      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-bg-soft)] text-[var(--color-text-main)] opacity-80">
         {icon}
       </span>
       <span
         className={`min-w-0 flex-1 text-sm font-medium ${
-          danger ? "text-danger" : "text-ink-body"
+          danger ? "text-danger" : "text-[var(--color-text-main)]"
         }`}
       >
         {label}
       </span>
-      {value ? (
-        <span className="shrink-0 font-numeric text-sm font-medium text-[#9C9285]">
+      {value != null && value !== false && value !== "" ? (
+        <span className="flex shrink-0 items-center gap-1 font-numeric text-sm font-medium text-[var(--color-text-main)] opacity-60">
           {value}
         </span>
       ) : null}
       {chevron && interactive ? (
         <ChevronRight
           aria-hidden
-          className="size-4 shrink-0 text-[#D4C4B0]"
+          className="size-4 shrink-0 text-[var(--color-text-main)] opacity-30"
           strokeWidth={2}
         />
       ) : null}

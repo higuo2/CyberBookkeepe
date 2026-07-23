@@ -162,12 +162,66 @@ create table if not exists public.planner_state (
     check (spend_mode in ('actual', 'reserve_fixed')),
   accounts jsonb not null default '[]'::jsonb,
   ledger jsonb not null default '[]'::jsonb,
+  cans_count int not null default 0,
+  can_fragments int not null default 0,
+  unlocked_themes text[] not null default array['cream']::text[],
+  current_theme text not null default 'cream',
+  checkin_streak int not null default 0,
+  last_checkin_date date,
+  completed_milestones text[] not null default array[]::text[],
+  last_sponsor_claim_date date,
   updated_at timestamptz not null default now()
 );
 
 insert into public.planner_state (id)
 values ('default')
 on conflict (id) do nothing;
+
+-- 已有表补列（幂等）
+alter table public.planner_state
+  add column if not exists cans_count int;
+
+alter table public.planner_state
+  add column if not exists can_fragments int;
+
+alter table public.planner_state
+  add column if not exists unlocked_themes text[];
+
+alter table public.planner_state
+  add column if not exists current_theme text;
+
+alter table public.planner_state
+  add column if not exists checkin_streak int;
+
+alter table public.planner_state
+  add column if not exists last_checkin_date date;
+
+alter table public.planner_state
+  add column if not exists completed_milestones text[];
+
+alter table public.planner_state
+  add column if not exists last_sponsor_claim_date date;
+
+update public.planner_state set cans_count = 0 where cans_count is null;
+update public.planner_state set can_fragments = 0 where can_fragments is null;
+update public.planner_state set unlocked_themes = array['cream']::text[] where unlocked_themes is null;
+update public.planner_state set current_theme = 'cream' where current_theme is null;
+update public.planner_state set checkin_streak = 0 where checkin_streak is null;
+update public.planner_state set completed_milestones = array[]::text[] where completed_milestones is null;
+
+alter table public.planner_state alter column cans_count set default 0;
+alter table public.planner_state alter column can_fragments set default 0;
+alter table public.planner_state alter column unlocked_themes set default array['cream']::text[];
+alter table public.planner_state alter column current_theme set default 'cream';
+alter table public.planner_state alter column checkin_streak set default 0;
+alter table public.planner_state alter column completed_milestones set default array[]::text[];
+
+alter table public.planner_state alter column cans_count set not null;
+alter table public.planner_state alter column can_fragments set not null;
+alter table public.planner_state alter column unlocked_themes set not null;
+alter table public.planner_state alter column current_theme set not null;
+alter table public.planner_state alter column checkin_streak set not null;
+alter table public.planner_state alter column completed_milestones set not null;
 
 alter table public.planner_state enable row level security;
 

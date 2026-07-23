@@ -26,7 +26,7 @@ import type { TransactionDraft } from "@/lib/types";
 import { useT } from "@/components/LocaleProvider";
 
 const fieldClass =
-  "h-11 w-full rounded-2xl border border-[#EAE5D9] bg-[#F0ECE1] px-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#C86235] focus:ring-4 focus:ring-[#C86235]/15";
+  "h-11 w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] px-3 text-sm text-[var(--color-text-main)] outline-none transition-all focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/15";
 
 export function TransactionDialog({
   open,
@@ -78,17 +78,17 @@ export function TransactionDialog({
       className="fixed inset-0 z-[70] flex items-end justify-center overflow-x-hidden bg-[#5C4A32]/25 p-0 backdrop-blur-sm sm:items-center sm:p-5"
       role="dialog"
     >
-      <section className="max-h-[92dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-3xl border border-[#EAE5D9] bg-white p-5 pb-[calc(env(safe-area-inset-bottom)+20px)] shadow-2xs touch-pan-y sm:rounded-3xl sm:pb-5">
+      <section className="max-h-[92dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-3xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5 pb-[calc(env(safe-area-inset-bottom)+20px)] shadow-2xs touch-pan-y sm:rounded-3xl sm:pb-5">
         <header className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9C9285]">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-main)] opacity-60">
               {t("auth.brand")}
             </p>
-            <h2 className="mt-1 text-xl font-semibold text-[#5C4A32]">{title}</h2>
+            <h2 className="mt-1 text-xl font-semibold text-[var(--color-text-main)]">{title}</h2>
           </div>
           <button
             aria-label={t("common.close")}
-            className="grid size-10 place-items-center rounded-full bg-white text-[#8A7A5C] shadow-sm transition-all duration-150 active:scale-[0.98]"
+            className="grid size-10 place-items-center rounded-full bg-[var(--color-bg-card)] text-[var(--color-text-main)] opacity-60 shadow-sm transition-all duration-150 active:scale-[0.98]"
             disabled={locked}
             onClick={onClose}
             type="button"
@@ -98,8 +98,8 @@ export function TransactionDialog({
         </header>
 
         {isRecurring && (
-          <div className="mt-4 rounded-2xl bg-[#F0ECE1] px-3.5 py-3">
-            <p className="flex items-start gap-1.5 text-sm leading-5 text-[#8C6D53]">
+          <div className="mt-4 rounded-2xl bg-[var(--color-bg-soft)] px-3.5 py-3">
+            <p className="flex items-start gap-1.5 text-sm leading-5 text-[var(--color-primary)]">
               <Lightbulb className="mt-0.5 size-3.5 shrink-0" strokeWidth={2} />
               {t("dialog.recurringGenerated")}
             </p>
@@ -108,10 +108,10 @@ export function TransactionDialog({
 
         <form className="mt-6 space-y-4" onSubmit={submit}>
           <div>
-            <span className="mb-2 block text-xs font-medium text-[#9A7B55]">
+            <span className="mb-2 block text-xs font-medium text-[var(--color-text-main)] opacity-60">
               {t("dialog.type")}
             </span>
-            <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[#F0ECE1] p-1.5">
+            <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[var(--color-bg-soft)] p-1.5">
               {(["EXPENSE", "INCOME"] as const).map((type) => {
                 const active = value.type === type;
                 const expense = type === "EXPENSE";
@@ -120,8 +120,8 @@ export function TransactionDialog({
                     className={`flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all duration-150 active:scale-[0.98] ${
                       active
                         ? expense
-                          ? "bg-white text-[#B8785C] shadow-sm"
-                          : "bg-white text-[#5B7A66] shadow-sm"
+                          ? "bg-[var(--color-bg-card)] text-expense shadow-sm"
+                          : "bg-[var(--color-bg-card)] text-income shadow-sm"
                         : "text-[#A08B68]"
                     }`}
                     key={type}
@@ -151,7 +151,7 @@ export function TransactionDialog({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <label className="text-xs font-medium text-[#9A7B55]">
+            <label className="text-xs font-medium text-[var(--color-text-main)] opacity-60">
               {t("dialog.amount")}
               <input
                 className={`${fieldClass} mt-2 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
@@ -167,7 +167,7 @@ export function TransactionDialog({
                 value={value.amount || ""}
               />
             </label>
-            <label className="text-xs font-medium text-[#9A7B55]">
+            <label className="text-xs font-medium text-[var(--color-text-main)] opacity-60">
               {t("dialog.currency")}
               <select
                 className={`${fieldClass} mt-2`}
@@ -188,7 +188,7 @@ export function TransactionDialog({
             </label>
           </div>
 
-          <label className="block text-xs font-medium text-[#9A7B55]">
+          <label className="block text-xs font-medium text-[var(--color-text-main)] opacity-60">
             {t("dialog.date")}
             <input
               className={`${fieldClass} mt-2`}
@@ -201,7 +201,7 @@ export function TransactionDialog({
             />
           </label>
 
-          <label className="block text-xs font-medium text-[#9A7B55]">
+          <label className="block text-xs font-medium text-[var(--color-text-main)] opacity-60">
             {t("dialog.category")}
             <select
               className={`${fieldClass} mt-2`}
@@ -219,10 +219,10 @@ export function TransactionDialog({
             </select>
           </label>
 
-          <label className="block text-xs font-medium text-[#9A7B55]">
+          <label className="block text-xs font-medium text-[var(--color-text-main)] opacity-60">
             {t("dialog.noteOptional")}
             <textarea
-              className="mt-2 min-h-20 w-full resize-none rounded-2xl border border-[#EAE5D9] bg-[#F0ECE1] p-3 text-sm text-[#5C4A32] outline-none transition-all focus:border-[#C86235] focus:ring-4 focus:ring-[#C86235]/15"
+              className="mt-2 min-h-20 w-full resize-none rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] p-3 text-sm text-[var(--color-text-main)] outline-none transition-all focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/15"
               maxLength={200}
               onChange={(event) =>
                 onChange({ ...value, note: event.target.value })
@@ -234,7 +234,7 @@ export function TransactionDialog({
 
           <div className="flex flex-col gap-2 pt-1">
             <button
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#C86235] font-semibold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--color-primary)] font-semibold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
               disabled={locked}
               type="submit"
             >
@@ -249,7 +249,7 @@ export function TransactionDialog({
             {onDelete && (
               <div className="flex flex-col gap-2">
                 <button
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#EFEAE8] text-sm font-semibold text-[#B8785C] transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#EFEAE8] text-sm font-semibold text-expense transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
                   disabled={locked}
                   onClick={() => void onDelete()}
                   type="button"
@@ -263,7 +263,7 @@ export function TransactionDialog({
                 </button>
                 {isRecurring && onManageRecurring && (
                   <button
-                    className="w-full py-1.5 text-center text-xs font-bold text-[#B37233] transition-opacity active:opacity-70"
+                    className="w-full py-1.5 text-center text-xs font-bold text-[var(--color-primary)] transition-opacity active:opacity-70"
                     disabled={locked}
                     onClick={onManageRecurring}
                     type="button"

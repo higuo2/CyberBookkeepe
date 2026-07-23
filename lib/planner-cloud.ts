@@ -23,6 +23,13 @@ import {
   readBudgetFromStorage,
   writeBudgetToStorage,
 } from "@/lib/transaction-utils";
+import {
+  applyCanStateFromCloud,
+  canStateForCloud,
+  clearCanEconomyLocal,
+  type CanEconomyState,
+} from "@/lib/can-system";
+import { isThemeId, type ThemeId } from "@/lib/cream-theme";
 
 export type PlannerCloudSnapshot = {
   goals: WishlistGoal[];
@@ -31,6 +38,7 @@ export type PlannerCloudSnapshot = {
   spend_mode: BudgetSpendMode;
   accounts: PlannerAccount[];
   ledger: AccountLedgerEntry[];
+  can?: CanEconomyState;
   updated_at?: string;
 };
 
@@ -79,6 +87,34 @@ function asLedger(raw: unknown): AccountLedgerEntry[] {
   });
 }
 
+function asThemeList(raw: unknown): ThemeId[] {
+  if (!Array.isArray(raw)) return ["cream"];
+  const list = raw.filter((t): t is ThemeId => isThemeId(t));
+  return list.includes("cream") ? list : (["cream", ...list] as ThemeId[]);
+}
+
+function canFromRow(row: Record<string, unknown>): CanEconomyState {
+  return {
+    cans_count: Math.max(0, Math.floor(Number(row.cans_count) || 0)),
+    can_fragments: Math.max(0, Math.floor(Number(row.can_fragments) || 0)),
+    unlocked_themes: asThemeList(row.unlocked_themes),
+    current_theme: isThemeId(row.current_theme) ? row.current_theme : "cream",
+    checkin_streak: Math.max(0, Math.floor(Number(row.checkin_streak) || 0)),
+    last_checkin_date:
+      typeof row.last_checkin_date === "string" && row.last_checkin_date
+        ? row.last_checkin_date
+        : null,
+    completed_milestones: Array.isArray(row.completed_milestones)
+      ? row.completed_milestones.filter((m): m is string => typeof m === "string")
+      : [],
+    last_sponsor_claim_date:
+      typeof row.last_sponsor_claim_date === "string" &&
+      row.last_sponsor_claim_date
+        ? row.last_sponsor_claim_date
+        : null,
+  };
+}
+
 function snapshotFromLocal(): PlannerCloudSnapshot {
   return {
     goals: readGoals(),
@@ -87,6 +123,7 @@ function snapshotFromLocal(): PlannerCloudSnapshot {
     spend_mode: readBudgetSpendMode(),
     accounts: readAccounts(),
     ledger: readLedger(),
+    can: canStateForCloud(),
   };
 }
 
@@ -106,6 +143,7 @@ function applySnapshotLocally(s: PlannerCloudSnapshot) {
   writeBudgetSpendMode(s.spend_mode);
   if (s.accounts.length > 0) writeAccounts(s.accounts);
   writeLedger(s.ledger);
+  if (s.can) applyCanStateFromCloud(s.can);
 }
 
 function rowToSnapshot(row: Record<string, unknown>): PlannerCloudSnapshot {
@@ -119,6 +157,7 @@ function rowToSnapshot(row: Record<string, unknown>): PlannerCloudSnapshot {
     spend_mode: spend,
     accounts: asAccounts(row.accounts),
     ledger: asLedger(row.ledger),
+    can: canFromRow(row),
     updated_at:
       typeof row.updated_at === "string" ? row.updated_at : undefined,
   };
@@ -128,7 +167,7 @@ export async function fetchPlannerCloud(): Promise<PlannerCloudSnapshot | null> 
   const { data, error } = await getSupabase()
     .from("planner_state")
     .select(
-      "goals, recurring, monthly_budget, spend_mode, accounts, ledger, updated_at",
+      "goals, recurring, monthly_budget, spend_mode, accounts, ledger, cans_count, can_fragments, unlocked_themes, current_theme, checkin_streak, last_checkin_date, completed_milestones, last_sponsor_claim_date, updated_at",
     )
     .eq("id", ROW_ID)
     .maybeSingle();
@@ -138,12 +177,25 @@ export async function fetchPlannerCloud(): Promise<PlannerCloudSnapshot | null> 
   return rowToSnapshot(data as Record<string, unknown>);
 }
 
-/** 把当前 localStorage 规划数据整包 upsert 到云端 */
+function canPayload(can: CanEconomyState) {
+  return {
+    cans_count: can.cans_count,
+    can_fragments: can.can_fragments,
+    unlocked_themes: can.unlocked_themes,
+    current_theme: can.current_theme,
+    checkin_streak: can.checkin_streak,
+    last_checkin_date: can.last_checkin_date,
+    completed_milestones: can.completed_milestones,
+    last_sponsor_claim_date: can.last_sponsor_claim_date,
+  };
+}
+
 export async function pushPlannerToCloud(
   snapshot?: PlannerCloudSnapshot,
 ): Promise<void> {
   if (!isBrowser()) return;
   const local = snapshot ?? snapshotFromLocal();
+  const can = local.can ?? canStateForCloud();
   const { error } = await getSupabase().from("planner_state").upsert(
     {
       id: ROW_ID,
@@ -153,6 +205,7 @@ export async function pushPlannerToCloud(
       spend_mode: local.spend_mode,
       accounts: local.accounts,
       ledger: local.ledger,
+      ...canPayload(can),
       updated_at: new Date().toISOString(),
     },
     { onConflict: "id" },
@@ -160,7 +213,6 @@ export async function pushPlannerToCloud(
   if (error) throw error;
 }
 
-/** 写入后防抖推送；不阻塞 UI */
 export function schedulePlannerCloudPush(delayMs = 400) {
   if (!isBrowser()) return;
   if (pushTimer) clearTimeout(pushTimer);
@@ -168,7 +220,7 @@ export function schedulePlannerCloudPush(delayMs = 400) {
     pushTimer = null;
     pushInFlight = pushPlannerToCloud()
       .catch(() => {
-        // best-effort；下次写入或下次打开再同步
+        // best-effort
       })
       .finally(() => {
         pushInFlight = null;
@@ -185,12 +237,6 @@ export async function flushPlannerCloudPush() {
   else await pushPlannerToCloud().catch(() => undefined);
 }
 
-/**
- * 启动时拉取云端规划：
- * - 云端有内容 → 覆盖本地（跨设备同步）
- * - 云端空、本地有内容 → 上传本地（首次迁移）
- * 同会话只跑一次。
- */
 export function hydratePlannerFromCloud(): Promise<void> {
   if (!isBrowser()) return Promise.resolve();
   if (hydratePromise) return hydratePromise;
@@ -207,23 +253,20 @@ export function hydratePlannerFromCloud(): Promise<void> {
         return;
       }
 
-      // 云端空：仅首次（本机尚未 hydrate）且本地有数据 → 上传迁移
       if (!isEmptySnapshot(local) && !everHydrated) {
         await pushPlannerToCloud(local);
         return;
       }
 
       if (remote) {
-        // 云端有行但是空（例如设置里点了重置）→ 覆盖本地
         applySnapshotWithoutCloudPush(remote);
         window.dispatchEvent(new Event("planner-cloud-hydrated"));
         return;
       }
 
-      // 云端尚无行：创建 default
       await pushPlannerToCloud(local);
     } catch {
-      // 表未建 / 网络失败：继续用本地
+      // 表未建 / 缺列时：继续用本地
     } finally {
       try {
         localStorage.setItem(HYDRATED_FLAG, "1");
@@ -236,7 +279,6 @@ export function hydratePlannerFromCloud(): Promise<void> {
   return hydratePromise;
 }
 
-/** 应用快照但不触发 schedulePush（供 hydrate 使用） */
 function applySnapshotWithoutCloudPush(s: PlannerCloudSnapshot) {
   const prev = (globalThis as { __plannerCloudMutePush?: boolean })
     .__plannerCloudMutePush;
@@ -256,8 +298,17 @@ export function isPlannerCloudPushMuted() {
   );
 }
 
-/** 设置页「重置」时清空云端规划 */
 export async function clearPlannerCloud(): Promise<void> {
+  const emptyCan: CanEconomyState = {
+    cans_count: 0,
+    can_fragments: 0,
+    unlocked_themes: ["cream"],
+    current_theme: "cream",
+    checkin_streak: 0,
+    last_checkin_date: null,
+    completed_milestones: [],
+    last_sponsor_claim_date: null,
+  };
   await getSupabase().from("planner_state").upsert(
     {
       id: ROW_ID,
@@ -267,6 +318,7 @@ export async function clearPlannerCloud(): Promise<void> {
       spend_mode: "actual",
       accounts: [],
       ledger: [],
+      ...canPayload(emptyCan),
       updated_at: new Date().toISOString(),
     },
     { onConflict: "id" },
@@ -275,6 +327,7 @@ export async function clearPlannerCloud(): Promise<void> {
     localStorage.removeItem(HYDRATED_FLAG);
     localStorage.removeItem(BUDGET_STORAGE_KEY);
     localStorage.removeItem(BUDGET_SPEND_MODE_KEY);
+    clearCanEconomyLocal();
   } catch {
     // ignore
   }

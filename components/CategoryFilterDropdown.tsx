@@ -119,7 +119,7 @@ export function CategoryFilterDropdown({
       <button
         aria-expanded={open}
         aria-haspopup="listbox"
-        className="flex h-9 max-w-[9.5rem] items-center gap-1 rounded-xl border border-[#EAE5D9] bg-white py-0 pl-2.5 pr-2 text-xs font-medium text-[#5C4A32] shadow-sm transition-all duration-150 active:scale-[0.98]"
+        className="flex h-9 max-w-[9.5rem] items-center gap-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] py-0 pl-2.5 pr-2 text-xs font-medium text-[var(--color-text-main)] shadow-sm transition-all duration-150 active:scale-[0.98]"
         onClick={() => setOpen((prev) => !prev)}
         type="button"
       >
@@ -134,7 +134,7 @@ export function CategoryFilterDropdown({
 
       {open && (
         <div
-          className="absolute right-0 z-40 mt-1.5 w-52 overflow-hidden rounded-2xl border border-[#EAE5D9] bg-[#FBF9F5] shadow-xl"
+          className="absolute right-0 z-40 mt-1.5 w-52 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] shadow-xl"
           role="listbox"
         >
           <ul className="max-h-64 overflow-y-auto overscroll-contain py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -156,8 +156,8 @@ export function CategoryFilterDropdown({
                   <button
                     className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors ${
                       selected
-                        ? "bg-[#F3ECE0] font-semibold text-[#8C6D53]"
-                        : "text-[#5C4A32] hover:bg-[#F3ECE0] hover:text-[#8C6D53]"
+                        ? "bg-[#F3ECE0] font-semibold text-[var(--color-primary)]"
+                        : "text-[var(--color-text-main)] hover:bg-[#F3ECE0] hover:text-[var(--color-primary)]"
                     }`}
                     onClick={() => {
                       onChange(item.value);
@@ -179,7 +179,7 @@ export function CategoryFilterDropdown({
                     </span>
                     <span className="min-w-0 flex-1 truncate">{item.label}</span>
                     {selected && (
-                      <Check className="size-3.5 shrink-0 text-[#8C6D53]" strokeWidth={2} />
+                      <Check className="size-3.5 shrink-0 text-[var(--color-primary)]" strokeWidth={2} />
                     )}
                   </button>
                 </li>

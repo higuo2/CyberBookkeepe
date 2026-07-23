@@ -182,7 +182,7 @@ export function ChartsPage() {
         actions={
           <button
             aria-label={t("charts.aria.refresh")}
-            className="grid size-9 place-items-center rounded-full border border-[#EAE5D9] bg-white text-[#8A7A5C] shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+            className="grid size-9 place-items-center rounded-full border border-[var(--color-border)] bg-[var(--color-bg-card)] text-[var(--color-text-main)] opacity-60 shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
             disabled={loading}
             onClick={() => void loadChart(true)}
             type="button"
@@ -194,7 +194,6 @@ export function ChartsPage() {
           </button>
         }
         caption={t("charts.eyebrow")}
-        description={t("charts.subtitle")}
         title={t("charts.title")}
       />
 
@@ -213,33 +212,33 @@ export function ChartsPage() {
                 m.cardGradient
               } ${
                 active
-                  ? "border-[#C86235] ring-2 ring-[#C86235]/25"
-                  : "border-[#EAE5D9]"
+                  ? "border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/25"
+                  : "border-[var(--color-border)]"
               }`}
               key={code}
               onClick={() => setActiveCurrency(code)}
               type="button"
             >
               <div className="flex items-center justify-between gap-2">
-                <p className="flex items-center gap-1.5 text-sm font-semibold text-[#5C4A32]">
+                <p className="flex items-center gap-1.5 text-sm font-semibold text-[var(--color-text-main)]">
                   <CurrencyIcon
-                    className="size-4 text-[#8C6D53]"
+                    className="size-4 text-[var(--color-primary)]"
                     code={code}
                     strokeWidth={2}
                   />
                   {code} {translateCurrencyLabel(code, t)}
                 </p>
-                <span className="rounded-full bg-white/70 px-2 py-0.5 text-xs font-bold text-[#8C6D53]">
+                <span className="rounded-full bg-[var(--color-bg-card)]/70 px-2 py-0.5 text-xs font-bold text-[var(--color-primary)]">
                   {m.symbol}
                 </span>
               </div>
               <p className="mt-3 text-caption">{t("charts.monthExpense")}</p>
-              <p className="mt-0.5 font-numeric text-xl font-semibold tracking-tight text-[#B8785C]">
+              <p className="mt-0.5 font-numeric text-xl font-semibold tracking-tight text-expense">
                 {formatMoney(totals.expense, code)}
               </p>
               <p className="mt-2 text-caption">
                 {t("charts.monthIncome")}{" "}
-                <span className="font-numeric font-semibold text-[#5B7A66]">
+                <span className="font-numeric font-semibold text-income">
                   {formatMoney(totals.income, code)}
                 </span>
               </p>
@@ -249,8 +248,8 @@ export function ChartsPage() {
       </div>
 
       <div className="mt-3 flex flex-col gap-3">
-        <section className="rounded-2xl border border-[#EAE5D9] bg-white p-4 shadow-2xs">
-          <h2 className="text-sm font-semibold text-[#5C4A32]">
+        <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 shadow-2xs">
+          <h2 className="text-sm font-semibold text-[var(--color-text-main)]">
             {t("charts.trendTitle", { currency: activeCurrency })}
           </h2>
           <div className="mt-1">
@@ -262,8 +261,8 @@ export function ChartsPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-[#EAE5D9] bg-white p-4 shadow-2xs">
-          <h2 className="text-sm font-semibold text-[#5C4A32]">
+        <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 shadow-2xs">
+          <h2 className="text-sm font-semibold text-[var(--color-text-main)]">
             {t("charts.categoryTitle", { currency: activeCurrency })}
           </h2>
           {loading && monthTransactions.length === 0 ? (

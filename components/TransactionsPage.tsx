@@ -27,6 +27,7 @@ import {
   queryTransactions,
 } from "@/lib/transactions-query";
 import { getSupabase } from "@/lib/supabase";
+import { processDailyCheckin } from "@/lib/can-system";
 import {
   createEmptyTransaction,
   EXPENSE_CATEGORIES,
@@ -95,6 +96,7 @@ function formatDayExpenseSummary(
   items: Transaction[],
   preferred: CurrencyCode,
   t: TranslateFn,
+  locale: string,
 ): string {
   const totals = dayTotalsByCurrency(items).filter(([, s]) => s.expense > 0);
   if (totals.length === 0) return "";
@@ -103,11 +105,13 @@ function formatDayExpenseSummary(
     if (b === preferred) return 1;
     return a.localeCompare(b);
   });
-  return totals
-    .map(([code, sums]) =>
-      t("transactions.dayExpense", { amount: formatMoney(sums.expense, code) }),
-    )
-    .join(" · ");
+  const parts = totals.map(([code, sums]) =>
+    t("transactions.dayExpense", { amount: formatMoney(sums.expense, code) }),
+  );
+  if (parts.length === 1) return parts[0]!;
+  const open = locale.startsWith("zh") ? "（" : " (";
+  const close = locale.startsWith("zh") ? "）" : ")";
+  return `${parts[0]}${open}${parts.slice(1).join(" ")}${close}`;
 }
 
 function categoryIconTone(category: string) {
@@ -293,6 +297,12 @@ export function TransactionsPage() {
         await updateTransactionDraft(editingId, cleanDraft);
       } else {
         await insertTransactionDraft(cleanDraft);
+        const checkin = processDailyCheckin();
+        if (checkin.didCheckin) {
+          toast.success(t("can.checkin.fragment"));
+          if (checkin.synthesizedCan) toast.success(t("can.checkin.synthesize"));
+          if (checkin.streakBonus) toast.success(t("can.checkin.streak7"));
+        }
       }
       setDialogMode(null);
       toast.success(isEditing ? t("toast.txUpdated") : t("toast.txCreated"), { id: toastId });
@@ -407,7 +417,7 @@ export function TransactionsPage() {
                 </button>
                 <button
                   aria-label={t("transactions.aria.manualAdd")}
-                  className="grid size-9 place-items-center rounded-full bg-[#C86235] text-white shadow-sm transition-all active:scale-95"
+                  className="grid size-9 place-items-center rounded-full bg-[var(--color-primary)] text-white shadow-sm transition-all active:scale-95"
                   onClick={openCreate}
                   type="button"
                 >
@@ -424,7 +434,7 @@ export function TransactionsPage() {
               <Search className="pointer-events-none absolute left-3.5 top-1/2 size-3.5 -translate-y-1/2 text-[#C0B49A]" strokeWidth={2} />
               <input
                 autoFocus
-                className="h-10 w-full rounded-2xl border border-cream-border bg-[#F0ECE1] pl-10 pr-3 text-sm text-ink outline-none transition-all placeholder:text-ink-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                className="h-10 w-full rounded-2xl border border-cream-border bg-[var(--color-bg-soft)] pl-10 pr-3 text-sm text-ink outline-none transition-all placeholder:text-ink-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t("transactions.searchPlaceholder")}
                 value={query}
@@ -433,7 +443,7 @@ export function TransactionsPage() {
           ) : null}
 
           <div className="mt-3 flex items-center gap-2.5">
-            <div className="flex min-w-0 flex-1 rounded-xl bg-[#F0ECE1] p-[3px]">
+            <div className="flex min-w-0 flex-1 rounded-xl bg-[var(--color-bg-soft)] p-[3px]">
               {TYPE_SEGMENTS.map(({ key, labelKey }) => {
                 const active = typeFilter === key;
                 return (
@@ -480,7 +490,7 @@ export function TransactionsPage() {
           {loading && transactions.length === 0 ? (
             <TransactionListSkeleton />
           ) : filtered.length === 0 ? (
-            <div className="mt-4 rounded-2xl border border-dashed border-[#EAE5D9] bg-white px-5 py-14 text-center shadow-2xs">
+            <div className="mt-4 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-bg-card)] px-5 py-14 text-center shadow-2xs">
               <p className="font-medium text-ink-title">{t("transactions.emptyTitle")}</p>
               <p className="mt-1 text-sm text-[#9A8B78]">
                 {recurringOnly
@@ -495,6 +505,7 @@ export function TransactionsPage() {
                   items,
                   defaultCurrency,
                   t,
+                  locale,
                 );
                 return (
                   <section key={date}>
@@ -509,7 +520,7 @@ export function TransactionsPage() {
                       ) : null}
                     </div>
 
-                    <div className="overflow-hidden rounded-2xl border border-[#EAE5D9] bg-white shadow-2xs divide-y divide-[#F0ECE1]">
+                    <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-2xs divide-y divide-[var(--color-bg-soft)]">
                       {items.map((item, index) => {
                         const expense = item.type === "EXPENSE";
                         const recurring = isRecurringNote(item.note);
@@ -628,11 +639,11 @@ export function TransactionsPage() {
 
         <section>
           <div className="mb-3 flex items-center justify-between gap-2">
-            <p className="text-xs font-medium text-[#9C9285]">
+            <p className="text-xs font-medium text-[var(--color-text-main)] opacity-60">
               {categorySectionTitle}
             </p>
             {typeFilter === "ALL" ? (
-              <div className="flex rounded-xl bg-[#F0ECE1] p-0.5">
+              <div className="flex rounded-xl bg-[var(--color-bg-soft)] p-0.5">
                 {(
                   [
                     { key: "EXPENSE" as const, label: t("transactions.expenseCategories") },
@@ -709,7 +720,7 @@ export function TransactionsPage() {
         </section>
 
         <section>
-          <div className="flex items-center justify-between rounded-2xl border border-[#EAE5D9] bg-white p-3.5 shadow-2xs">
+          <div className="flex items-center justify-between rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3.5 shadow-2xs">
             <p className="flex items-center gap-1.5 text-sm font-medium text-ink-body">
               <RecurringBadgeIcon className="size-3.5 text-brand-primary" />
               {t("transactions.recurringOnly")}

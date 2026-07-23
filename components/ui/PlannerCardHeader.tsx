@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Pencil, Plus } from "lucide-react";
 
 const ACTION_BTN =
-  "flex h-7 w-7 items-center justify-center rounded-full bg-[#F0ECE1] text-[#5A5046] transition-all hover:bg-[#E2DCCF] active:scale-95";
+  "flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-bg-soft)] text-[var(--color-text-main)] opacity-70 transition-all hover:bg-[var(--color-bg-soft)] active:scale-95";
 
 /** Shared planner card title row */
 export function PlannerCardHeader({
@@ -19,7 +19,7 @@ export function PlannerCardHeader({
   const Icon = action === "pencil" ? Pencil : Plus;
   return (
     <div className="mb-3 flex items-center justify-between gap-2">
-      <h2 className="text-[15px] font-bold text-[#2C2420]">{title}</h2>
+      <h2 className="text-[15px] font-bold text-[var(--color-text-main)]">{title}</h2>
       <button
         aria-label={actionAriaLabel}
         className={ACTION_BTN}
@@ -40,7 +40,7 @@ export function MetricLabel({ children }: { children: ReactNode }) {
 
 export function MetricValue({
   children,
-  className = "text-[#2C2420]",
+  className = "text-[var(--color-text-main)]",
 }: {
   children: ReactNode;
   className?: string;

@@ -56,17 +56,17 @@ export function emptyRecurringForm(): RecurringFormState {
 }
 
 const numberFieldClass =
-  "mt-2 h-12 min-w-0 w-full max-w-full rounded-2xl border border-[#EAE5D9] bg-[#F0ECE1] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#C86235] focus:ring-4 focus:ring-[#C86235]/15 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+  "mt-2 h-12 min-w-0 w-full max-w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] px-3 text-sm text-[var(--color-text-main)] outline-none transition-all focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/15 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
 const textFieldClass =
-  "h-12 w-full rounded-2xl border border-[#EAE5D9] bg-[#F0ECE1] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#C86235] focus:ring-4 focus:ring-[#C86235]/15";
+  "h-12 w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] px-3 text-sm text-[var(--color-text-main)] outline-none transition-all focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/15";
 
 const selectFieldClass =
   `${numberFieldClass} appearance-none bg-[length:14px_14px] bg-[right_14px_center] bg-no-repeat pr-10 ` +
   `bg-[url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23A08875' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")]`;
 
 const dateFieldClass =
-  "relative h-12 min-w-0 w-full max-w-full cursor-pointer rounded-2xl border border-[#EAE5D9] bg-[#F0ECE1] px-3 pr-10 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#C86235] focus:ring-4 focus:ring-[#C86235]/15 " +
+  "relative h-12 min-w-0 w-full max-w-full cursor-pointer rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] px-3 pr-10 text-sm text-[var(--color-text-main)] outline-none transition-all focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/15 " +
   "[&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0";
 
 export function computeFormNextDate(form: RecurringFormState): string {
@@ -129,7 +129,7 @@ export function RecurringEditorSheet({
     >
       <form className="space-y-4 pt-1" onSubmit={onSubmit}>
         {/* 收 / 支 Segmented Control */}
-        <div className="grid grid-cols-2 gap-1.5 rounded-2xl bg-[#F0ECE1] p-1.5">
+        <div className="grid grid-cols-2 gap-1.5 rounded-2xl bg-[var(--color-bg-soft)] p-1.5">
           {(
             [
               {
@@ -150,9 +150,9 @@ export function RecurringEditorSheet({
                 className={`flex h-11 items-center justify-center gap-1.5 rounded-xl text-sm font-bold transition-all duration-150 active:scale-[0.98] ${
                   active
                     ? key === "expense"
-                      ? "bg-white text-[#B8785C] shadow-sm"
-                      : "bg-white text-[#5B7A66] shadow-sm"
-                    : "text-[#A08875]"
+                      ? "bg-[var(--color-bg-card)] text-expense shadow-sm"
+                      : "bg-[var(--color-bg-card)] text-income shadow-sm"
+                    : "text-[var(--color-text-main)] opacity-50"
                 }`}
                 key={key}
                 onClick={() =>
@@ -178,11 +178,11 @@ export function RecurringEditorSheet({
 
         {/* 名称 + Lucide 图标 */}
         <div>
-          <p className="text-xs font-medium text-[#A08875]">{t("recurring.name")}</p>
+          <p className="text-xs font-medium text-[var(--color-text-main)] opacity-50">{t("recurring.name")}</p>
           <div className="mt-2 flex items-center gap-2">
             <button
               aria-label={t("recurring.aria.pickIcon")}
-              className="grid size-12 shrink-0 place-items-center rounded-xl border border-[#EAE5D9] bg-[#F0ECE1] text-[#6E6559] shadow-sm transition-all duration-150 active:scale-[0.98]"
+              className="grid size-12 shrink-0 place-items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] text-[var(--color-text-main)] opacity-60 shadow-sm transition-all duration-150 active:scale-[0.98]"
               onClick={() => setEmojiOpen((v) => !v)}
               type="button"
             >
@@ -199,7 +199,7 @@ export function RecurringEditorSheet({
             />
           </div>
           {emojiOpen && (
-            <div className="mt-2 rounded-2xl border border-[#EAE5D9] bg-white p-2.5 shadow-sm">
+            <div className="mt-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-2.5 shadow-sm">
               <div className="grid grid-cols-7 gap-1.5">
                 {RECURRING_EMOJIS.map((iconId) => {
                   const active = form.emoji === iconId;
@@ -207,8 +207,8 @@ export function RecurringEditorSheet({
                     <button
                       className={`grid size-10 place-items-center rounded-xl transition-all duration-150 active:scale-[0.98] ${
                         active
-                          ? "bg-[#C86235]/20 text-[#8C6D53] ring-2 ring-[#C86235]"
-                          : "bg-[#F0ECE1] text-[#9C9181]"
+                          ? "bg-[var(--color-primary)]/20 text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]"
+                          : "bg-[var(--color-bg-soft)] text-[var(--color-text-main)] opacity-60"
                       }`}
                       key={iconId}
                       onClick={() => {
@@ -227,7 +227,7 @@ export function RecurringEditorSheet({
         </div>
 
         {/* 金额 */}
-        <label className="block text-xs font-medium text-[#A08875]">
+        <label className="block text-xs font-medium text-[var(--color-text-main)] opacity-50">
           {t("recurring.amountHkd")}
           <input
             className={numberFieldClass}
@@ -242,7 +242,7 @@ export function RecurringEditorSheet({
         </label>
 
         {/* 周期类型 */}
-        <label className="relative block text-xs font-medium text-[#A08875]">
+        <label className="relative block text-xs font-medium text-[var(--color-text-main)] opacity-50">
           {t("recurring.periodType")}
           <select
             className={selectFieldClass}
@@ -257,13 +257,13 @@ export function RecurringEditorSheet({
           </select>
           <ChevronDown
             aria-hidden
-            className="pointer-events-none absolute right-3.5 top-[2.35rem] size-4 text-[#A08875] opacity-0"
+            className="pointer-events-none absolute right-3.5 top-[2.35rem] size-4 text-[var(--color-text-main)] opacity-50 opacity-0"
           />
         </label>
 
         {form.kind === "by_days" ? (
           <div>
-            <p className="text-xs font-medium text-[#A08875]">{t("recurring.weekdays")}</p>
+            <p className="text-xs font-medium text-[var(--color-text-main)] opacity-50">{t("recurring.weekdays")}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {WEEKDAY_OPTIONS.map(({ code }) => {
                 const active = form.byDays.includes(code);
@@ -271,8 +271,8 @@ export function RecurringEditorSheet({
                   <button
                     className={`grid size-9 place-items-center rounded-full text-xs font-bold transition-all duration-150 active:scale-[0.98] ${
                       active
-                        ? "bg-[#C86235] text-white"
-                        : "bg-[#F0ECE1] text-[#A08875]"
+                        ? "bg-[var(--color-primary)] text-white"
+                        : "bg-[var(--color-bg-soft)] text-[var(--color-text-main)] opacity-50"
                     }`}
                     key={code}
                     onClick={() => toggleWeekday(code)}
@@ -284,20 +284,20 @@ export function RecurringEditorSheet({
               })}
             </div>
             <button
-              className="mt-2 text-xs font-semibold text-[#9C9285]"
+              className="mt-2 text-xs font-semibold text-[var(--color-text-main)] opacity-60"
               onClick={() => patch({ byDays: [...WORKDAYS] })}
               type="button"
             >
               {t("recurring.oneClickWorkdays")}
             </button>
-            <p className="mt-2 flex items-start gap-1 text-xs leading-5 text-[#A08875]">
+            <p className="mt-2 flex items-start gap-1 text-xs leading-5 text-[var(--color-text-main)] opacity-50">
               <Lightbulb className="mt-0.5 size-3.5 shrink-0" strokeWidth={2} />
               {t("recurring.nextChargeDate", { date: nextDateHint })}
             </p>
           </div>
         ) : form.kind === "monthly" ? (
           <div>
-            <label className="block text-xs font-medium text-[#A08875]">
+            <label className="block text-xs font-medium text-[var(--color-text-main)] opacity-50">
               {t("recurring.dayOfMonth")}
               <input
                 className={numberFieldClass}
@@ -308,7 +308,7 @@ export function RecurringEditorSheet({
                 value={form.dayOfMonth}
               />
             </label>
-            <p className="mt-2 flex items-start gap-1 text-xs leading-5 text-[#A08875]">
+            <p className="mt-2 flex items-start gap-1 text-xs leading-5 text-[var(--color-text-main)] opacity-50">
               <Lightbulb className="mt-0.5 size-3.5 shrink-0" strokeWidth={2} />
               {t("recurring.nextChargeDate", { date: nextDateHint })}
             </p>
@@ -316,7 +316,7 @@ export function RecurringEditorSheet({
         ) : (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <label className="block text-xs font-medium text-[#A08875]">
+              <label className="block text-xs font-medium text-[var(--color-text-main)] opacity-50">
                 {t("recurring.month")}
                 <select
                   className={selectFieldClass}
@@ -332,7 +332,7 @@ export function RecurringEditorSheet({
                   ))}
                 </select>
               </label>
-              <label className="block text-xs font-medium text-[#A08875]">
+              <label className="block text-xs font-medium text-[var(--color-text-main)] opacity-50">
                 {t("recurring.dayOfMonthYearly")}
                 <input
                   className={numberFieldClass}
@@ -346,7 +346,7 @@ export function RecurringEditorSheet({
                 />
               </label>
             </div>
-            <p className="flex items-start gap-1 text-xs leading-5 text-[#A08875]">
+            <p className="flex items-start gap-1 text-xs leading-5 text-[var(--color-text-main)] opacity-50">
               <Lightbulb className="mt-0.5 size-3.5 shrink-0" strokeWidth={2} />
               {t("recurring.nextChargeDate", { date: nextDateHint })}
             </p>
@@ -354,7 +354,7 @@ export function RecurringEditorSheet({
         )}
 
         <div className="grid grid-cols-2 gap-3">
-          <label className="block min-w-0 w-full text-xs font-medium text-[#A08875]">
+          <label className="block min-w-0 w-full text-xs font-medium text-[var(--color-text-main)] opacity-50">
             {t("recurring.endDateOptional")}
             <div className="relative mt-2 min-w-0 w-full">
               <input
@@ -378,11 +378,11 @@ export function RecurringEditorSheet({
               />
               <CalendarDays
                 aria-hidden
-                className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#A08875]"
+                className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-text-main)] opacity-50"
               />
             </div>
           </label>
-          <label className="block min-w-0 w-full text-xs font-medium text-[#A08875]">
+          <label className="block min-w-0 w-full text-xs font-medium text-[var(--color-text-main)] opacity-50">
             {t("recurring.remindDays")}
             <input
               className={numberFieldClass}
@@ -394,13 +394,13 @@ export function RecurringEditorSheet({
           </label>
         </div>
 
-        <label className="flex items-center justify-between gap-3 rounded-2xl bg-[#F0ECE1] px-3.5 py-3.5">
-          <span className="text-sm font-semibold text-[#4A3E3D]">
+        <label className="flex items-center justify-between gap-3 rounded-2xl bg-[var(--color-bg-soft)] px-3.5 py-3.5">
+          <span className="text-sm font-semibold text-[var(--color-text-main)]">
             {t("recurring.autoWrite")}
           </span>
           <input
             checked={form.autoWrite}
-            className="size-5 accent-[#C86235]"
+            className="size-5 accent-[var(--color-primary)]"
             onChange={(event) => patch({ autoWrite: event.target.checked })}
             type="checkbox"
           />
@@ -408,18 +408,18 @@ export function RecurringEditorSheet({
 
         {!isNew && onEarlyWrite && (
           <button
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#EAE5D9] bg-white text-sm font-bold text-[#8C6D53] shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] text-sm font-bold text-[var(--color-primary)] shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
             disabled={earlyWriting}
             onClick={() => void onEarlyWrite()}
             type="button"
           >
-            <Zap className="size-4 text-[#C86235]" strokeWidth={2.25} />
+            <Zap className="size-4 text-[var(--color-primary)]" strokeWidth={2.25} />
             {earlyWriting ? t("recurring.earlyWriting") : t("recurring.earlyWrite")}
           </button>
         )}
 
         <button
-          className="w-full rounded-xl bg-[#C86235] py-3.5 text-base font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+          className="w-full rounded-xl bg-[var(--color-primary)] py-3.5 text-base font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
           type="submit"
         >
           {t("recurring.saveSettings")}

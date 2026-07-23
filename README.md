@@ -15,7 +15,7 @@
 ## 本地启动
 
 1. 复制 `.env.local.example` 为 `.env.local`，填入密钥与访问密码。
-2. 在 Supabase SQL Editor 执行 `supabase/schema.sql`（含 `transactions`、`chat_messages`、`planner_state`）。若表已存在、只缺多币种，可只跑 `supabase/migrate-currency.sql`；若只缺规划云同步，可只跑 `supabase/migrate-planner-cloud.sql`。
+2. 在 Supabase SQL Editor 执行 `supabase/schema.sql`（含 `transactions`、`chat_messages`、`planner_state`）。若表已存在、只缺多币种，可只跑 `supabase/migrate-currency.sql`；若只缺规划云同步，可只跑 `supabase/migrate-planner-cloud.sql`；若只缺猫罐头小铺 / 主题字段，可只跑 `supabase/migrate-can-store.sql`。
 3. 安装并启动：
 
 ```bash
