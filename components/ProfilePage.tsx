@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import {
   ChevronRight,
+  Cloud,
   Coins,
   Download,
   Flame,
@@ -10,18 +11,23 @@ import {
   Heart,
   Info,
   LoaderCircle,
+  Mail,
   Palette,
+  RefreshCw,
+  Sparkles,
   Trash2,
   Type,
 } from "lucide-react";
 import { toast } from "sonner";
 import { BottomSheet } from "@/components/BottomSheet";
+import { CatAvatar } from "@/components/CatAvatar";
+import { CanBalanceSheet } from "@/components/CanBalanceSheet";
 import { CheckinRulesModal } from "@/components/CheckinRulesModal";
 import { ConfirmDialog, SettingsRow } from "@/components/ConfirmDialog";
 import { CurrencyIcon } from "@/components/AppIcons";
-import { CatCanIcon } from "@/components/icons/CatCanIcon";
 import { ThemeStoreSheet } from "@/components/ThemeStoreSheet";
 import { TipRiverSheet } from "@/components/TipRiverSheet";
+import { CatCanIcon } from "@/components/icons/CatCanIcon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import {
   CURRENCY_CODES,
@@ -35,6 +41,12 @@ import {
   formatSupabaseError,
   queryTransactions,
 } from "@/lib/transactions-query";
+import {
+  formatSyncClock,
+  readCompanionDays,
+  readLastCloudSyncAt,
+  touchLastCloudSync,
+} from "@/lib/settings-meta";
 import { useI18n } from "@/components/LocaleProvider";
 import {
   LOCALE_OPTIONS,
@@ -58,6 +70,35 @@ import {
   themeDisplayName,
 } from "@/lib/can-system";
 
+const FEEDBACK_EMAIL = "guokaier1478@gmail.com";
+
+const SECTION_LABEL =
+  "mb-2 px-1 text-caption font-semibold tracking-wide text-[#7A6B5C]";
+
+/** 分组图标淡底：外观 / 工坊 / 数据 / 关于 */
+const ICON_BG = {
+  look: "bg-[#F3EEE6]",
+  workshop: "bg-[#FFF0E6]",
+  data: "bg-[#EBF7F0]",
+  about: "bg-[#F0EEF6]",
+} as const;
+
+const RIVER_QUOTE_KEYS = [
+  "settings.river.quote0",
+  "settings.river.quote1",
+  "settings.river.quote2",
+  "settings.river.quote3",
+  "settings.river.quote4",
+  "settings.river.quote5",
+] as const satisfies readonly MessageKey[];
+
+const RIVER_POKE_KEYS = [
+  "settings.river.poke0",
+  "settings.river.poke1",
+  "settings.river.poke2",
+  "settings.river.poke3",
+] as const satisfies readonly MessageKey[];
+
 const PLANNER_STORAGE_KEYS = [
   "cyberbookkeeper_planner_accounts",
   "cyberbookkeeper_planner_ledger",
@@ -71,6 +112,7 @@ const PLANNER_STORAGE_KEYS = [
   "cyberbookkeeper_chat_user_id",
   "cyberbookkeeper_can_economy_v1",
   "cyberbookkeeper_current_theme",
+  "cyberbookkeeper_last_cloud_sync_at",
 ];
 
 const FONT_STYLE_OPTIONS: {
@@ -106,22 +148,41 @@ export function ProfilePage() {
   const [isFontStyleSheetOpen, setIsFontStyleSheetOpen] = useState(false);
   const [isThemeStoreOpen, setIsThemeStoreOpen] = useState(false);
   const [isTipRiverOpen, setIsTipRiverOpen] = useState(false);
+  const [isCanDrawerOpen, setIsCanDrawerOpen] = useState(false);
   const [isCheckinRulesOpen, setIsCheckinRulesOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [canState, setCanState] = useState(() => readCanState());
+  const [companionDays, setCompanionDays] = useState(1);
+  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
+  const [online, setOnline] = useState(true);
+  const [quoteIdx, setQuoteIdx] = useState(0);
+  const [avatarBump, setAvatarBump] = useState(false);
+  const [floatHearts, setFloatHearts] = useState(0);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setCurrency(readDefaultCurrency());
-      setCanState(readCanState());
+      const cans = readCanState();
+      setCanState(cans);
+      const days = readCompanionDays();
+      setCompanionDays(days);
+      setQuoteIdx(0);
+      setLastSyncAt(readLastCloudSyncAt());
+      setOnline(navigator.onLine);
     }, 0);
     const onCan = () => setCanState(readCanState());
+    const onOnline = () => setOnline(true);
+    const onOffline = () => setOnline(false);
     window.addEventListener(CAN_STATE_EVENT, onCan);
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
     return () => {
       window.clearTimeout(timer);
       window.removeEventListener(CAN_STATE_EVENT, onCan);
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
     };
   }, []);
 
@@ -151,6 +212,38 @@ export function ProfilePage() {
     setIsTipRiverOpen(true);
   }
 
+  function cycleQuote(e?: MouseEvent) {
+    e?.stopPropagation();
+    setQuoteIdx((i) => (i + 1) % RIVER_QUOTE_KEYS.length);
+  }
+
+  function pokeRiver() {
+    setAvatarBump(true);
+    window.setTimeout(() => setAvatarBump(false), 450);
+    setFloatHearts((n) => n + 1);
+    window.setTimeout(() => setFloatHearts((n) => Math.max(0, n - 1)), 900);
+    const pokeKey =
+      RIVER_POKE_KEYS[Math.floor(Math.random() * RIVER_POKE_KEYS.length)]!;
+    toast(t(pokeKey), { duration: 2200 });
+  }
+
+  function handleFeedback() {
+    const subject = encodeURIComponent(
+      locale.startsWith("zh") ? "钱包小猫 · 使用反馈" : "Wallet Cat feedback",
+    );
+    window.location.href = `mailto:${FEEDBACK_EMAIL}?subject=${subject}`;
+  }
+
+  function syncStatusValue() {
+    if (!online) return t("settings.sync.offline");
+    if (lastSyncAt) {
+      return t("settings.sync.synced", {
+        time: formatSyncClock(lastSyncAt, locale),
+      });
+    }
+    return t("settings.sync.online");
+  }
+
   function fontStyleLabel(style: FontStyle) {
     const option = FONT_STYLE_OPTIONS.find((item) => item.code === style);
     return option ? t(option.labelKey) : style;
@@ -175,6 +268,8 @@ export function ProfilePage() {
         return;
       }
       exportTransactionsToXlsx(rows, { t });
+      const synced = touchLastCloudSync();
+      setLastSyncAt(synced);
       const milestone = completeMilestone("milestone_export");
       if (milestone.awarded) {
         toast.success(t("can.milestone.export"));
@@ -232,27 +327,98 @@ export function ProfilePage() {
   }
 
   return (
-    <main className="h-full overflow-y-auto overscroll-contain px-4 pb-8 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
+    <main className="h-full overflow-y-auto overscroll-contain px-4 pb-28 pt-[calc(env(safe-area-inset-top)+12px)] touch-pan-y">
       <PageHeader
         caption={t("settings.eyebrow")}
         className="px-1"
         title={t("settings.title")}
       />
 
-      {/* 卡片 A：偏好设置 */}
+      {/* River 互动名片 — 低饱和焦糖奶油 */}
+      <div className="mt-4 flex items-center gap-4 rounded-2xl border border-stone-200/80 bg-gradient-to-br from-[#FDFBF7] via-[#FAFAF5] to-[#F5F0E8] p-4 shadow-xs shadow-stone-900/5">
+        <div className="flex shrink-0 flex-col items-center gap-1.5">
+          <button
+            aria-label={t("settings.river.tapHint")}
+            className="relative size-14 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/30"
+            onClick={pokeRiver}
+            type="button"
+          >
+            <span
+              className={`block size-14 transition-transform duration-200 hover:scale-[1.08] active:scale-[0.92] ${
+                avatarBump ? "river-avatar-wobble" : ""
+              }`}
+            >
+              <CatAvatar className="size-14" size={56} />
+            </span>
+            {floatHearts > 0
+              ? Array.from({ length: Math.min(floatHearts, 3) }).map((_, i) => (
+                  <Heart
+                    aria-hidden
+                    className="river-float-heart pointer-events-none absolute left-1/2 top-0 size-3.5 -translate-x-1/2 fill-[var(--color-primary)]/40 text-[var(--color-primary)]"
+                    key={`heart-${floatHearts}-${i}`}
+                    style={{
+                      marginLeft: `${(i - 1) * 10}px`,
+                      animationDelay: `${i * 60}ms`,
+                    }}
+                    strokeWidth={2}
+                  />
+                ))
+              : null}
+          </button>
+          <span className="pointer-events-none inline-flex items-center gap-0.5 text-[11px] font-medium tracking-wider text-stone-400">
+            <Sparkles className="size-2.5 shrink-0" strokeWidth={2.5} />
+            {t("settings.river.tapHint")}
+          </span>
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
+          <div className="flex items-start gap-2">
+            <p className="min-w-0 flex-1 text-[15px] font-medium leading-relaxed text-stone-800">
+              {t(RIVER_QUOTE_KEYS[quoteIdx]!)}
+            </p>
+            <button
+              aria-label={t("settings.river.refreshAria")}
+              className="grid size-6 shrink-0 place-items-center text-stone-300 transition-colors hover:text-stone-500 active:scale-95"
+              onClick={cycleQuote}
+              type="button"
+            >
+              <RefreshCw className="size-3.5" strokeWidth={2} />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2.5 text-xs text-stone-400">
+            <span>{t("settings.river.days", { days: companionDays })}</span>
+            <button
+              className="group inline-flex cursor-pointer items-center gap-1 font-medium text-stone-600 transition-colors hover:text-stone-900"
+              onClick={() => setIsCanDrawerOpen(true)}
+              type="button"
+            >
+              <CatCanIcon className="size-3.5 text-stone-500 transition-transform group-hover:scale-110" />
+              <span>
+                {canState.cans_count > 0
+                  ? t("settings.river.moodFull")
+                  : t("settings.river.moodEmpty")}
+              </span>
+              <ChevronRight className="size-3.5 text-stone-400 transition-transform group-hover:translate-x-0.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 外观与偏好 */}
       <section className="mt-6">
-        <p className="mb-2 px-1 text-caption font-semibold tracking-wide text-[var(--color-text-main)] opacity-60">
-          {t("settings.section.preferences")}
-        </p>
+        <p className={SECTION_LABEL}>{t("settings.section.preferences")}</p>
         <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-2xs divide-y divide-[var(--color-bg-soft)]">
           <SettingsRow
             icon={<Globe className="size-4" strokeWidth={2} />}
+            iconClassName={ICON_BG.look}
             label={t("settings.language")}
             onClick={() => setIsLanguageSheetOpen(true)}
             value={localeDisplayName(locale)}
           />
           <SettingsRow
             icon={<Coins className="size-4" strokeWidth={2} />}
+            iconClassName={ICON_BG.look}
             label={t("settings.defaultCurrency")}
             onClick={() => setIsCurrencySheetOpen(true)}
             value={currency}
@@ -260,71 +426,26 @@ export function ProfilePage() {
           <SettingsRow
             chevron
             icon={<Type className="size-4" strokeWidth={2} />}
+            iconClassName={ICON_BG.look}
             label={t("settings.fontStyle")}
             onClick={() => setIsFontStyleSheetOpen(true)}
             value={`${fontStyleLabel(fontStyle)}${locale.startsWith("zh") ? `（${fontSizeLabel(fontSize)}）` : ` (${fontSizeLabel(fontSize)})`}`}
           />
-        </div>
-      </section>
-
-      {/* 卡片 B：数据管理 */}
-      <section className="mt-5">
-        <p className="mb-2 px-1 text-caption font-semibold tracking-wide text-[var(--color-text-main)] opacity-60">
-          {t("settings.section.data")}
-        </p>
-        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-2xs divide-y divide-[var(--color-bg-soft)]">
-          <button
-            className="flex w-full items-center gap-3 px-4 py-4 text-left transition-all duration-150 active:scale-[0.98] active:bg-[var(--color-bg-soft)]/80 disabled:opacity-50"
-            disabled={exporting}
-            onClick={() => void exportAll()}
-            type="button"
-          >
-            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-bg-soft)] text-[var(--color-text-main)] opacity-80">
-              {exporting ? (
-                <LoaderCircle className="size-4 animate-spin" strokeWidth={2} />
-              ) : (
-                <Download className="size-4" strokeWidth={2} />
-              )}
-            </span>
-            <span className="min-w-0 flex-1 text-body font-semibold text-[var(--color-text-main)]">
-              {t("settings.exportData")}
-            </span>
-            <ChevronRight className="size-4 shrink-0 text-[var(--color-text-main)] opacity-30" strokeWidth={2} />
-          </button>
-          <SettingsRow
-            danger
-            icon={<Trash2 className="size-4" strokeWidth={2} />}
-            label={t("settings.resetAll")}
-            onClick={() => setIsResetModalOpen(true)}
-          />
-        </div>
-      </section>
-
-      {/* 卡片 C：关于 */}
-      <section className="mt-5">
-        <p className="mb-2 px-1 text-caption font-semibold tracking-wide text-[var(--color-text-main)] opacity-60">
-          {t("settings.section.about")}
-        </p>
-        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-2xs divide-y divide-[var(--color-bg-soft)]">
           <SettingsRow
             chevron
             icon={<Palette className="size-4" strokeWidth={2} />}
+            iconClassName={ICON_BG.look}
             label={t("settings.theme")}
             onClick={handleThemeClick}
             value={themeDisplayName(canState.current_theme)}
           />
-          <SettingsRow
-            chevron
-            icon={<Heart className="size-4" strokeWidth={2} />}
-            label={t("settings.tipCat")}
-            onClick={handleTipClick}
-            value={
-              <>
-                <CatCanIcon className="size-4 text-[var(--color-primary)]" />
-                {canState.cans_count}
-              </>
-            }
-          />
+        </div>
+      </section>
+
+      {/* 喵喵工坊 */}
+      <section className="mt-5">
+        <p className={SECTION_LABEL}>{t("settings.section.workshop")}</p>
+        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-2xs divide-y divide-[var(--color-bg-soft)]">
           <SettingsRow
             chevron
             icon={
@@ -333,10 +454,11 @@ export function ProfilePage() {
                 strokeWidth={2}
               />
             }
+            iconClassName={ICON_BG.workshop}
             label={t("settings.checkin")}
             onClick={() => setIsCheckinRulesOpen(true)}
             value={
-              <span className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-primary)]">
+              <span className="flex items-center gap-1 text-xs font-medium text-[var(--color-primary)]">
                 <span>
                   {t("can.checkin.streak", {
                     days: canState.checkin_streak,
@@ -353,10 +475,77 @@ export function ProfilePage() {
             }
           />
           <SettingsRow
+            chevron
+            icon={<Heart className="size-4 text-[var(--color-primary)]" strokeWidth={2} />}
+            iconClassName={ICON_BG.workshop}
+            label={t("settings.tipCat")}
+            onClick={handleTipClick}
+          />
+        </div>
+      </section>
+
+      {/* 数据与安全 */}
+      <section className="mt-5">
+        <p className={SECTION_LABEL}>{t("settings.section.data")}</p>
+        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-2xs divide-y divide-[var(--color-bg-soft)]">
+          <SettingsRow
+            chevron={false}
+            icon={<Cloud className="size-4" strokeWidth={2} />}
+            iconClassName={ICON_BG.data}
+            label={t("settings.sync")}
+            value={syncStatusValue()}
+          />
+          <button
+            className="flex w-full items-center gap-3 px-4 py-4 text-left transition-all duration-150 active:scale-[0.98] active:bg-[var(--color-bg-soft)]/80 disabled:opacity-50"
+            disabled={exporting}
+            onClick={() => void exportAll()}
+            type="button"
+          >
+            <span
+              className={`grid size-9 shrink-0 place-items-center rounded-xl text-[var(--color-text-main)] opacity-90 ${ICON_BG.data}`}
+            >
+              {exporting ? (
+                <LoaderCircle className="size-4 animate-spin" strokeWidth={2} />
+              ) : (
+                <Download className="size-4" strokeWidth={2} />
+              )}
+            </span>
+            <span className="min-w-0 flex-1 text-body font-semibold text-[var(--color-text-main)]">
+              {t("settings.exportData")}
+            </span>
+            <ChevronRight
+              className="size-4 shrink-0 text-[var(--color-text-main)] opacity-30"
+              strokeWidth={2}
+            />
+          </button>
+          <SettingsRow
+            danger
+            icon={<Trash2 className="size-4" strokeWidth={2} />}
+            iconClassName="bg-[#F8EDEA]"
+            label={t("settings.resetAll")}
+            onClick={() => setIsResetModalOpen(true)}
+          />
+        </div>
+      </section>
+
+      {/* 关于应用 */}
+      <section className="mt-5">
+        <p className={SECTION_LABEL}>{t("settings.section.about")}</p>
+        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-2xs divide-y divide-[var(--color-bg-soft)]">
+          <SettingsRow
             chevron={false}
             icon={<Info className="size-4" strokeWidth={2} />}
+            iconClassName={ICON_BG.about}
             label={t("settings.version")}
             value="v3.0"
+          />
+          <SettingsRow
+            chevron
+            icon={<Mail className="size-4" strokeWidth={2} />}
+            iconClassName={ICON_BG.about}
+            label={t("settings.feedback")}
+            onClick={handleFeedback}
+            value={t("settings.feedbackValue")}
           />
         </div>
       </section>
@@ -530,6 +719,11 @@ export function ProfilePage() {
       <ThemeStoreSheet
         onOpenChange={setIsThemeStoreOpen}
         open={isThemeStoreOpen}
+      />
+      <CanBalanceSheet
+        onGoTip={handleTipClick}
+        onOpenChange={setIsCanDrawerOpen}
+        open={isCanDrawerOpen}
       />
       <TipRiverSheet
         onOpenChange={setIsTipRiverOpen}

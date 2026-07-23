@@ -749,7 +749,7 @@ export function inferRecurringCategory(item: RecurringItem): string {
   if (/数码|手机|电脑/.test(n)) return "数码";
   if (/宠物|猫|狗/.test(n)) return "宠物";
   if (/学习|课程|学费/.test(n)) return "学习";
-  if (/丽人|美容|美甲/.test(n)) return "丽人";
+  if (/丽人|美容|美甲/.test(n)) return "美容";
   return "其它支出";
 }
 

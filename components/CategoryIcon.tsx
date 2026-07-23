@@ -52,7 +52,7 @@ export function CategoryIcon({
   if (category.includes("学习") || category.includes("教育")) {
     return <BookOpen {...props} />;
   }
-  if (category.includes("丽人") || category.includes("美妆")) {
+  if (category.includes("丽人") || category.includes("美容") || category.includes("美妆")) {
     return <Sparkles {...props} />;
   }
   if (category.includes("工资")) return <Banknote {...props} />;

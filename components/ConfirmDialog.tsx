@@ -69,6 +69,7 @@ export function ConfirmDialog({
 
 export function SettingsRow({
   icon,
+  iconClassName,
   label,
   value,
   onClick,
@@ -77,6 +78,8 @@ export function SettingsRow({
   disabled = false,
 }: {
   icon: ReactNode;
+  /** 图标容器背景，如暖橙淡底 */
+  iconClassName?: string;
   label: string;
   value?: ReactNode;
   onClick?: () => void;
@@ -98,7 +101,11 @@ export function SettingsRow({
       onClick={interactive ? onClick : undefined}
       type={interactive ? "button" : undefined}
     >
-      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-bg-soft)] text-[var(--color-text-main)] opacity-80">
+      <span
+        className={`grid size-9 shrink-0 place-items-center rounded-xl text-[var(--color-text-main)] opacity-90 ${
+          iconClassName ?? "bg-[var(--color-bg-soft)] opacity-80"
+        }`}
+      >
         {icon}
       </span>
       <span

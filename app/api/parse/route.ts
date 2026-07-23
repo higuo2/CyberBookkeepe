@@ -88,7 +88,7 @@ function normalizeCategory(type: "EXPENSE" | "INCOME", raw: unknown) {
       return type === "EXPENSE" ? "学习" : list[0];
     }
     if (raw.includes("丽人") || raw.includes("美甲") || raw.includes("美容")) {
-      return type === "EXPENSE" ? "丽人" : list[0];
+      return type === "EXPENSE" ? "美容" : list[0];
     }
     if (raw.includes("奖金") || raw.includes("红包")) {
       return type === "INCOME" ? "奖金" : list[0];

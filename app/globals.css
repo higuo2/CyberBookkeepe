@@ -291,6 +291,37 @@ button {
 .text-body {
   @apply text-sm font-medium text-ink-body;
 }
-.text-caption {
-  @apply text-xs font-normal text-ink-muted;
+@keyframes river-float-up {
+  0% {
+    opacity: 0.9;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-28px) scale(1.15);
+  }
+}
+
+@keyframes river-wobble {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(-6deg) scale(1.06);
+  }
+  50% {
+    transform: rotate(5deg) scale(1.08);
+  }
+  75% {
+    transform: rotate(-3deg) scale(1.04);
+  }
+}
+
+.river-float-heart {
+  animation: river-float-up 0.85s ease-out forwards;
+}
+
+.river-avatar-wobble {
+  animation: river-wobble 0.45s ease-in-out;
 }

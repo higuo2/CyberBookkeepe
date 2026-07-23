@@ -18,7 +18,7 @@ export const EXPENSE_CATEGORIES = [
   "医疗",
   "宠物",
   "学习",
-  "丽人",
+  "美容",
   "其它支出",
 ] as const;
 
@@ -36,11 +36,12 @@ export type IncomeCategory = (typeof INCOME_CATEGORIES)[number];
 /** @deprecated use EXPENSE_CATEGORIES / INCOME_CATEGORIES */
 export const CATEGORIES = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES] as const;
 
-/** 旧名 → 规范名（居住→住房；裸「其它」默认其它支出，收入场景请显式传其它收入） */
+/** 旧名 → 规范名（居住→住房；丽人→美容；裸「其它」默认其它支出） */
 export function canonicalizeCategory(category: string): string {
   const raw = category.trim();
   if (!raw) return raw;
   if (raw === "居住" || raw === "住房") return "住房";
+  if (raw === "丽人" || raw === "美容") return "美容";
   if (raw === "其它支出" || raw === "其他支出") return "其它支出";
   if (raw === "其它收入" || raw === "其他收入") return "其它收入";
   if (raw === "其它" || raw === "其他") return "其它支出";
