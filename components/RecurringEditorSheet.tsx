@@ -56,7 +56,7 @@ export function emptyRecurringForm(): RecurringFormState {
 }
 
 const numberFieldClass =
-  "mt-2 h-12 w-full rounded-2xl border border-[#EAE5D9] bg-[#F0ECE1] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#C86235] focus:ring-4 focus:ring-[#C86235]/15 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+  "mt-2 h-12 min-w-0 w-full max-w-full rounded-2xl border border-[#EAE5D9] bg-[#F0ECE1] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#C86235] focus:ring-4 focus:ring-[#C86235]/15 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
 const textFieldClass =
   "h-12 w-full rounded-2xl border border-[#EAE5D9] bg-[#F0ECE1] px-3 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#C86235] focus:ring-4 focus:ring-[#C86235]/15";
@@ -66,7 +66,7 @@ const selectFieldClass =
   `bg-[url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23A08875' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")]`;
 
 const dateFieldClass =
-  "relative h-12 w-full cursor-pointer rounded-2xl border border-[#EAE5D9] bg-[#F0ECE1] px-3 pr-10 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#C86235] focus:ring-4 focus:ring-[#C86235]/15 " +
+  "relative h-12 min-w-0 w-full max-w-full cursor-pointer rounded-2xl border border-[#EAE5D9] bg-[#F0ECE1] px-3 pr-10 text-sm text-[#4A3E3D] outline-none transition-all focus:border-[#C86235] focus:ring-4 focus:ring-[#C86235]/15 " +
   "[&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0";
 
 export function computeFormNextDate(form: RecurringFormState): string {
@@ -354,9 +354,9 @@ export function RecurringEditorSheet({
         )}
 
         <div className="grid grid-cols-2 gap-3">
-          <label className="block text-xs font-medium text-[#A08875]">
+          <label className="block min-w-0 w-full text-xs font-medium text-[#A08875]">
             {t("recurring.endDateOptional")}
-            <div className="relative mt-2">
+            <div className="relative mt-2 min-w-0 w-full">
               <input
                 className={dateFieldClass}
                 onChange={(event) => patch({ endDate: event.target.value })}
@@ -382,7 +382,7 @@ export function RecurringEditorSheet({
               />
             </div>
           </label>
-          <label className="block text-xs font-medium text-[#A08875]">
+          <label className="block min-w-0 w-full text-xs font-medium text-[#A08875]">
             {t("recurring.remindDays")}
             <input
               className={numberFieldClass}
