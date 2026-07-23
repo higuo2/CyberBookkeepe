@@ -306,6 +306,22 @@ export function claimSponsorCans(): RedeemResult {
   };
 }
 
+/** 投喂 River：消耗 1 罐罐头 */
+export function feedRiverOneCan(): {
+  ok: boolean;
+  state: CanEconomyState;
+  messageKey: "can.drawer.feedOk" | "can.drawer.feedEmpty";
+} {
+  const state = readCanState();
+  if (state.cans_count <= 0) {
+    return { ok: false, state, messageKey: "can.drawer.feedEmpty" };
+  }
+  const next = { ...state, cans_count: state.cans_count - 1 };
+  writeCanState(next);
+  triggerHaptic();
+  return { ok: true, state: next, messageKey: "can.drawer.feedOk" };
+}
+
 export function redeemCode(raw: string): RedeemResult {
   const code = raw.trim().toUpperCase();
   const entry = REDEEM_CODES[code];

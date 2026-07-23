@@ -7,6 +7,7 @@ import {
   Coins,
   Download,
   Flame,
+  Gamepad2,
   Globe,
   Heart,
   Info,
@@ -25,6 +26,7 @@ import { CanBalanceSheet } from "@/components/CanBalanceSheet";
 import { CheckinRulesModal } from "@/components/CheckinRulesModal";
 import { ConfirmDialog, SettingsRow } from "@/components/ConfirmDialog";
 import { CurrencyIcon } from "@/components/AppIcons";
+import { GameArcadeDrawer } from "@/components/GameArcadeDrawer";
 import { ThemeStoreSheet } from "@/components/ThemeStoreSheet";
 import { TipRiverSheet } from "@/components/TipRiverSheet";
 import { CatCanIcon } from "@/components/icons/CatCanIcon";
@@ -69,6 +71,7 @@ import {
   readCanState,
   themeDisplayName,
 } from "@/lib/can-system";
+import { clearGameArcadeLocal } from "@/lib/game-arcade";
 
 const FEEDBACK_EMAIL = "guokaier1478@gmail.com";
 
@@ -149,6 +152,7 @@ export function ProfilePage() {
   const [isThemeStoreOpen, setIsThemeStoreOpen] = useState(false);
   const [isTipRiverOpen, setIsTipRiverOpen] = useState(false);
   const [isCanDrawerOpen, setIsCanDrawerOpen] = useState(false);
+  const [isArcadeOpen, setIsArcadeOpen] = useState(false);
   const [isCheckinRulesOpen, setIsCheckinRulesOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -310,6 +314,7 @@ export function ProfilePage() {
       for (const key of PLANNER_STORAGE_KEYS) {
         localStorage.removeItem(key);
       }
+      clearGameArcadeLocal();
       writeDefaultCurrency(currency);
       writeStoredLocale(locale);
 
@@ -471,6 +476,34 @@ export function ProfilePage() {
                   })}
                   {locale.startsWith("zh") ? "）" : ")"}
                 </span>
+              </span>
+            }
+          />
+          <SettingsRow
+            chevron
+            icon={
+              <CatCanIcon className="size-4 text-amber-700" />
+            }
+            iconClassName={ICON_BG.workshop}
+            label={t("can.drawer.title")}
+            onClick={() => setIsCanDrawerOpen(true)}
+            value={
+              <span className="text-xs font-medium text-amber-700/80">
+                {t("can.drawer.badge")}
+              </span>
+            }
+          />
+          <SettingsRow
+            chevron
+            icon={
+              <Gamepad2 className="size-5 text-amber-600" strokeWidth={2} />
+            }
+            iconClassName={ICON_BG.workshop}
+            label={t("game.arcade.title")}
+            onClick={() => setIsArcadeOpen(true)}
+            value={
+              <span className="text-xs font-medium text-amber-700/80">
+                {t("game.arcade.badge")}
               </span>
             }
           />
@@ -721,9 +754,15 @@ export function ProfilePage() {
         open={isThemeStoreOpen}
       />
       <CanBalanceSheet
+        onGoArcade={() => setIsArcadeOpen(true)}
+        onGoCheckin={() => setIsCheckinRulesOpen(true)}
         onGoTip={handleTipClick}
         onOpenChange={setIsCanDrawerOpen}
         open={isCanDrawerOpen}
+      />
+      <GameArcadeDrawer
+        onOpenChange={setIsArcadeOpen}
+        open={isArcadeOpen}
       />
       <TipRiverSheet
         onOpenChange={setIsTipRiverOpen}
