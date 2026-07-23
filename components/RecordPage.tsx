@@ -755,7 +755,7 @@ export function RecordPage() {
               </span>
             </p>
           </div>
-          <CatAvatar className="shadow-md" size={44} />
+          <CatAvatar size={44} />
         </header>
 
         <div
@@ -1016,17 +1016,17 @@ export function RecordPage() {
         </div>
 
         <div className="z-30 shrink-0 border-t border-[#EAE5D9]/60 bg-[#F6F4EE]/85 px-0 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 backdrop-blur-lg">
-          <div className="mb-2 flex gap-2 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mb-1.5 flex gap-1 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {QUICK_CHIPS.map((chip) => {
               const Icon = chip.Icon;
               return (
                 <button
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#EAE5D9] bg-white px-3.5 py-1.5 text-sm font-medium text-[#6B5A40] shadow-sm transition-all duration-150 active:scale-[0.98]"
+                  className="inline-flex h-6 shrink-0 items-center gap-0.5 rounded-full border border-[#EAE5D9] bg-white px-2 text-[6px] leading-none font-medium text-[#6B5A40] transition-all duration-150 active:scale-[0.98]"
                   key={chip.labelKey}
                   onClick={() => handleChip(chip)}
                   type="button"
                 >
-                  <Icon className="size-3.5 text-[#B37233]" strokeWidth={2} />
+                  <Icon className="size-2.5 text-[#B37233]" strokeWidth={2.25} />
                   {t(chip.labelKey)}
                 </button>
               );

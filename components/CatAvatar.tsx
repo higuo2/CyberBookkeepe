@@ -1,4 +1,4 @@
-/** 记账对话头像：River（与 App logo 分离） */
+/** 记账对话头像：River 透明底插画（非圆形裁切） */
 export function CatAvatar({
   size = 44,
   className = "",
@@ -15,7 +15,7 @@ export function CatAvatar({
       alt=""
       aria-hidden="true"
       className={[
-        "shrink-0 rounded-full object-cover shadow-sm",
+        "shrink-0 object-contain",
         thinking ? "animate-pulse" : "",
         className,
       ]

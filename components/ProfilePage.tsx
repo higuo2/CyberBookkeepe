@@ -117,7 +117,6 @@ export function ProfilePage() {
 
   function handleFontStyleChange(next: FontStyle) {
     setFontStyle(next);
-    setIsFontStyleSheetOpen(false);
   }
 
   function handleTipClick() {
@@ -127,6 +126,11 @@ export function ProfilePage() {
   function fontStyleLabel(style: FontStyle) {
     const option = FONT_STYLE_OPTIONS.find((item) => item.code === style);
     return option ? t(option.labelKey) : style;
+  }
+
+  function fontSizeLabel(size: FontSize) {
+    const option = FONT_SIZE_OPTIONS.find((item) => item.code === size);
+    return option ? t(option.labelKey) : size;
   }
 
   async function exportAll() {
@@ -222,75 +226,13 @@ export function ProfilePage() {
             onClick={() => setIsCurrencySheetOpen(true)}
             value={currency}
           />
-        </div>
-      </section>
-
-      {/* 卡片：字体与字号 */}
-      <section className="mt-5">
-        <p className="mb-2 px-1 text-caption font-semibold tracking-wide">
-          {t("settings.fontSection")}
-        </p>
-        <div className="overflow-hidden rounded-2xl border border-[#EAE5D9] bg-white shadow-2xs">
           <SettingsRow
             chevron
             icon={<Type className="size-4" strokeWidth={2} />}
             label={t("settings.fontStyle")}
             onClick={() => setIsFontStyleSheetOpen(true)}
-            value={fontStyleLabel(fontStyle)}
+            value={`${fontStyleLabel(fontStyle)} · ${fontSizeLabel(fontSize)}`}
           />
-
-          <div className="border-t border-[#F0ECE1] px-4 pb-4 pt-3">
-            <p className="text-body">{t("settings.fontSize")}</p>
-            <div className="mt-3 flex items-center gap-3">
-              <span
-                aria-hidden
-                className="select-none text-[11px] font-semibold text-[#9C9285]"
-              >
-                A
-              </span>
-              <div
-                aria-label={t("settings.fontSize")}
-                className="grid flex-1 grid-cols-3 rounded-2xl bg-[#F0ECE1] p-1"
-                role="radiogroup"
-              >
-                {FONT_SIZE_OPTIONS.map((option) => {
-                  const active = fontSize === option.code;
-                  return (
-                    <button
-                      aria-checked={active}
-                      className={`h-9 rounded-xl text-xs font-semibold transition-all duration-150 active:scale-[0.98] ${
-                        active
-                          ? "bg-white text-[#2C2420] shadow-sm"
-                          : "text-[#9C9285]"
-                      }`}
-                      key={option.code}
-                      onClick={() => setFontSize(option.code)}
-                      role="radio"
-                      type="button"
-                    >
-                      {t(option.labelKey)}
-                    </button>
-                  );
-                })}
-              </div>
-              <span
-                aria-hidden
-                className="select-none text-lg font-semibold leading-none text-[#9C9285]"
-              >
-                A
-              </span>
-            </div>
-
-            <p
-              className="mt-4 rounded-2xl bg-[#F0ECE1] px-3.5 py-3 text-sm leading-6 text-[#4A3E31]"
-              style={{ fontFamily: FONT_FAMILY_STACK[fontStyle] }}
-            >
-              {t("settings.fontPreview")}
-              <span className="mt-1 block font-numeric text-base font-semibold text-[#B8785C]">
-                $1,280.50
-              </span>
-            </p>
-          </div>
         </div>
       </section>
 
@@ -379,41 +321,98 @@ export function ProfilePage() {
       <BottomSheet
         onOpenChange={setIsFontStyleSheetOpen}
         open={isFontStyleSheetOpen}
-        title={t("settings.fontStyleSheetTitle")}
+        title={t("settings.fontStyle")}
       >
-        <div className="space-y-2 pt-1">
-          {FONT_STYLE_OPTIONS.map((option) => {
-            const active = fontStyle === option.code;
-            return (
-              <button
-                className={`flex h-14 w-full items-center justify-between rounded-2xl px-4 text-left transition-all duration-150 active:scale-[0.98] ${
-                  active
-                    ? "bg-[#C86235]/15 text-[#8C6D53] ring-2 ring-[#C86235]"
-                    : "bg-[#F0ECE1] text-[#4A3E31]"
-                }`}
-                key={option.code}
-                onClick={() => handleFontStyleChange(option.code)}
-                style={{ fontFamily: FONT_FAMILY_STACK[option.code] }}
-                type="button"
-              >
-                <span>
-                  <span className="block text-sm font-semibold">
-                    {t(option.labelKey)}
+        <div className="space-y-5 pt-1 pb-2">
+          <div className="space-y-2">
+            {FONT_STYLE_OPTIONS.map((option) => {
+              const active = fontStyle === option.code;
+              return (
+                <button
+                  className={`flex h-14 w-full items-center justify-between rounded-2xl px-4 text-left transition-all duration-150 active:scale-[0.98] ${
+                    active
+                      ? "bg-[#C86235]/15 text-[#8C6D53] ring-2 ring-[#C86235]"
+                      : "bg-[#F0ECE1] text-[#4A3E31]"
+                  }`}
+                  key={option.code}
+                  onClick={() => handleFontStyleChange(option.code)}
+                  style={{ fontFamily: FONT_FAMILY_STACK[option.code] }}
+                  type="button"
+                >
+                  <span>
+                    <span className="block text-sm font-semibold">
+                      {t(option.labelKey)}
+                    </span>
+                    {option.hintKey ? (
+                      <span className="mt-0.5 block text-xs text-[#9C9285]">
+                        {t(option.hintKey)}
+                      </span>
+                    ) : null}
                   </span>
-                  {option.hintKey ? (
-                    <span className="mt-0.5 block text-xs text-[#9C9285]">
-                      {t(option.hintKey)}
+                  {active ? (
+                    <span className="text-xs font-semibold">
+                      {t("settings.current")}
                     </span>
                   ) : null}
-                </span>
-                {active ? (
-                  <span className="text-xs font-semibold">
-                    {t("settings.current")}
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
+                </button>
+              );
+            })}
+          </div>
+
+          <div>
+            <p className="mb-2 px-0.5 text-xs font-semibold text-[#9C9285]">
+              {t("settings.fontSize")}
+            </p>
+            <div className="flex items-center gap-3">
+              <span
+                aria-hidden
+                className="select-none text-[11px] font-semibold text-[#9C9285]"
+              >
+                A
+              </span>
+              <div
+                aria-label={t("settings.fontSize")}
+                className="grid flex-1 grid-cols-3 rounded-2xl bg-[#F0ECE1] p-1"
+                role="radiogroup"
+              >
+                {FONT_SIZE_OPTIONS.map((option) => {
+                  const active = fontSize === option.code;
+                  return (
+                    <button
+                      aria-checked={active}
+                      className={`h-9 rounded-xl text-xs font-semibold transition-all duration-150 active:scale-[0.98] ${
+                        active
+                          ? "bg-white text-[#2C2420] shadow-sm"
+                          : "text-[#9C9285]"
+                      }`}
+                      key={option.code}
+                      onClick={() => setFontSize(option.code)}
+                      role="radio"
+                      type="button"
+                    >
+                      {t(option.labelKey)}
+                    </button>
+                  );
+                })}
+              </div>
+              <span
+                aria-hidden
+                className="select-none text-lg font-semibold leading-none text-[#9C9285]"
+              >
+                A
+              </span>
+            </div>
+          </div>
+
+          <p
+            className="rounded-2xl bg-[#F0ECE1] px-3.5 py-3 text-sm leading-6 text-[#4A3E31]"
+            style={{ fontFamily: FONT_FAMILY_STACK[fontStyle] }}
+          >
+            {t("settings.fontPreview")}
+            <span className="mt-1 block font-numeric text-base font-semibold text-[#B8785C]">
+              $1,280.50
+            </span>
+          </p>
         </div>
       </BottomSheet>
 
