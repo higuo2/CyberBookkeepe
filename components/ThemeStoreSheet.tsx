@@ -7,6 +7,11 @@ import { BottomSheet } from "@/components/BottomSheet";
 import { CatCanIcon } from "@/components/icons/CatCanIcon";
 import { useT } from "@/components/LocaleProvider";
 import {
+  WORKSHOP_SHEET_CONTENT,
+  WORKSHOP_SHEET_PANEL,
+  WorkshopSheetHeader,
+} from "@/components/WorkshopSheetHeader";
+import {
   CAN_STATE_EVENT,
   readCanState,
   restoreSavedTheme,
@@ -61,31 +66,29 @@ export function ThemeStoreSheet({
 
   return (
     <BottomSheet
+      contentClassName={WORKSHOP_SHEET_CONTENT}
       header={
-        <div className="flex items-center justify-between gap-3 px-5 pb-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <Palette
-              className="size-5 shrink-0 text-[var(--color-primary)]"
-              strokeWidth={2}
-            />
-            <p className="truncate text-lg font-extrabold text-[var(--color-text-main)]">
-              {t("can.storeTitle")}
-            </p>
-          </div>
-          <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--color-bg-card)] px-3 py-1 text-xs font-medium text-[var(--color-text-main)]">
-            <CatCanIcon className="size-3.5 text-[var(--color-primary)]" />
-            <span className="font-numeric">
-              {t("can.balanceShort", { cans: state.cans_count })}
+        <WorkshopSheetHeader
+          icon={<Palette strokeWidth={2} />}
+          onClose={() => handleOpenChange(false)}
+          title={t("can.storeTitle")}
+          trailing={
+            <span className="inline-flex items-center gap-1 rounded-full border border-[#E8DFC2] bg-[#F5EFE6] px-2 py-1 text-[10px] font-medium text-[var(--color-text-body)]">
+              <CatCanIcon className="size-3 shrink-0 text-amber-700" />
+              <span className="font-numeric leading-none">
+                {t("can.balanceShort", { cans: state.cans_count })}
+              </span>
             </span>
-          </span>
-        </div>
+          }
+        />
       }
       onOpenChange={handleOpenChange}
       open={open}
-      panelClassName="bg-[var(--color-bg-main)]"
+      panelClassName={WORKSHOP_SHEET_PANEL}
+      title={t("can.storeTitle")}
     >
-      <div className="space-y-5 pb-2 pt-1">
-        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-bg-card)] shadow-sm divide-y divide-[var(--color-border)]/40">
+      <div className="space-y-4">
+        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-2xs divide-y divide-[var(--color-border)]/40">
           {STORE_THEMES.map((theme) => {
             const dots = THEME_DOTS[theme.id];
             const unlocked = state.unlocked_themes.includes(theme.id);

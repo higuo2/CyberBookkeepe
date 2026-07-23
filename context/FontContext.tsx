@@ -179,3 +179,20 @@ export function useFont() {
   }
   return ctx;
 }
+
+/**
+ * Canvas 需显式设置 font；从当前应用字体外观读取，避免写死 system-ui。
+ */
+export function getAppCanvasFont(
+  weight: number | string,
+  sizePx: number,
+): string {
+  if (typeof document === "undefined") {
+    return `${weight} ${sizePx}px ${FONT_FAMILY_STACK.rounded}`;
+  }
+  const computed = getComputedStyle(document.documentElement).fontFamily;
+  const rawStyle = document.documentElement.dataset.fontStyle;
+  const style = isFontStyle(rawStyle) ? rawStyle : "rounded";
+  const family = computed?.trim() || FONT_FAMILY_STACK[style];
+  return `${weight} ${sizePx}px ${family}`;
+}

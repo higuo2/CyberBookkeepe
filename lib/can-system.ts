@@ -41,9 +41,14 @@ const STORAGE_KEY = "cyberbookkeeper_can_economy_v1";
 const THEME_STORAGE_KEY = "cyberbookkeeper_current_theme";
 export const CAN_STATE_EVENT = "can-economy-updated";
 
-const REDEEM_CODES: Record<string, { milestone: MilestoneId; cans: number }> = {
+const REDEEM_CODES: Record<
+  string,
+  { milestone: MilestoneId | null; cans: number; unlimited?: boolean }
+> = {
   RIVER666: { milestone: "code_river666", cans: 2 },
   CYBER2026: { milestone: "code_cyber2026", cans: 2 },
+  /** 开发自测无限码：每次 +5 罐，不写 milestone */
+  MEOWTEST: { milestone: null, cans: 5, unlimited: true },
 };
 
 export function triggerHaptic() {
@@ -288,9 +293,22 @@ export function completeMilestone(id: MilestoneId): {
   return { awarded: true, state };
 }
 
+/** 今日是否已领取赞助罐头奖励（荣誉制防刷） */
+export function hasClaimedSponsorToday(
+  state: CanEconomyState = readCanState(),
+): boolean {
+  return state.last_sponsor_claim_date === localDateString();
+}
+
 export function claimSponsorCans(): RedeemResult {
   let state = readCanState();
-  // 可随时多次领取；仅记录最近一次日期（云同步/统计用），不做日限拦截
+  if (hasClaimedSponsorToday(state)) {
+    return {
+      ok: false,
+      messageKey: "can.sponsor.alreadyToday",
+      state,
+    };
+  }
   state = {
     ...state,
     cans_count: state.cans_count + 2,
@@ -329,13 +347,20 @@ export function redeemCode(raw: string): RedeemResult {
     return { ok: false, messageKey: "can.code.invalid", state: readCanState() };
   }
   let state = readCanState();
-  if (state.completed_milestones.includes(entry.milestone)) {
+  if (
+    !entry.unlimited &&
+    entry.milestone &&
+    state.completed_milestones.includes(entry.milestone)
+  ) {
     return { ok: false, messageKey: "can.code.used", state };
   }
   state = {
     ...state,
     cans_count: state.cans_count + entry.cans,
-    completed_milestones: [...state.completed_milestones, entry.milestone],
+    completed_milestones:
+      entry.unlimited || !entry.milestone
+        ? state.completed_milestones
+        : [...state.completed_milestones, entry.milestone],
   };
   writeCanState(state);
   triggerHaptic();

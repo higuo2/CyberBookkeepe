@@ -32,7 +32,7 @@ export function BottomSheet({
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-[80] bg-black/30 backdrop-blur-sm" />
         <Drawer.Content
-          className={`fixed inset-x-0 bottom-0 z-[90] mx-auto flex max-h-[92dvh] w-full max-w-md flex-col rounded-t-3xl border-t border-[var(--color-border)] outline-none ${
+          className={`fixed inset-x-0 bottom-0 z-[90] mx-auto flex max-h-[85vh] w-full max-w-md flex-col rounded-t-[28px] border-t border-[var(--color-border)] outline-none ${
             panelClassName ?? "bg-[var(--color-bg-card)]"
           }`}
           onPointerDownOutside={(event) => {
@@ -42,7 +42,7 @@ export function BottomSheet({
             }
           }}
         >
-          <div className="mx-auto my-2 h-1.5 w-12 shrink-0 rounded-full bg-[var(--color-text-main)] opacity-20" />
+          <div className="mx-auto my-2.5 h-1 w-10 shrink-0 rounded-full bg-stone-300/70" />
           {header ? (
             <>
               <Drawer.Title className="sr-only">{fallbackTitle}</Drawer.Title>

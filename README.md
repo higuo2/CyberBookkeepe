@@ -1,6 +1,8 @@
-# CyberBookkeeper
+# River
 
-移动端优先的 AI 智能记账 PWA（钱包小猫）。奶油色 UI，适配 iPhone 安全区；支持自然语言记账、账单管理、统计图表、规划资产与 Excel 导出。币种默认 **HKD**（港币），另支持 CNY / JPY / KRW；各币种独立结算，不做汇率换算。
+**River** 是一款移动端优先的 AI 智能记账 PWA。奶油色治愈风 UI，适配 iPhone 安全区；小猫 River 陪你用自然语言记账，并提供账单管理、统计图表、规划资产与 Excel 导出。
+
+币种默认 **HKD**（港币），另支持 CNY / JPY / KRW；各币种独立结算，不做汇率换算。
 
 ## 功能一览
 
@@ -10,7 +12,14 @@
 | 账单 | `/transactions` | 搜索 / 筛选 / 点按编辑 / Excel 导出 |
 | 统计 | `/charts` | 按币种独立展示本月收支与分类占比（不做汇率换算） |
 | 规划 | `/summary` | 预算进度（含预估固定开销）、周期收支/订阅、愿望存钱罐 |
-| 设置 | `/profile` | 默认记账币种、导出、重置与关于 |
+| 设置 | `/profile` | 默认记账币种、字体与主题、喵喵工坊、导出与关于 |
+
+### 喵喵工坊（与 River 互动）
+
+- **每日打卡**：记账打卡攒碎片，合成猫罐头
+- **罐头小窝**：投喂 River、查看粮仓与获取途径
+- **喵喵游乐场**：翻翻乐、刮刮乐，赢取喵喵积分兑换装扮
+- **赏个猫罐头**：赞助支持 River（荣誉制每日奖励）
 
 ## 本地启动
 
@@ -42,3 +51,7 @@ DEEPSEEK_MODEL=deepseek-chat
 ## 技术栈
 
 Next.js App Router · Tailwind CSS · Recharts · Supabase · DeepSeek · vaul · next-pwa · xlsx · sonner · lucide-react
+
+---
+
+仓库包名仍为 `cyberbookkeeper`（历史工程名）；面向用户的产品名是 **River**。

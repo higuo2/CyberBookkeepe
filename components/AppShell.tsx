@@ -24,7 +24,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             offset="calc(env(safe-area-inset-top) + 12px)"
             position="top-center"
             richColors
-            toastOptions={{ className: "font-sans" }}
           />
         </AuthGate>
       </LocaleProvider>

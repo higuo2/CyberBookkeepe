@@ -2,9 +2,9 @@
 
 import { useEffect, useState, type MouseEvent } from "react";
 import {
+  Banknote,
   ChevronRight,
   Cloud,
-  Coins,
   Download,
   Flame,
   Gamepad2,
@@ -25,10 +25,14 @@ import { CatAvatar } from "@/components/CatAvatar";
 import { CanBalanceSheet } from "@/components/CanBalanceSheet";
 import { CheckinRulesModal } from "@/components/CheckinRulesModal";
 import { ConfirmDialog, SettingsRow } from "@/components/ConfirmDialog";
-import { CurrencyIcon } from "@/components/AppIcons";
 import { GameArcadeDrawer } from "@/components/GameArcadeDrawer";
 import { ThemeStoreSheet } from "@/components/ThemeStoreSheet";
 import { TipRiverSheet } from "@/components/TipRiverSheet";
+import {
+  WORKSHOP_SHEET_CONTENT,
+  WORKSHOP_SHEET_PANEL,
+  WorkshopSheetHeader,
+} from "@/components/WorkshopSheetHeader";
 import { CatCanIcon } from "@/components/icons/CatCanIcon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import {
@@ -422,7 +426,7 @@ export function ProfilePage() {
             value={localeDisplayName(locale)}
           />
           <SettingsRow
-            icon={<Coins className="size-4" strokeWidth={2} />}
+            icon={<Banknote className="size-4" strokeWidth={2} />}
             iconClassName={ICON_BG.look}
             label={t("settings.defaultCurrency")}
             onClick={() => setIsCurrencySheetOpen(true)}
@@ -481,9 +485,7 @@ export function ProfilePage() {
           />
           <SettingsRow
             chevron
-            icon={
-              <CatCanIcon className="size-4 text-amber-700" />
-            }
+            icon={<CatCanIcon className="size-4 text-amber-700" />}
             iconClassName={ICON_BG.workshop}
             label={t("can.drawer.title")}
             onClick={() => setIsCanDrawerOpen(true)}
@@ -509,7 +511,12 @@ export function ProfilePage() {
           />
           <SettingsRow
             chevron
-            icon={<Heart className="size-4 text-[var(--color-primary)]" strokeWidth={2} />}
+            icon={
+              <Heart
+                className="size-4 text-[var(--color-primary)]"
+                strokeWidth={2}
+              />
+            }
             iconClassName={ICON_BG.workshop}
             label={t("settings.tipCat")}
             onClick={handleTipClick}
@@ -584,27 +591,46 @@ export function ProfilePage() {
       </section>
 
       <BottomSheet
+        contentClassName={WORKSHOP_SHEET_CONTENT}
+        header={
+          <WorkshopSheetHeader
+            icon={<Globe strokeWidth={2} />}
+            onClose={() => setIsLanguageSheetOpen(false)}
+            title={t("settings.languageSheetTitle")}
+          />
+        }
         onOpenChange={setIsLanguageSheetOpen}
         open={isLanguageSheetOpen}
+        panelClassName={WORKSHOP_SHEET_PANEL}
         title={t("settings.languageSheetTitle")}
       >
-        <div className="space-y-2 pt-1">
+        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-2xs divide-y divide-[var(--color-border)]/40">
           {LOCALE_OPTIONS.map((option) => {
             const active = locale === option.code;
             return (
               <button
-                className={`flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold transition-all duration-150 active:scale-[0.98] ${
-                  active
-                    ? "bg-[var(--color-primary)]/15 text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]"
-                    : "bg-[var(--color-bg-soft)] text-[var(--color-text-main)]"
-                }`}
+                className="flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors active:bg-[var(--color-text-main)]/5"
                 key={option.code}
                 onClick={() => handleLanguageChange(option.code, option.label)}
                 type="button"
               >
-                <span>{option.label}</span>
+                <span className="flex min-w-0 items-center gap-3">
+                  <Globe
+                    className={`size-4 shrink-0 ${
+                      active
+                        ? "text-amber-700"
+                        : "text-[var(--color-text-main)] opacity-40"
+                    }`}
+                    strokeWidth={2}
+                  />
+                  <span className="truncate text-sm font-semibold text-[var(--color-text-main)]">
+                    {option.label}
+                  </span>
+                </span>
                 {active ? (
-                  <span className="text-xs opacity-70">{t("settings.current")}</span>
+                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-[var(--color-primary)]">
+                    {t("settings.current")}
+                  </span>
                 ) : null}
               </button>
             );
@@ -613,38 +639,43 @@ export function ProfilePage() {
       </BottomSheet>
 
       <BottomSheet
+        contentClassName={WORKSHOP_SHEET_CONTENT}
+        header={
+          <WorkshopSheetHeader
+            icon={<Type strokeWidth={2} />}
+            onClose={() => setIsFontStyleSheetOpen(false)}
+            title={t("settings.fontStyle")}
+          />
+        }
         onOpenChange={setIsFontStyleSheetOpen}
         open={isFontStyleSheetOpen}
+        panelClassName={WORKSHOP_SHEET_PANEL}
         title={t("settings.fontStyle")}
       >
-        <div className="space-y-5 pt-1 pb-2">
-          <div className="space-y-2">
+        <div className="space-y-4">
+          <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-2xs divide-y divide-[var(--color-border)]/40">
             {FONT_STYLE_OPTIONS.map((option) => {
               const active = fontStyle === option.code;
               return (
                 <button
-                  className={`flex h-14 w-full items-center justify-between rounded-2xl px-4 text-left transition-all duration-150 active:scale-[0.98] ${
-                    active
-                      ? "bg-[var(--color-primary)]/15 text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]"
-                      : "bg-[var(--color-bg-soft)] text-[var(--color-text-main)]"
-                  }`}
+                  className="flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors active:bg-[var(--color-text-main)]/5"
                   key={option.code}
                   onClick={() => handleFontStyleChange(option.code)}
                   style={{ fontFamily: FONT_FAMILY_STACK[option.code] }}
                   type="button"
                 >
-                  <span>
-                    <span className="block text-sm font-semibold">
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold text-[var(--color-text-main)]">
                       {t(option.labelKey)}
                     </span>
                     {option.hintKey ? (
-                      <span className="mt-0.5 block text-xs text-[var(--color-text-main)] opacity-60">
+                      <span className="mt-0.5 block text-xs text-[var(--color-text-main)] opacity-40">
                         {t(option.hintKey)}
                       </span>
                     ) : null}
                   </span>
                   {active ? (
-                    <span className="text-xs font-semibold opacity-70">
+                    <span className="shrink-0 text-xs font-semibold text-[var(--color-primary)]">
                       {t("settings.current")}
                     </span>
                   ) : null}
@@ -654,19 +685,19 @@ export function ProfilePage() {
           </div>
 
           <div>
-            <p className="mb-2 px-0.5 text-xs font-semibold text-[var(--color-text-main)] opacity-60">
+            <p className="mb-2 px-1 text-xs font-semibold text-[var(--color-text-main)] opacity-40">
               {t("settings.fontSize")}
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-2 shadow-2xs">
               <span
                 aria-hidden
-                className="select-none text-[11px] font-semibold text-[var(--color-text-main)] opacity-60"
+                className="select-none px-1 text-[11px] font-semibold text-[var(--color-text-main)] opacity-40"
               >
                 A
               </span>
               <div
                 aria-label={t("settings.fontSize")}
-                className="grid flex-1 grid-cols-3 rounded-2xl bg-[var(--color-bg-soft)] p-1"
+                className="grid flex-1 grid-cols-3 gap-1"
                 role="radiogroup"
               >
                 {FONT_SIZE_OPTIONS.map((option) => {
@@ -676,8 +707,8 @@ export function ProfilePage() {
                       aria-checked={active}
                       className={`h-9 rounded-xl text-xs font-semibold transition-all duration-150 active:scale-[0.98] ${
                         active
-                          ? "bg-[var(--color-bg-card)] text-[var(--color-text-main)] shadow-sm"
-                          : "text-[var(--color-text-main)] opacity-60"
+                          ? "bg-[var(--color-bg-soft)] text-[var(--color-text-main)]"
+                          : "text-[var(--color-text-main)] opacity-40"
                       }`}
                       key={option.code}
                       onClick={() => setFontSize(option.code)}
@@ -691,7 +722,7 @@ export function ProfilePage() {
               </div>
               <span
                 aria-hidden
-                className="select-none text-lg font-semibold leading-none text-[var(--color-text-main)] opacity-60"
+                className="select-none px-1 text-lg font-semibold leading-none text-[var(--color-text-main)] opacity-40"
               >
                 A
               </span>
@@ -699,7 +730,7 @@ export function ProfilePage() {
           </div>
 
           <p
-            className="rounded-2xl bg-[var(--color-bg-soft)] px-3.5 py-3 text-sm leading-6 text-[var(--color-text-main)]"
+            className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-3 text-sm leading-6 text-[var(--color-text-main)] shadow-2xs"
             style={{ fontFamily: FONT_FAMILY_STACK[fontStyle] }}
           >
             {t("settings.fontPreview")}
@@ -711,39 +742,53 @@ export function ProfilePage() {
       </BottomSheet>
 
       <BottomSheet
+        contentClassName={WORKSHOP_SHEET_CONTENT}
+        header={
+          <WorkshopSheetHeader
+            icon={<Banknote strokeWidth={2} />}
+            onClose={() => setIsCurrencySheetOpen(false)}
+            title={t("settings.currencySheetTitle")}
+          />
+        }
         onOpenChange={setIsCurrencySheetOpen}
         open={isCurrencySheetOpen}
+        panelClassName={WORKSHOP_SHEET_PANEL}
         title={t("settings.currencySheetTitle")}
       >
-        <div className="space-y-2 pt-1">
-          {CURRENCY_CODES.map((code) => {
-            const active = currency === code;
-            return (
-              <button
-                className={`flex h-12 w-full items-center justify-between rounded-2xl px-4 text-sm font-semibold transition-all duration-150 active:scale-[0.98] ${
-                  active
-                    ? "bg-[var(--color-primary)]/15 text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]"
-                    : "bg-[var(--color-bg-soft)] text-[var(--color-text-main)]"
-                }`}
-                key={code}
-                onClick={() => handleCurrencyChange(code)}
-                type="button"
-              >
-                <span className="flex items-center gap-2">
-                  <CurrencyIcon
-                    className={`size-4 ${active ? "text-[var(--color-primary)]" : "text-[var(--color-text-main)] opacity-50"}`}
-                    code={code}
-                    strokeWidth={2}
-                  />
-                  {code} ({translateCurrencyLabel(code, t)})
-                </span>
-                {active ? (
-                  <span className="text-xs opacity-70">{t("settings.current")}</span>
-                ) : null}
-              </button>
-            );
-          })}
-          <p className="px-1 pt-2 text-caption leading-5 text-[var(--color-text-main)] opacity-60">
+        <div className="space-y-3">
+          <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-2xs divide-y divide-[var(--color-border)]/40">
+            {CURRENCY_CODES.map((code) => {
+              const active = currency === code;
+              return (
+                <button
+                  className="flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors active:bg-[var(--color-text-main)]/5"
+                  key={code}
+                  onClick={() => handleCurrencyChange(code)}
+                  type="button"
+                >
+                  <span className="flex min-w-0 items-center gap-3">
+                    <Banknote
+                      className={`size-4 shrink-0 ${
+                        active
+                          ? "text-amber-700"
+                          : "text-[var(--color-text-main)] opacity-40"
+                      }`}
+                      strokeWidth={2}
+                    />
+                    <span className="truncate text-sm font-semibold text-[var(--color-text-main)]">
+                      {code} ({translateCurrencyLabel(code, t)})
+                    </span>
+                  </span>
+                  {active ? (
+                    <span className="shrink-0 text-xs font-semibold text-[var(--color-primary)]">
+                      {t("settings.current")}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+          <p className="px-1 text-xs leading-5 text-[var(--color-text-main)] opacity-40">
             {t("settings.currencyHint")}
           </p>
         </div>

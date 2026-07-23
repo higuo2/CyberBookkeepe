@@ -4,6 +4,17 @@ import { readCanState, writeCanState, triggerHaptic } from "@/lib/can-system";
 /** 游乐场：每日免费门票 + 喵喵积分 + 装扮解锁 */
 export type SkinId = "bubble-caramel" | "river-shades" | "font-meow";
 
+/**
+ * 预留装扮槽位 ID（尚未上线）。
+ * 正式上线时：并入 SkinId → 写入 SHOP_PREVIEWS → 从 SHOP_UPCOMING 移除。
+ */
+export type UpcomingSkinId =
+  | "scarf-oat"
+  | "bell-collar"
+  | "frame-polaroid"
+  | "tail-pompom"
+  | "sticker-paw";
+
 export type GameArcadeState = {
   /** 上次结算日期 YYYY-MM-DD */
   lastGameDate: string | null;
@@ -33,6 +44,25 @@ export type ShopSkin = {
     | "game.shop.descFont";
 };
 
+/** 装扮小铺「开发中」预告槽：便于未来接皮肤，不可兑换 */
+export type UpcomingShopSkin = {
+  id: UpcomingSkinId;
+  /** 预估积分（仅展示） */
+  pointsPreview: number;
+  nameKey:
+    | "game.shop.upcoming.scarf"
+    | "game.shop.upcoming.bell"
+    | "game.shop.upcoming.frame"
+    | "game.shop.upcoming.tail"
+    | "game.shop.upcoming.sticker";
+  hintKey:
+    | "game.shop.upcoming.scarfHint"
+    | "game.shop.upcoming.bellHint"
+    | "game.shop.upcoming.frameHint"
+    | "game.shop.upcoming.tailHint"
+    | "game.shop.upcoming.stickerHint";
+};
+
 const STORAGE_KEY = "cyberbookkeeper_game_arcade_v2";
 export const GAME_ARCADE_EVENT = "game-arcade-updated";
 export const FREE_PLAYS_PER_DAY = 1;
@@ -41,6 +71,7 @@ export const WIN_POINTS = 100;
 
 const SKIN_IDS: SkinId[] = ["bubble-caramel", "river-shades", "font-meow"];
 
+/** 已上线可兑换装扮（按此数组扩展正式皮肤） */
 export const SHOP_PREVIEWS: readonly ShopSkin[] = [
   {
     id: "bubble-caramel",
@@ -61,6 +92,53 @@ export const SHOP_PREVIEWS: readonly ShopSkin[] = [
     descKey: "game.shop.descFont",
   },
 ] as const;
+
+/**
+ * 装扮预告槽（占位接口）。
+ * 新增预告：往此数组 push 一项 + 补 i18n；上线时迁移到 SHOP_PREVIEWS。
+ */
+export const SHOP_UPCOMING: readonly UpcomingShopSkin[] = [
+  {
+    id: "scarf-oat",
+    pointsPreview: 450,
+    nameKey: "game.shop.upcoming.scarf",
+    hintKey: "game.shop.upcoming.scarfHint",
+  },
+  {
+    id: "bell-collar",
+    pointsPreview: 600,
+    nameKey: "game.shop.upcoming.bell",
+    hintKey: "game.shop.upcoming.bellHint",
+  },
+  {
+    id: "frame-polaroid",
+    pointsPreview: 700,
+    nameKey: "game.shop.upcoming.frame",
+    hintKey: "game.shop.upcoming.frameHint",
+  },
+  {
+    id: "tail-pompom",
+    pointsPreview: 550,
+    nameKey: "game.shop.upcoming.tail",
+    hintKey: "game.shop.upcoming.tailHint",
+  },
+  {
+    id: "sticker-paw",
+    pointsPreview: 350,
+    nameKey: "game.shop.upcoming.sticker",
+    hintKey: "game.shop.upcoming.stickerHint",
+  },
+] as const;
+
+export function getShopSkin(id: SkinId): ShopSkin | undefined {
+  return SHOP_PREVIEWS.find((s) => s.id === id);
+}
+
+export function getUpcomingShopSkin(
+  id: UpcomingSkinId,
+): UpcomingShopSkin | undefined {
+  return SHOP_UPCOMING.find((s) => s.id === id);
+}
 
 function isSkinId(v: unknown): v is SkinId {
   return typeof v === "string" && (SKIN_IDS as string[]).includes(v);
@@ -135,10 +213,6 @@ export function readGameArcade(): GameArcadeView {
   return toView(ensureTodayState());
 }
 
-export function getShopSkin(id: SkinId): ShopSkin | undefined {
-  return SHOP_PREVIEWS.find((s) => s.id === id);
-}
-
 /**
  * 开始一局：优先消耗免费门票；否则扣除 1 罐头。
  */
@@ -196,6 +270,41 @@ export function awardWinPoints(amount = WIN_POINTS): {
   writeRaw(next);
   triggerHaptic();
   return { pointsAdded: amount, view: toView(next) };
+}
+
+/** 扣除喵喵积分（装扮兑换等） */
+export function spendGamePoints(amount: number): {
+  ok: boolean;
+  view: GameArcadeView;
+  messageKey?: "game.shop.needMore";
+} {
+  const view = readGameArcade();
+  const cost = Math.max(0, Math.floor(amount));
+  if (view.gamePoints < cost) {
+    return { ok: false, view, messageKey: "game.shop.needMore" };
+  }
+  const next: GameArcadeState = {
+    lastGameDate: view.lastGameDate ?? localDateString(),
+    freePlayUsedToday: view.freePlayUsedToday,
+    gamePoints: view.gamePoints - cost,
+    unlockedSkins: view.unlockedSkins,
+  };
+  writeRaw(next);
+  triggerHaptic();
+  return { ok: true, view: toView(next) };
+}
+
+/** 发放猫罐头 */
+export function awardCans(amount: number): number {
+  const cans = readCanState();
+  const add = Math.max(0, Math.floor(amount));
+  if (add <= 0) return 0;
+  writeCanState({
+    ...cans,
+    cans_count: cans.cans_count + add,
+  });
+  triggerHaptic();
+  return add;
 }
 
 /** 用积分兑换皮肤 */

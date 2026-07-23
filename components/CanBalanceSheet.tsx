@@ -8,13 +8,17 @@ import {
   Gift,
   Heart,
   Sparkles,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Drawer } from "vaul";
+import { BottomSheet } from "@/components/BottomSheet";
 import { CatAvatar } from "@/components/CatAvatar";
 import { CatCanIcon } from "@/components/icons/CatCanIcon";
 import { useT } from "@/components/LocaleProvider";
+import {
+  WORKSHOP_SHEET_CONTENT,
+  WORKSHOP_SHEET_PANEL,
+  WorkshopSheetHeader,
+} from "@/components/WorkshopSheetHeader";
 import {
   CAN_STATE_EVENT,
   feedRiverOneCan,
@@ -70,141 +74,109 @@ export function CanBalanceSheet({
   }
 
   return (
-    <Drawer.Root direction="left" onOpenChange={onOpenChange} open={open}>
-      <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 z-[80] bg-black/30 backdrop-blur-[2px]" />
-        <Drawer.Content
-          aria-describedby={undefined}
-          className="fixed inset-y-0 left-0 z-[90] flex h-full w-[min(320px,85vw)] flex-col bg-[#FDFBF7] outline-none shadow-2xl"
-        >
-          <Drawer.Title className="sr-only">{t("can.drawer.title")}</Drawer.Title>
-
-          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-stone-200/50 px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
-            <div className="flex min-w-0 items-center gap-2">
-              <CatCanIcon className="size-5 shrink-0 text-[#A68B6A]" />
-              <p className="truncate text-base font-bold text-stone-800">
-                {t("can.drawer.title")}
-              </p>
-            </div>
-            <button
-              aria-label={t("common.close")}
-              className="grid size-8 shrink-0 place-items-center rounded-full text-stone-400 transition-colors hover:bg-stone-200/50 hover:text-stone-600 active:scale-95"
-              onClick={() => onOpenChange(false)}
-              type="button"
-            >
-              <X className="size-4" strokeWidth={2} />
-            </button>
+    <BottomSheet
+      contentClassName={WORKSHOP_SHEET_CONTENT}
+      header={
+        <WorkshopSheetHeader
+          icon={<CatCanIcon className="text-[#A68B6A]" />}
+          onClose={() => onOpenChange(false)}
+          title={t("can.drawer.title")}
+        />
+      }
+      onOpenChange={onOpenChange}
+      open={open}
+      panelClassName={WORKSHOP_SHEET_PANEL}
+      title={t("can.drawer.title")}
+    >
+      <div className="rounded-2xl border border-[#EDE4D8] bg-gradient-to-br from-[#FFFDF9] to-[#F8F3EC] p-4 shadow-2xs">
+        <div className="flex items-center gap-3">
+          <div
+            className={`shrink-0 ${avatarBump ? "river-avatar-wobble" : ""}`}
+          >
+            <CatAvatar className="size-12 drop-shadow-sm" size={48} />
           </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 touch-pan-y">
-            {/* River 互动大卡片 */}
-            <div className="mb-4 rounded-2xl border border-amber-200/80 bg-gradient-to-br from-[#FFFDF9] to-[#F7F2EA] p-4 shadow-xs">
-              <div className="flex items-center gap-3.5">
-                <div
-                  className={`shrink-0 ${
-                    avatarBump ? "river-avatar-wobble" : ""
-                  }`}
-                >
-                  <CatAvatar
-                    className="size-14 drop-shadow-sm"
-                    size={56}
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-numeric text-3xl font-bold text-stone-800">
-                    {state.cans_count}
-                    <span className="ml-1 text-base font-semibold text-stone-500">
-                      {t("can.drawer.unit")}
-                    </span>
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-stone-500">
-                    {full
-                      ? t("can.drawer.stockFull")
-                      : t("can.drawer.stockEmpty")}
-                  </p>
-                </div>
-              </div>
-
-              <p className="my-3 text-xs leading-relaxed text-stone-600">
-                {full
-                  ? t("can.drawer.statusFull")
-                  : t("can.drawer.statusEmpty")}
-              </p>
-
-              <button
-                className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-amber-200/80 bg-white py-2.5 text-xs font-semibold text-amber-900 shadow-2xs transition-all hover:bg-amber-50/80 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={!full}
-                onClick={handleFeed}
-                type="button"
-              >
-                <Sparkles
-                  className="size-3.5 text-amber-600"
-                  strokeWidth={2}
-                />
-                {t("can.drawer.feed")}
-              </button>
-            </div>
-
-            {/* 统一任务清单 */}
-            <p className="mb-2 flex items-center text-xs font-medium text-stone-500">
-              <Gift className="mr-1 inline size-4 text-stone-400" strokeWidth={2} />
-              {t("can.drawer.howtoTitle")}
+          <div className="min-w-0 flex-1">
+            <p className="font-numeric text-2xl font-bold text-stone-800">
+              {state.cans_count}
+              <span className="ml-1 text-sm font-semibold text-stone-500">
+                {t("can.drawer.unit")}
+              </span>
             </p>
-            <div className="overflow-hidden rounded-xl border border-stone-200/70 bg-white shadow-2xs divide-y divide-stone-100">
-              <button
-                className="flex w-full items-center justify-between gap-2 px-3.5 py-3 text-left transition-colors hover:bg-stone-50/80 active:bg-stone-50"
-                onClick={() => closeThen(onGoCheckin)}
-                type="button"
-              >
-                <span className="flex min-w-0 items-center text-xs font-medium text-stone-700">
-                  <Calendar
-                    className="mr-2 inline size-4 shrink-0 text-amber-700"
-                    strokeWidth={2}
-                  />
-                  {t("can.drawer.taskCheckin")}
-                </span>
-                <span className="inline-flex shrink-0 items-center gap-0.5 text-xs font-medium text-amber-800">
-                  {t("can.drawer.taskCheckinAction")}
-                  <ChevronRight className="size-3.5" strokeWidth={2} />
-                </span>
-              </button>
-
-              <button
-                className="flex w-full items-center justify-between gap-2 px-3.5 py-3 text-left transition-colors hover:bg-stone-50/80 active:bg-stone-50"
-                onClick={() => closeThen(onGoArcade)}
-                type="button"
-              >
-                <span className="flex min-w-0 items-center text-xs font-medium text-stone-700">
-                  <Gamepad2
-                    className="mr-2 inline size-4 shrink-0 text-amber-700"
-                    strokeWidth={2}
-                  />
-                  {t("game.arcade.title")}
-                </span>
-                <span className="inline-flex shrink-0 items-center gap-0.5 text-xs text-stone-400">
-                  {t("can.drawer.taskArcadeAction")}
-                  <ChevronRight className="size-3.5" strokeWidth={2} />
-                </span>
-              </button>
-            </div>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-stone-500">
+              {full ? t("can.drawer.stockFull") : t("can.drawer.stockEmpty")}
+            </p>
           </div>
+        </div>
 
-          <div className="shrink-0 border-t border-stone-200/50 px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4">
-            <button
-              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-200 to-amber-300 py-3 text-sm font-medium text-amber-950 shadow-xs transition-all hover:from-amber-300 hover:to-amber-400 active:scale-[0.98]"
-              onClick={() => closeThen(onGoTip)}
-              type="button"
-            >
-              <Heart
-                className="size-4 fill-amber-800 text-amber-800"
-                strokeWidth={2}
-              />
-              {t("can.drawer.goTip")}
-              <ChevronRight className="size-4" strokeWidth={2} />
-            </button>
-          </div>
-        </Drawer.Content>
-      </Drawer.Portal>
-    </Drawer.Root>
+        <p className="mt-3 text-[11px] leading-relaxed text-stone-600">
+          {full ? t("can.drawer.statusFull") : t("can.drawer.statusEmpty")}
+        </p>
+
+        <button
+          className="mt-3 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[#D9C4B0] bg-white py-2.5 text-xs font-bold text-[#634225] shadow-2xs transition-all hover:bg-amber-50/50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={!full}
+          onClick={handleFeed}
+          type="button"
+        >
+          <Sparkles className="size-3.5 text-amber-600" strokeWidth={2} />
+          {t("can.drawer.feed")}
+        </button>
+      </div>
+
+      <p className="mb-1.5 mt-4 flex items-center text-[11px] font-medium text-stone-500">
+        <Gift className="mr-1 inline size-3.5 text-stone-400" strokeWidth={2} />
+        {t("can.drawer.howtoTitle")}
+      </p>
+      <div className="overflow-hidden rounded-2xl border border-[#EDE6DC] bg-white shadow-2xs">
+        <button
+          className="flex w-full cursor-pointer items-center justify-between border-b border-[#F5EFE6] p-3 text-left transition-colors last:border-none hover:bg-[#FAF7F2]"
+          onClick={() => closeThen(onGoCheckin)}
+          type="button"
+        >
+          <span className="flex min-w-0 items-center text-xs font-medium text-stone-800">
+            <Calendar
+              className="mr-2 inline size-3.5 shrink-0 text-amber-700"
+              strokeWidth={2}
+            />
+            {t("can.drawer.taskCheckin")}
+          </span>
+          <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-amber-900/70">
+            {t("can.drawer.taskCheckinAction")}
+            <ChevronRight className="size-3.5" strokeWidth={2} />
+          </span>
+        </button>
+
+        <button
+          className="flex w-full cursor-pointer items-center justify-between border-b border-[#F5EFE6] p-3 text-left transition-colors last:border-none hover:bg-[#FAF7F2]"
+          onClick={() => closeThen(onGoArcade)}
+          type="button"
+        >
+          <span className="flex min-w-0 items-center text-xs font-medium text-stone-800">
+            <Gamepad2
+              className="mr-2 inline size-3.5 shrink-0 text-amber-700"
+              strokeWidth={2}
+            />
+            {t("game.arcade.title")}
+          </span>
+          <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-amber-900/70">
+            {t("can.drawer.taskArcadeAction")}
+            <ChevronRight className="size-3.5" strokeWidth={2} />
+          </span>
+        </button>
+      </div>
+
+      <button
+        className="mt-4 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-r from-[#8C5D33] to-[#734722] px-4 py-3.5 text-xs font-semibold text-white shadow-sm transition-all hover:from-[#794E29] hover:to-[#633B1A] active:scale-[0.98]"
+        onClick={() => closeThen(onGoTip)}
+        type="button"
+      >
+        <Heart
+          className="size-4 fill-rose-300/30 text-rose-300"
+          strokeWidth={2}
+        />
+        {t("can.drawer.goTip")}
+        <ChevronRight className="size-4 text-amber-200/70" strokeWidth={2} />
+      </button>
+    </BottomSheet>
   );
 }
